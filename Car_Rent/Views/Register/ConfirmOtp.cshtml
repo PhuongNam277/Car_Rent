@@ -1,0 +1,22 @@
+﻿
+@{
+    ViewData["Title"] = "Confirm OTP";
+}
+
+<h2>Confirm OTP</h2>
+
+<form method="post">
+    <div>
+        <label>Mã OTP đã gửi đến email</label>
+        <input type="text" name="otp" required />
+    </div>
+    <button type="submit">Confirm</button>
+</form>
+
+@* @if (ModelState["Otp"] != null)
+{
+    <div style="color: red;">
+        @ModelState["Otp"].Errors[0].ErrorMessage
+    </div>
+} *@
+
