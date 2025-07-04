@@ -7,6 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CarRentalDbContext>(
     options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
+
+
 // Thêm dịch vụ session
 builder.Services.AddSession(options =>
 {
@@ -26,6 +29,13 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddTransient<EmailService>();
 
 var app = builder.Build();
+
+// Thực hiện migration tự động khi ứng dụng khởi động
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<CarRentalDbContext>(); // Đổi thành CarRentalDbContext
+    dbContext.Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

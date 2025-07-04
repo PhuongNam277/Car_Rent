@@ -1,38 +1,39 @@
-﻿using System.Net.Mail;
-using System.Net;
+﻿
 using MailKit.Net.Smtp;
+using MailKit.Security;
 using MimeKit;
+using System.Threading.Tasks;
 
 namespace Car_Rent.Models
 {
     public class EmailService
     {
-        private readonly string _smtpServer = "smtp.gmail.com";
-        private readonly int _smtpPort = 587;
-        private readonly string _senderEmail = "nguyenphuongnamforwork@gmail.com"; // Email của anh
-        private readonly string _senderPassword = "riwx ymof qwlt npyp"; // Mật khẩu ứng dụng (hoặc mật khẩu email)
+        private const string _smtpServer = "smtp.gmail.com";
+        private const int _smtpPort = 587;
+        private const string _senderEmail = "nguyenphuongnamforwork@gmail.com";
+        private const string _senderPassword = "qpwj nqec biml ibeo";   // 16 ký tự, KHÔNG khoảng trắng
 
-        public async Task SendEmailAsync(string recipientEmail, string subject, string body)
+        public async Task SendEmailAsync(string recipientEmail, string subject, string htmlBody)
         {
-            var emailMessage = new MimeMessage();
-            emailMessage.From.Add(new MailboxAddress("RentCar", _senderEmail));
-            emailMessage.To.Add(new MailboxAddress("", recipientEmail));
-            emailMessage.Subject = subject;
+            var msg = new MimeMessage();
+            msg.From.Add(new MailboxAddress("RentCar", _senderEmail));
+            msg.To.Add(MailboxAddress.Parse(recipientEmail));
+            msg.Subject = subject;
+            msg.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
-            var bodyBuilder = new BodyBuilder
-            {
-                HtmlBody = body // Nội dung email dạng HTML
-            };
+            using var client = new SmtpClient();
 
-            emailMessage.Body = bodyBuilder.ToMessageBody();
+            // 1) Kết nối TLS ngay
+            await client.ConnectAsync(_smtpServer, _smtpPort, SecureSocketOptions.StartTls);
 
-            using (var client = new MailKit.Net.Smtp.SmtpClient())
-            {
-                await client.ConnectAsync(_smtpServer, _smtpPort, false);
-                await client.AuthenticateAsync(_senderEmail, _senderPassword);
-                await client.SendAsync(emailMessage);
-                await client.DisconnectAsync(true);
-            }
+            // 2) Xoá XOAUTH2 (đề phòng MailKit ưu tiên sai cơ chế)
+            client.AuthenticationMechanisms.Remove("XOAUTH2");
+
+            // 3) Đăng nhập bằng App Password
+            await client.AuthenticateAsync(_senderEmail, _senderPassword);
+
+            await client.SendAsync(msg);
+            await client.DisconnectAsync(true);
         }
     }
 }

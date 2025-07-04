@@ -1,4 +1,6 @@
-﻿@{
+﻿@model CategoryCarModel
+
+@{
     ViewData["Title"] = "Booking A Car";
     Layout = "~/Views/Shared/MainLayout.cshtml";
 }
@@ -22,12 +24,24 @@
                                     <form>
                                         <div class="row g-3">
                                             <div class="col-12">
-                                                <select class="form-select" aria-label="Default select example">
+                                                <select id="categorySelect" class="form-select" aria-label="Default select example">
                                                     <option selected>Select Your Car type</option>
-                                                    <option value="1">VW Golf VII</option>
-                                                    <option value="2">Audi A1 S-Line</option>
-                                                    <option value="3">Toyota Camry</option>
-                                                    <option value="4">BMW 320 ModernLine</option>
+                                                    @foreach (var c in Model.Categories)
+                                                    {
+                                                        <option value="@c.CategoryId">@c.CategoryName</option>
+                                                    }
+
+
+                                                </select>
+                                            </div>
+                                            <div class="col-12">
+                                                <select id="carSelect" class="form-select" aria-label="Default select example">
+                                                    <option selected>Select Your Car Brand</option>
+                                                    @foreach(var car in Model.Cars)
+                                                    {
+                                                        <option value="@car.CarId">@car.CarName</option>
+                                                    }
+
                                                 </select>
                                             </div>
                                             <div class="col-12">
@@ -111,12 +125,24 @@
                                     <form>
                                         <div class="row g-3">
                                             <div class="col-12">
-                                                <select class="form-select" aria-label="Default select example">
+                                                <select id="categorySelect" class="form-select" aria-label="Default select example">
                                                     <option selected>Select Your Car type</option>
-                                                    <option value="1">VW Golf VII</option>
-                                                    <option value="2">Audi A1 S-Line</option>
-                                                    <option value="3">Toyota Camry</option>
-                                                    <option value="4">BMW 320 ModernLine</option>
+                                                    @foreach (var c in Model.Categories)
+                                                    {
+                                                        <option value="@c.CategoryId">@c.CategoryName</option>
+                                                    }
+
+
+                                                </select>
+                                            </div>
+                                            <div class="col-12">
+                                                <select id="carSelect" class="form-select" aria-label="Default select example">
+                                                    <option selected>Select Your Car Brand</option>
+                                                    @foreach (var car in Model.Cars)
+                                                    {
+                                                        <option value="@car.CarId">@car.CarName</option>
+                                                    }
+
                                                 </select>
                                             </div>
                                             <div class="col-12">
@@ -193,3 +219,36 @@
     </div>
 </div>
 <!-- Carousel End -->
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#categorySelect").change(function () {
+            var categoryId = $(this).val(); // Lay category id da chon
+            $("#carSelect").html('<option selected> Loading... </option>') // Hien thi loading
+
+            if(categoryId) {
+                $.ajax({
+                    url: "/Bookcar/GetCarsByCategory", // Goi controller
+                    type: "GET",
+                    data: {categoryId: categoryId},
+                    success: function (data) {
+                        $("#carSelect").html('<option selected value=""> Select Your Car Brand </option>');
+                        $.each(data, function (index, car) {
+                            $("#carSelect").append('<option value="' + car.carId + '">' + car.carName + '</option>' );
+                        } ) ;
+                    },
+                    error: function () {
+                        alert("Loi khi tai danh sach xe.");
+                    }
+                });
+            }
+            else {
+                $("#carSelect").html('<option selected value="">Select Your Car Brand</option>'); // Reset nếu chưa chọn
+            }
+
+        })
+        
+    } )
+</script>

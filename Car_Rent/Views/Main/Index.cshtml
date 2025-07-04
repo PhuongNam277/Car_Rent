@@ -1,4 +1,6 @@
-﻿@{
+﻿@model Car_Rent.Models.IndexViewModel
+
+@{
     ViewData["Title"] = "Home Page";
     Layout = "~/Views/Shared/MainLayout.cshtml";
 }
@@ -17,73 +19,11 @@
                         <div class="row g-5">
                             <div class="col-lg-6 fadeInLeft animated" data-animation="fadeInLeft" data-delay="1s" style="animation-delay: 1s;">
                                 <div class="bg-secondary rounded p-5">
-                                    <h4 class="text-white mb-4">CONTINUE CAR RESERVATION</h4>
+                                    <h4 class="text-white mb-4">WANT TO RENT A CAR? PRESS BUTTON BELOW</h4>
                                     <form>
                                         <div class="row g-3">
                                             <div class="col-12">
-                                                <select class="form-select" aria-label="Default select example">
-                                                    <option selected>Select Your Car type</option>
-                                                    <option value="1">VW Golf VII</option>
-                                                    <option value="2">Audi A1 S-Line</option>
-                                                    <option value="3">Toyota Camry</option>
-                                                    <option value="4">BMW 320 ModernLine</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-map-marker-alt"></span> <span class="ms-1">Pick Up</span>
-                                                    </div>
-                                                    <input class="form-control" type="text" placeholder="Enter a City or Airport" aria-label="Enter a City or Airport">
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <a href="#" class="text-start text-white d-block mb-2">Need a different drop-off location?</a>
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-map-marker-alt"></span><span class="ms-1">Drop off</span>
-                                                    </div>
-                                                    <input class="form-control" type="text" placeholder="Enter a City or Airport" aria-label="Enter a City or Airport">
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Pick Up</span>
-                                                    </div>
-                                                    <input class="form-control" type="date">
-                                                    <select class="form-select ms-3" aria-label="Default select example">
-                                                        <option selected>12:00AM</option>
-                                                        <option value="1">1:00AM</option>
-                                                        <option value="2">2:00AM</option>
-                                                        <option value="3">3:00AM</option>
-                                                        <option value="4">4:00AM</option>
-                                                        <option value="5">5:00AM</option>
-                                                        <option value="6">6:00AM</option>
-                                                        <option value="7">7:00AM</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Drop off</span>
-                                                    </div>
-                                                    <input class="form-control" type="date">
-                                                    <select class="form-select ms-3" aria-label="Default select example">
-                                                        <option selected>12:00AM</option>
-                                                        <option value="1">1:00AM</option>
-                                                        <option value="2">2:00AM</option>
-                                                        <option value="3">3:00AM</option>
-                                                        <option value="4">4:00AM</option>
-                                                        <option value="5">5:00AM</option>
-                                                        <option value="6">6:00AM</option>
-                                                        <option value="7">7:00AM</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <button class="btn btn-light w-100 py-2">Book Now</button>
+                                                <button asp-controller="Bookcar" asp-action="Index" class="btn btn-light w-100 py-2">Book Now</button>
                                             </div>
                                         </div>
                                     </form>
@@ -106,73 +46,11 @@
                         <div class="row g-5">
                             <div class="col-lg-6 fadeInLeft animated" data-animation="fadeInLeft" data-delay="1s" style="animation-delay: 1s;">
                                 <div class="bg-secondary rounded p-5">
-                                    <h4 class="text-white mb-4">CONTINUE CAR RESERVATION</h4>
+                                    <h4 class="text-white mb-4">WANT TO RENT A CAR? PRESS BUTTON BELOW</h4>
                                     <form>
                                         <div class="row g-3">
                                             <div class="col-12">
-                                                <select class="form-select" aria-label="Default select example">
-                                                    <option selected>Select Your Car type</option>
-                                                    <option value="1">VW Golf VII</option>
-                                                    <option value="2">Audi A1 S-Line</option>
-                                                    <option value="3">Toyota Camry</option>
-                                                    <option value="4">BMW 320 ModernLine</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-map-marker-alt"></span><span class="ms-1">Pick Up</span>
-                                                    </div>
-                                                    <input class="form-control" type="text" placeholder="Enter a City or Airport" aria-label="Enter a City or Airport">
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <a href="#" class="text-start text-white d-block mb-2">Need a different drop-off location?</a>
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-map-marker-alt"></span><span class="ms-1">Drop off</span>
-                                                    </div>
-                                                    <input class="form-control" type="text" placeholder="Enter a City or Airport" aria-label="Enter a City or Airport">
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Pick Up</span>
-                                                    </div>
-                                                    <input class="form-control" type="date">
-                                                    <select class="form-select ms-3" aria-label="Default select example">
-                                                        <option selected>12:00AM</option>
-                                                        <option value="1">1:00AM</option>
-                                                        <option value="2">2:00AM</option>
-                                                        <option value="3">3:00AM</option>
-                                                        <option value="4">4:00AM</option>
-                                                        <option value="5">5:00AM</option>
-                                                        <option value="6">6:00AM</option>
-                                                        <option value="7">7:00AM</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Drop off</span>
-                                                    </div>
-                                                    <input class="form-control" type="date">
-                                                    <select class="form-select ms-3" aria-label="Default select example">
-                                                        <option selected>12:00AM</option>
-                                                        <option value="1">1:00AM</option>
-                                                        <option value="2">2:00AM</option>
-                                                        <option value="3">3:00AM</option>
-                                                        <option value="4">4:00AM</option>
-                                                        <option value="5">5:00AM</option>
-                                                        <option value="6">6:00AM</option>
-                                                        <option value="7">7:00AM</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <button class="btn btn-light w-100 py-2">Book Now</button>
+                                                <button asp-controller="Bookcar" asp-action="Index" class="btn btn-light w-100 py-2">Book Now</button>
                                             </div>
                                         </div>
                                     </form>
@@ -474,182 +352,65 @@
             </p>
         </div>
         <div class="categories-carousel owl-carousel wow fadeInUp" data-wow-delay="0.1s">
-            <div class="categories-item p-4">
-                <div class="categories-item-inner">
-                    <div class="categories-img rounded-top">
-                        <img src="~/Main/img/car-1.png" class="img-fluid w-100 rounded-top" alt="">
-                    </div>
-                    <div class="categories-content rounded-bottom p-4">
-                        <h4>Mercedes Benz R3</h4>
-                        <div class="categories-review mb-4">
-                            <div class="me-3">4.5 Review</div>
-                            <div class="d-flex justify-content-center text-secondary">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star text-body"></i>
-                            </div>
+            @foreach (var car in Model.Cars)
+            {
+
+                <div class="categories-item p-4">
+                    <div class="categories-item-inner">
+                        <div class="categories-img rounded-top">
+                            <img src="~/Main/img/@car.ImageUrl" class="img-fluid w-100 rounded-top" alt="">
                         </div>
-                        <div class="mb-4">
-                            <h4 class="bg-white text-primary rounded-pill py-2 px-4 mb-0">$99:00/Day</h4>
+                        <div class="categories-content rounded-bottom p-4">
+                            <h4>@car.CarName</h4>
+                            <div class="categories-review mb-4">
+                                <div class="me-3">4.5 Review</div>
+                                <div class="d-flex justify-content-center text-secondary">
+                                    @*                            @for (int i = 1; i <= 5; i++) *@
+                                    @* { *@
+                                    @* 	if (i <= car.Rating) *@
+                                    @* 	{ *@
+                                    @* 		<i class="fas fa-star"></i> *@
+                                    @* 	} *@
+                                    @* 	else *@
+                                    @* 	{ *@
+                                    @* 		<i class="fas fa-star text-body"></i> *@
+                                    @* 	} *@
+                                    @* } *@
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star text-body"></i>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <h4 class="bg-white text-primary rounded-pill py-2 px-4 mb-0">$@car.RentalPricePerDay/Day</h4>
+                            </div>
+                            <div class="row gy-2 gx-0 text-center mb-4">
+                                <div class="col-4 border-end border-white">
+                                    <i class="fa fa-users text-dark"></i> <span class="text-body ms-1">@car.SeatNumber Seat</span>
+                                </div>
+                                <div class="col-4 border-end border-white">
+                                    <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">@car.EngineType</span>
+                                </div>
+                                <div class="col-4">
+                                    <i class="fa fa-gas-pump text-dark"></i> <span class="text-body ms-1">@car.EnergyType</span>
+                                </div>
+                                <div class="col-4 border-end border-white">
+                                    <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">@car.SellDate</span>
+                                </div>
+                                <div class="col-4 border-end border-white">
+                                    <i class="fa fa-cogs text-dark"></i> <span class="text-body ms-1">AUTO</span>
+                                </div>
+                                <div class="col-4">
+                                    <i class="fa fa-road text-dark"></i> <span class="text-body ms-1">@car.DistanceTraveled km</span>
+                                </div>
+                            </div>
+                            <a asp-controller="Bookcar" asp-action="Index" class="btn btn-primary rounded-pill d-flex justify-content-center py-3">Book Now</a>
                         </div>
-                        <div class="row gy-2 gx-0 text-center mb-4">
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-users text-dark"></i> <span class="text-body ms-1">4 Seat</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">AT/MT</span>
-                            </div>
-                            <div class="col-4">
-                                <i class="fa fa-gas-pump text-dark"></i> <span class="text-body ms-1">Petrol</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">2015</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-cogs text-dark"></i> <span class="text-body ms-1">AUTO</span>
-                            </div>
-                            <div class="col-4">
-                                <i class="fa fa-road text-dark"></i> <span class="text-body ms-1">27K</span>
-                            </div>
-                        </div>
-                        <a asp-controller="Bookcar" asp-action="Index" class="btn btn-primary rounded-pill d-flex justify-content-center py-3">Book Now</a>
-                    </div>
-                </div>
-            </div>
-            <div class="categories-item p-4">
-                <div class="categories-item-inner">
-                    <div class="categories-img rounded-top">
-                        <img src="~/Main/img/car-2.png" class="img-fluid w-100 rounded-top" alt="">
-                    </div>
-                    <div class="categories-content rounded-bottom p-4">
-                        <h4>Toyota Corolla Cross</h4>
-                        <div class="categories-review mb-4">
-                            <div class="me-3">3.5 Review</div>
-                            <div class="d-flex justify-content-center text-secondary">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star text-body"></i>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <h4 class="bg-white text-primary rounded-pill py-2 px-4 mb-0">$128:00/Day</h4>
-                        </div>
-                        <div class="row gy-2 gx-0 text-center mb-4">
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-users text-dark"></i> <span class="text-body ms-1">4 Seat</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">AT/MT</span>
-                            </div>
-                            <div class="col-4">
-                                <i class="fa fa-gas-pump text-dark"></i> <span class="text-body ms-1">Petrol</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">2015</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-cogs text-dark"></i> <span class="text-body ms-1">AUTO</span>
-                            </div>
-                            <div class="col-4">
-                                <i class="fa fa-road text-dark"></i> <span class="text-body ms-1">27K</span>
-                            </div>
-                        </div>
-                        <a href="#" class="btn btn-primary rounded-pill d-flex justify-content-center py-3">Book Now</a>
                     </div>
                 </div>
-            </div>
-            <div class="categories-item p-4">
-                <div class="categories-item-inner">
-                    <div class="categories-img rounded-top">
-                        <img src="~/Main/img/car-3.png" class="img-fluid w-100 rounded-top" alt="">
-                    </div>
-                    <div class="categories-content rounded-bottom p-4">
-                        <h4>Tesla Model S Plaid</h4>
-                        <div class="categories-review mb-4">
-                            <div class="me-3">3.8 Review</div>
-                            <div class="d-flex justify-content-center text-secondary">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star text-body"></i>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <h4 class="bg-white text-primary rounded-pill py-2 px-4 mb-0">$170:00/Day</h4>
-                        </div>
-                        <div class="row gy-2 gx-0 text-center mb-4">
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-users text-dark"></i> <span class="text-body ms-1">4 Seat</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">AT/MT</span>
-                            </div>
-                            <div class="col-4">
-                                <i class="fa fa-gas-pump text-dark"></i> <span class="text-body ms-1">Petrol</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">2015</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-cogs text-dark"></i> <span class="text-body ms-1">AUTO</span>
-                            </div>
-                            <div class="col-4">
-                                <i class="fa fa-road text-dark"></i> <span class="text-body ms-1">27K</span>
-                            </div>
-                        </div>
-                        <a href="#" class="btn btn-primary rounded-pill d-flex justify-content-center py-3">Book Now</a>
-                    </div>
-                </div>
-            </div>
-            <div class="categories-item p-4">
-                <div class="categories-item-inner">
-                    <div class="categories-img rounded-top">
-                        <img src="~/Main/img/car-4.png" class="img-fluid w-100 rounded-top" alt="">
-                    </div>
-                    <div class="categories-content rounded-bottom p-4">
-                        <h4>Hyundai Kona Electric</h4>
-                        <div class="categories-review mb-4">
-                            <div class="me-3">4.8 Review</div>
-                            <div class="d-flex justify-content-center text-secondary">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <h4 class="bg-white text-primary rounded-pill py-2 px-4 mb-0">$187:00/Day</h4>
-                        </div>
-                        <div class="row gy-2 gx-0 text-center mb-4">
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-users text-dark"></i> <span class="text-body ms-1">4 Seat</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">AT/MT</span>
-                            </div>
-                            <div class="col-4">
-                                <i class="fa fa-gas-pump text-dark"></i> <span class="text-body ms-1">Petrol</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">2015</span>
-                            </div>
-                            <div class="col-4 border-end border-white">
-                                <i class="fa fa-cogs text-dark"></i> <span class="text-body ms-1">AUTO</span>
-                            </div>
-                            <div class="col-4">
-                                <i class="fa fa-road text-dark"></i> <span class="text-body ms-1">27K</span>
-                            </div>
-                        </div>
-                        <a href="#" class="btn btn-primary rounded-pill d-flex justify-content-center py-3">Book Now</a>
-                    </div>
-                </div>
-            </div>
+            }
         </div>
     </div>
 </div>
@@ -699,57 +460,27 @@
             </p>
         </div>
         <div class="row g-4">
-            <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.1s">
-                <div class="blog-item">
-                    <div class="blog-img">
-                        <img src="~/Main/img/blog-1.jpg" class="img-fluid rounded-top w-100" alt="Image">
-                    </div>
-                    <div class="blog-content rounded-bottom p-4">
-                        <div class="blog-date">30 Dec 2025</div>
-                        <div class="blog-comment my-3">
-                            <div class="small"><span class="fa fa-user text-primary"></span><span class="ms-2">Martin.C</span></div>
-                            <div class="small"><span class="fa fa-comment-alt text-primary"></span><span class="ms-2">6 Comments</span></div>
+            @foreach (var blog in Model.Blogs)
+            {
+                <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.1s">
+                    <div class="blog-item">
+                        <div class="blog-img">
+                            <img src="~/Main/img/blog-1.jpg" class="img-fluid rounded-top w-100" alt="Image">
                         </div>
-                        <a href="#" class="h4 d-block mb-3">Rental Cars how to check driving fines?</a>
-                        <p class="mb-3">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Eius libero soluta impedit eligendi? Quibusdam, laudantium.</p>
-                        <a href="#" class="">Read More  <i class="fa fa-arrow-right"></i></a>
+                        <div class="blog-content rounded-bottom p-4">
+                            <div class="blog-date">@blog.PublishedDate?.ToString("dd MMM yyyy")</div>
+                            <div class="blog-comment my-3">
+                                <div class="small"><span class="fa fa-user text-primary"></span><span class="ms-2">@blog.Author.Username</span></div>
+                                <div class="small"><span class="fa fa-comment-alt text-primary"></span><span class="ms-2">
+                                    @Model.Comments.Count(c => c.BlogId == blog.BlogId) Comments</span></div>
+                            </div>
+                            <a href="#" class="h4 d-block mb-3">@blog.Title</a>
+                            <p class="mb-3">@blog.Content.Substring(0, Math.Min(100, blog.Content.Length))...</p>
+                            <a href="#" class="">Read More  <i class="fa fa-arrow-right"></i></a>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.3s">
-                <div class="blog-item">
-                    <div class="blog-img">
-                        <img src="~/Main/img/blog-2.jpg" class="img-fluid rounded-top w-100" alt="Image">
-                    </div>
-                    <div class="blog-content rounded-bottom p-4">
-                        <div class="blog-date">25 Dec 2025</div>
-                        <div class="blog-comment my-3">
-                            <div class="small"><span class="fa fa-user text-primary"></span><span class="ms-2">Martin.C</span></div>
-                            <div class="small"><span class="fa fa-comment-alt text-primary"></span><span class="ms-2">6 Comments</span></div>
-                        </div>
-                        <a href="#" class="h4 d-block mb-3">Rental cost of sport and other cars</a>
-                        <p class="mb-3">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Eius libero soluta impedit eligendi? Quibusdam, laudantium.</p>
-                        <a href="#" class="">Read More  <i class="fa fa-arrow-right"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.5s">
-                <div class="blog-item">
-                    <div class="blog-img">
-                        <img src="~/Main/img/blog-3.jpg" class="img-fluid rounded-top w-100" alt="Image">
-                    </div>
-                    <div class="blog-content rounded-bottom p-4">
-                        <div class="blog-date">27 Dec 2025</div>
-                        <div class="blog-comment my-3">
-                            <div class="small"><span class="fa fa-user text-primary"></span><span class="ms-2">Martin.C</span></div>
-                            <div class="small"><span class="fa fa-comment-alt text-primary"></span><span class="ms-2">6 Comments</span></div>
-                        </div>
-                        <a href="#" class="h4 d-block mb-3">Document required for car rental</a>
-                        <p class="mb-3">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Eius libero soluta impedit eligendi? Quibusdam, laudantium.</p>
-                        <a href="#" class="">Read More  <i class="fa fa-arrow-right"></i></a>
-                    </div>
-                </div>
-            </div>
+            }
         </div>
     </div>
 </div>

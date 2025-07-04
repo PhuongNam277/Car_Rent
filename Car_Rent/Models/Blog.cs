@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Car_Rent.Models;
 
@@ -19,5 +20,7 @@ public partial class Blog
 
     public string? Status { get; set; }
 
+    [ForeignKey("AuthorId")]
     public virtual User Author { get; set; } = null!;
+
 }

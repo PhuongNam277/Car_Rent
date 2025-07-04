@@ -35,7 +35,7 @@ namespace Car_Rent.Controllers
                         HttpContext.Session.SetString("UserId", user.UserId.ToString());
                         HttpContext.Session.SetString("Username", user.Username.ToString());
 
-                        return RedirectToAction("Index", "Home");
+                        return RedirectToAction("Index", "Main");
                     }
                     else
                     {
