@@ -24,12 +24,21 @@ namespace Car_Rent.Controllers
             var blogEntities = await _context.Blogs
                 .Include(b => b.Author).ToListAsync();
 
+            // Lay list team profession
+            var teamEntities = await _context.Users.ToListAsync();
+
             // Lay ds comment
 
             var commentEntities = await _context.Comments.ToListAsync();
 
             // Lay ds user
             var authorEntities = await _context.Users.ToListAsync();
+
+            // Lay ds review
+            var reviewEntities = await _context.Reviews
+                .Include(r => r.User)
+                .Include(r => r.Car)
+                .ToListAsync();
 
 
 
@@ -60,7 +69,9 @@ namespace Car_Rent.Controllers
                 Cars = carViewModels,
                 Blogs = blogEntities,
                 Authors = authorEntities.Cast<User>().ToList(),
-                Comments = commentEntities
+                Comments = commentEntities,
+                Teams = teamEntities,
+                Reviews = reviewEntities
             };
 
             // 4. Tra ve view

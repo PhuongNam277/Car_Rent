@@ -9,7 +9,9 @@ namespace Car_Rent.Models
         public List<Blog> Blogs { get; set; }
 
         public List<User> Authors { get; set; }
+        public List<User> Teams { get; set; }
 
+        public List<Review> Reviews { get; set; }
         public List<Comment> Comments { get; set; }
     }
 }

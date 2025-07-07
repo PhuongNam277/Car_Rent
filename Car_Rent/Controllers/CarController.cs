@@ -1,6 +1,7 @@
 ﻿using Car_Rent.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 
 namespace Car_Rent.Controllers
 {
@@ -13,13 +14,19 @@ namespace Car_Rent.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+
             ViewData["ActivePage"] = "Pages";
 
+            var cars = await _context.Cars.ToListAsync();
             
+            var carViewModels = new CarViewModel
+            {
+                Cars = cars
+            };
 
-            return View();
+            return View(carViewModels);
         }
 
         [HttpGet]
