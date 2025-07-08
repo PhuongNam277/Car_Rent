@@ -8,6 +8,17 @@ builder.Services.AddDbContext<CarRentalDbContext>(
     options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
+// Đăng ký dịch vụ Authentication
+builder.Services.AddAuthentication("MyCookieAuth")
+    .AddCookie("MyCookieAuth", options => 
+    {
+        options.Cookie.Name = "UserLoginCookie"; // Tên cookie
+        options.LoginPath = "/Login/Index"; // Đường dẫn đến trang đăng nhập
+        options.AccessDeniedPath = "/Login/AccessDenied"; // Đường dẫn đến trang từ chối truy cập
+    });
+
+builder.Services.AddAuthorization();
+
 
 
 // Thêm dịch vụ session
@@ -51,6 +62,8 @@ app.UseStaticFiles();
 app.UseSession(); // Thêm dòng này để sử dụng session
 
 app.UseRouting();
+
+app.UseAuthentication(); // Thêm dòng này để sử dụng Authentication
 
 app.UseAuthorization();
 

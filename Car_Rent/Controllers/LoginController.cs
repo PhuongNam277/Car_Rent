@@ -3,6 +3,10 @@ using System.Security.Cryptography;
 using Car_Rent.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Car_Rent.Controllers
 {
@@ -11,7 +15,7 @@ namespace Car_Rent.Controllers
         private readonly CarRentalDbContext _context;
 
         public LoginController(CarRentalDbContext context)
-        {  _context = context; }
+        { _context = context; }
 
         [HttpGet]
         public IActionResult Index()
@@ -20,7 +24,7 @@ namespace Car_Rent.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Index(LoginViewModel model)
+        public async Task<IActionResult> Index(LoginViewModel model, string? returnUrl = null)
         {
             if (ModelState.IsValid)
             {
@@ -32,8 +36,35 @@ namespace Car_Rent.Controllers
 
                     if (user.PasswordHash == hashedPassword)
                     {
-                        HttpContext.Session.SetString("UserId", user.UserId.ToString());
-                        HttpContext.Session.SetString("Username", user.Username.ToString());
+                        // Tạo danh tính người dùng
+                        var claims = new List<Claim>
+                        {
+                            new Claim(ClaimTypes.Name, user.Username),
+                            new Claim(ClaimTypes.Role, user.Role ?? "User"), // Mặc định là User nếu không có vai trò
+                            new Claim("UserId", user.UserId.ToString())
+
+                        };
+
+                        var identity = new ClaimsIdentity(claims, "MyCookieAuth");
+                        var principal = new ClaimsPrincipal(identity);
+
+                        // Đăng nhập người dùng
+                        await HttpContext.SignInAsync("MyCookieAuth", principal);
+
+                        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                        {
+                            // Nếu returnUrl là action POST thì tránh redirect
+                            if (returnUrl.ToLower().Contains("/contact/send"))
+                            {
+                                return RedirectToAction("Index", "Contact");
+                            }
+                            return Redirect(returnUrl);
+                        }
+
+
+
+                        //HttpContext.Session.SetString("UserId", user.UserId.ToString());
+                        //HttpContext.Session.SetString("Username", user.Username.ToString());
 
                         return RedirectToAction("Index", "Main");
                     }
@@ -51,6 +82,14 @@ namespace Car_Rent.Controllers
             return View(model);
         }
 
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync("MyCookieAuth");
+
+            return RedirectToAction("Index", "Main");
+        }
+
         private string HashPassword(string password)
         {
             using (var sha256 = SHA256.Create())
@@ -59,5 +98,11 @@ namespace Car_Rent.Controllers
                 return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
             }
         }
-    }
+
+        // Action Denied
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+    } 
 }
