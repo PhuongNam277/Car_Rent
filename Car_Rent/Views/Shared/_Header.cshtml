@@ -1,5 +1,7 @@
 ﻿@{
-    var username = ViewContext.HttpContext.Session.GetString("Username");
+    var username = User.Identity.Name;
+    var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+
 }
 
 <div class="container-fluid nav-bar sticky-top px-0 px-lg-4 py-2 py-lg-0">
@@ -48,9 +50,16 @@
 
                     }
                     else {
-                        <text>Get started</text>
+                        <text>Login</text>
                     }
                 </a>
+
+                @if (username == "Admin")
+                {
+                    <a asp-controller="Admin" asp-action="Index" class="btn btn-primary rounded-pill py-2 px-4" style="margin-left: 12px">
+                        <text>Manage</text>
+                    </a>
+                }
             </div>
         </nav>
     </div>

@@ -3,6 +3,7 @@ using System.Text;
 using Car_Rent.Models;
 using Microsoft.AspNetCore.Mvc;
 using Car_Rent.Interfaces;
+using System.Text.Json;
 
 namespace Car_Rent.Controllers
 {
@@ -47,15 +48,19 @@ namespace Car_Rent.Controllers
                 FullName = fullname,
                 Username = username,
                 Email = email,
+                Role = "User", // Mặc định là User, có thể thay đổi nếu cần
                 PasswordHash = hashedPassword // Mã hóa password nếu cần
             };
 
-            await _userService.SaveUserAsync(user);
+            
 
             // Tao va luu ma OTP vao session
             var otp = GenerateOtp();
             HttpContext.Session.SetString("OTPCode", otp);
             HttpContext.Session.SetString("OTPEmail", email);
+
+            // Serialize User thanh JSON và lưu vào session
+            HttpContext.Session.SetString("PendingUser", JsonSerializer.Serialize(user));
 
             // Gửi email xác nhận cho người dùng
             var emailBody = $"Mã OTP của bạn là: {otp}";
@@ -72,7 +77,7 @@ namespace Car_Rent.Controllers
         }
 
         [HttpPost]
-        public IActionResult ConfirmOtp(string email, string otp)
+        public async Task<IActionResult> ConfirmOtp(string email, string otp)
         {
             // Kiem tra ma OTP tu session
             var storedOtp = HttpContext.Session.GetString("OTPCode");
@@ -80,12 +85,24 @@ namespace Car_Rent.Controllers
 
             if(storedOtp == otp &&  storedEmail == email)
             {
+                // Lấy thông tin người dùng từ session và lưu vào cơ sở dữ liệu
+                var userJson = HttpContext.Session.GetString("PendingUser");
+                if (userJson != null)
+                {
+                    var user = JsonSerializer.Deserialize<User>(userJson);
+
+                    await _userService.SaveUserAsync(user);
+
+                    // Xóa thông tin người dùng tạm thời khỏi session
+                    HttpContext.Session.Remove("PendingUser");
+                }
                 // Xoa otp ra khoi session
                 HttpContext.Session.Remove("OTPCode");
                 HttpContext.Session.Remove("OTPEmail");
 
                 // Hiển thị alert
                 TempData["SuccessMessage"] = "Sign up successfully, please login to continue!";
+
 
                 // Thực hiện hành động đăng ký thành công
                 return RedirectToAction("Index", "Login");

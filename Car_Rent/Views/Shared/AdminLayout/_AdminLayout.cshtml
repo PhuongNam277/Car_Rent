@@ -1,0 +1,111 @@
+﻿<!doctype html>
+<html lang="en" data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-direction="ltr" dir="ltr" data-pc-theme="light">
+<!-- [Head] start -->
+
+<head>
+   @await Html.PartialAsync("_Head.cshtml")
+</head>
+<!-- [Head] end -->
+<!-- [Body] Start -->
+<body>
+    <!-- [ Pre-loader ] start -->
+    @await Html.PartialAsync("_Preloader.cshtml")
+    <!-- [ Pre-loader ] End -->
+
+
+    <!-- [ Sidebar Menu ] start -->
+    @await Html.PartialAsync("_Sidebar.cshtml")
+    <!-- [ Sidebar Menu ] end -->
+
+
+    <!-- [ Header Topbar ] start -->
+    @await Html.PartialAsync("_Topbar.cshtml")
+    <!-- [ Header Topbar ] end -->
+
+
+    <!-- [ Main Content ] start -->
+    <div class="pc-container">
+        <div class="pc-content">
+            <!-- [ breadcrumb ] start -->
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="page-header-title">
+                        <h5 class="mb-0 font-medium">Default</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../dashboard/index.html">Home</a></li>
+                        <li class="breadcrumb-item"><a href="javascript: void(0)">Dashboard</a></li>
+                        <li class="breadcrumb-item" aria-current="page">Default</li>
+                    </ul>
+                </div>
+            </div>
+            <!-- [ breadcrumb ] end -->
+            <!-- [ Main Content ] start -->
+            @RenderBody()
+            <!-- [ Main Content ] end -->
+        </div>
+    </div>
+    <!-- [ Main Content ] end -->
+    <footer class="pc-footer">
+        <div class="footer-wrapper container-fluid mx-10">
+            <div class="grid grid-cols-12 gap-1.5">
+                <div class="col-span-12 sm:col-span-6 my-1">
+                    <p class="m-0"></p>
+                    <a href="https://codedthemes.com/" class="text-theme-bodycolor dark:text-themedark-bodycolor hover:text-primary-500 dark:hover:text-primary-500" target="_blank">Phuong Nam</a>
+                    , Built with ♥ for a smoother web presence.
+                    </p>
+                </div>
+                <div class="col-span-12 sm:col-span-6 my-1 justify-self-end">
+                    <p class="inline-block max-sm:mr-3 sm:ml-2">Distributed by <a href="https://themewagon.com" target="_blank">Phuong Nam</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Required Js -->
+    <script src="~/Admin/dist/assets/js/plugins/simplebar.min.js"></script>
+    <script src="~/Admin/dist/assets/js/plugins/popper.min.js"></script>
+    <script src="~/Admin/dist/assets/js/icon/custom-icon.js"></script>
+    <script src="~/Admin/dist/assets/js/plugins/feather.min.js"></script>
+    <script src="~/Admin/dist/assets/js/component.js"></script>
+    <script src="~/Admin/dist/assets/js/theme.js"></script>
+    <script src="~/Admin/dist/assets/js/script.js"></script>
+
+    <div class="floting-button fixed bottom-[50px] right-[30px] z-[1030]">
+    </div>
+
+
+    <script>
+        layout_change('false');
+    </script>
+
+
+    <script>
+        layout_theme_sidebar_change('dark');
+    </script>
+
+
+    <script>
+        change_box_container('false');
+    </script>
+
+    <script>
+        layout_caption_change('true');
+    </script>
+
+    <script>
+        layout_rtl_change('false');
+    </script>
+
+    <script>
+        preset_change('preset-1');
+    </script>
+
+    <script>
+        main_layout_change('vertical');
+    </script>
+
+
+</body>
+<!-- [Body] end -->
+</html>
