@@ -1,0 +1,36 @@
+﻿@model Car_Rent.Models.User
+
+@{
+    ViewData["Title"] = "User Details";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">User Details</h1>
+
+    <dl class="row">
+        <dt class="col-sm-3">Full Name</dt>
+        <dd class="col-sm-9">@Model.FullName</dd>
+
+        <dt class="col-sm-3">Username</dt>
+        <dd class="col-sm-9">@Model.Username</dd>
+
+        <dt class="col-sm-3">Password</dt>
+        <dd class="col-sm-9">@Model.PasswordHash</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@Model.Email</dd>
+
+        <dt class="col-sm-3">Phone</dt>
+        <dd class="col-sm-9">@Model.PhoneNumber</dd>
+
+        <dt class="col-sm-3">Role</dt>
+        <dd class="col-sm-9">@Model.Role?.RoleName</dd>
+
+        <dt class="col-sm-3">Created Date</dt>
+        <dd class="col-sm-9">@Model.CreatedDate?.ToString("dd/MM/yyyy")</dd>
+    </dl>
+
+    <a asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-warning">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
+</div>

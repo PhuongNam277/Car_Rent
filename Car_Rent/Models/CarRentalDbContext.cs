@@ -37,6 +37,8 @@ public partial class CarRentalDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<Role> Roles { get; set; } = null!;
+
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -226,8 +228,20 @@ public partial class CarRentalDbContext : DbContext
             entity.Property(e => e.FullName).HasMaxLength(100);
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
             entity.Property(e => e.PhoneNumber).HasMaxLength(15);
-            entity.Property(e => e.Role).HasMaxLength(20);
             entity.Property(e => e.Username).HasMaxLength(50);
+
+
+            entity.HasOne(u => u.Role)
+            .WithMany(r => r.Users)
+            .HasForeignKey(u => u.RoleId)
+            .HasConstraintName("FK_Users_Roles_RoleId")
+            .OnDelete(DeleteBehavior.SetNull); // Hoặc Restrict
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.RoleId);
+            entity.Property(e => e.RoleName).HasMaxLength(50).IsRequired();
         });
 
         OnModelCreatingPartial(modelBuilder);

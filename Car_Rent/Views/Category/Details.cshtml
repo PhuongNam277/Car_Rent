@@ -1,0 +1,17 @@
+﻿@model Car_Rent.Models.Category
+
+@{
+    ViewData["Title"] = "Category Details";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<h2>Category Details</h2>
+<hr />
+
+<dl class="row">
+    <dt class="col-sm-2">@Html.DisplayNameFor(model => model.CategoryName)</dt>
+    <dd class="col-sm-10">@Html.DisplayFor(model => model.CategoryName)</dd>
+</dl>
+
+<a asp-action="Edit" asp-route-id="@Model?.CategoryId" class="btn btn-primary">Edit</a>
+<a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>

@@ -1,0 +1,43 @@
+﻿@model IEnumerable<Car_Rent.Models.Payment>
+
+@{
+    ViewData["Title"] = "Payment List";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Payments</h2>
+    <a asp-action="Create" style="margin-top:12px" class="btn btn-success">Create New</a>
+</div>
+
+<table class="table table-bordered table-hover table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.First().PaymentDate)</th>
+            <th>@Html.DisplayNameFor(model => model.First().Amount)</th>
+            <th>@Html.DisplayNameFor(model => model.First().PaymentMethod)</th>
+            <th>@Html.DisplayNameFor(model => model.First().Status)</th>
+            <th>@Html.DisplayNameFor(model => model.First().Reservation)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.PaymentDate)</td>
+                <td>@Html.DisplayFor(modelItem => item.Amount)</td>
+                <td>@Html.DisplayFor(modelItem => item.PaymentMethod)</td>
+                <td>@Html.DisplayFor(modelItem => item.Status)</td>
+                <td>@Html.DisplayFor(modelItem => item.Reservation.ReservationId)</td>
+                <td>
+                    <div class="btn-group">
+                        <a asp-action="Edit" asp-route-id="@item.PaymentId" class="btn btn-sm btn-primary">Edit</a>
+                        <a asp-action="Details" asp-route-id="@item.PaymentId" class="btn btn-sm btn-info text-white">Details</a>
+                        <a asp-action="Delete" asp-route-id="@item.PaymentId" class="btn btn-sm btn-danger">Delete</a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

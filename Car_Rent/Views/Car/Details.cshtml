@@ -1,0 +1,76 @@
+﻿@model Car_Rent.Models.Car
+
+@{
+    ViewData["Title"] = "Details";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<h1 class="mb-4 text-primary">Car Details</h1>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Car Information</h4>
+    </div>
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.CarName)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.CarName)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.Brand)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.Brand)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.Model)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.Model)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.LicensePlate)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.LicensePlate)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.ImageUrl)</dt>
+            <dd class="col-sm-9">
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <img src="@Model.ImageUrl" alt="Car Image" class="img-fluid rounded border" style="max-width: 200px;" />
+                }
+                else
+                {
+                    <span class="text-muted">No image available</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.RentalPricePerDay)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.RentalPricePerDay)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.Status)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.Status)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.SeatNumber)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.SeatNumber)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.EnergyType)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.EnergyType)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.SellDate)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.SellDate)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.EngineType)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.EngineType)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.DistanceTraveled)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.DistanceTraveled)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.TransmissionType)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.TransmissionType)</dd>
+
+            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.Category)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.Category.CategoryId)</dd>
+        </dl>
+    </div>
+</div>
+<div class="d-flex gap-2">
+    <a asp-action="Edit" asp-route-id="@Model?.CarId" class="btn btn-warning">
+        <i class="bi bi-pencil-square"></i> Edit
+    </a>
+    <a asp-action="AdminIndex" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+</div>

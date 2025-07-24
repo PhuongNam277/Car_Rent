@@ -1,0 +1,32 @@
+﻿@model Car_Rent.Models.User
+
+@{
+    ViewData["Title"] = "Delete User";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4 text-danger">Delete Confirmation</h1>
+
+    <p class="lead">Are you sure you want to delete this user?</p>
+
+    <dl class="row">
+        <dt class="col-sm-3">Full Name</dt>
+        <dd class="col-sm-9">@Model.FullName</dd>
+
+        <dt class="col-sm-3">Username</dt>
+        <dd class="col-sm-9">@Model.Username</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">@Model.Email</dd>
+
+        <dt class="col-sm-3">Role</dt>
+        <dd class="col-sm-9">@Model.Role?.RoleName</dd>
+    </dl>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="UserId" />
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+</div>

@@ -68,9 +68,9 @@
                             <i class="ti ti-headset"></i>
                             <span>Support</span>
                         </a>
-                        <a href="#!" class="dropdown-item">
+                        <a asp-action="Index" asp-controller="Main" class="dropdown-item">
                             <i class="ti ti-lock"></i>
-                            <span>Lock Screen</span>
+                            <span>Back to Home Page</span>
                         </a>
                         <a href="#!" class="dropdown-item">
                             <i class="ti ti-power"></i>
@@ -231,14 +231,16 @@
                                         <span>Change Password</span>
                                     </span>
                                 </a>
-                                <div class="grid my-3">
-                                    <button class="btn btn-primary flex items-center justify-center">
-                                        <svg class="pc-icon me-2 w-[22px] h-[22px]">
-                                            <use xlink:href="#custom-logout-1-outline"></use>
+
+                                <a asp-action="Index" asp-controller="Main" class="dropdown-item">
+                                    <span>
+                                        <svg class="pc-icon text-muted me-2 inline-block">
+                                            <use xlink:href="#custom-lock-outline"></use>
                                         </svg>
-                                        Logout
-                                    </button>
-                                </div>
+                                        <span>Back to Home Page</span>
+                                    </span>
+                                </a>
+                                
                             </div>
                         </div>
                     </div>

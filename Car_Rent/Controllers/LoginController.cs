@@ -40,7 +40,7 @@ namespace Car_Rent.Controllers
                         var claims = new List<Claim>
                         {
                             new Claim(ClaimTypes.Name, user.Username),
-                            new Claim(ClaimTypes.Role, user.Role ?? "User"), // Mặc định là User nếu không có vai trò
+                            //new Claim(ClaimTypes.Role, user.Role ?? "User"), // Mặc định là User nếu không có vai trò
                             new Claim("UserId", user.UserId.ToString())
 
                         };

@@ -1,0 +1,43 @@
+﻿@model IEnumerable<Car_Rent.Models.Blog>
+
+@{
+    ViewData["Title"] = "Blog Management";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<div class="container mt-4">
+    <h2>Blogs</h2>
+    <a asp-action="Create" class="btn btn-success mb-3" style="margin-top: 12px">Create New</a>
+
+    <table class="table table-bordered table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>@Html.DisplayNameFor(model => model.First().Title)</th>
+                <th>@Html.DisplayNameFor(model => model.First().Content)</th>
+                <th>@Html.DisplayNameFor(model => model.First().ImageUrl)</th>
+                <th>@Html.DisplayNameFor(model => model.First().PublishedDate)</th>
+                <th>@Html.DisplayNameFor(model => model.First().Status)</th>
+                <th>@Html.DisplayNameFor(model => model.First().Author)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Title</td>
+                    <td>@item.Content</td>
+                    <td>@item.ImageUrl</td>
+                    <td>@item.PublishedDate</td>
+                    <td>@item.Status</td>
+                    <td>@item.Author?.Username</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.BlogId" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="Details" asp-route-id="@item.BlogId" class="btn btn-sm btn-info text-white">Details</a>
+                        <a asp-action="Delete" asp-route-id="@item.BlogId" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

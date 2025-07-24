@@ -1,0 +1,33 @@
+﻿@model Car_Rent.Models.Blog
+
+@{
+    ViewData["Title"] = "Details";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<div class="container mt-4">
+    <h2>Blog Details</h2>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">Title</dt>
+        <dd class="col-sm-9">@Model.Title</dd>
+
+        <dt class="col-sm-3">Content</dt>
+        <dd class="col-sm-9">@Model.Content</dd>
+
+        <dt class="col-sm-3">Image</dt>
+        <dd class="col-sm-9">@Model.ImageUrl</dd>
+
+        <dt class="col-sm-3">Published Date</dt>
+        <dd class="col-sm-9">@Model.PublishedDate</dd>
+
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">@Model.Status</dd>
+
+        <dt class="col-sm-3">Author</dt>
+        <dd class="col-sm-9">@Model.Author?.Username</dd>
+    </dl>
+
+    <a asp-action="Edit" asp-route-id="@Model.BlogId" class="btn btn-primary">Edit</a>
+    <a asp-action="AdminIndex" class="btn btn-secondary ms-2">Back to List</a>
+</div>

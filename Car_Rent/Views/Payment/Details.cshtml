@@ -1,0 +1,29 @@
+﻿@model Car_Rent.Models.Payment
+
+@{
+    ViewData["Title"] = "Payment Details";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<h2>Payment Details</h2>
+<hr />
+
+<dl class="row">
+    <dt class="col-sm-2">Payment Date</dt>
+    <dd class="col-sm-10">@Html.DisplayFor(model => model.PaymentDate)</dd>
+
+    <dt class="col-sm-2">Amount</dt>
+    <dd class="col-sm-10">@Html.DisplayFor(model => model.Amount)</dd>
+
+    <dt class="col-sm-2">Payment Method</dt>
+    <dd class="col-sm-10">@Html.DisplayFor(model => model.PaymentMethod)</dd>
+
+    <dt class="col-sm-2">Status</dt>
+    <dd class="col-sm-10">@Html.DisplayFor(model => model.Status)</dd>
+
+    <dt class="col-sm-2">Reservation</dt>
+    <dd class="col-sm-10">@Html.DisplayFor(model => model.Reservation.ReservationId)</dd>
+</dl>
+
+<a asp-action="Edit" asp-route-id="@Model?.PaymentId" class="btn btn-primary">Edit</a>
+<a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>

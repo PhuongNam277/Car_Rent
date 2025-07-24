@@ -1,0 +1,49 @@
+﻿@model Car_Rent.Models.Payment
+
+@{
+    ViewData["Title"] = "Create Payment";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<h2>Create Payment</h2>
+<hr />
+
+<form asp-action="Create">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="mb-3">
+        <label asp-for="ReservationId" class="form-label"></label>
+        <select asp-for="ReservationId" class="form-select" asp-items="ViewBag.ReservationId"></select>
+        <span asp-validation-for="ReservationId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Amount" class="form-label"></label>
+        <input asp-for="Amount" class="form-control" />
+        <span asp-validation-for="Amount" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="PaymentMethod" class="form-label"></label>
+        <input asp-for="PaymentMethod" class="form-control" />
+        <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Status" class="form-label"></label>
+        <select asp-for="Status" class="form-select">
+            <option value="Unpaid">Unpaid</option>
+            <option value="Paid">Paid</option>
+        </select>
+        <span asp-validation-for="Status" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Create</button>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

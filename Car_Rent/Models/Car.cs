@@ -35,11 +35,11 @@ public partial class Car
 
     public string? TransmissionType { get; set; }
 
-    public virtual Category Category { get; set; } = null!;
+    public virtual Category? Category { get; set; } = null!;
 
-    public virtual ICollection<MaintenanceRecord> MaintenanceRecords { get; set; } = new List<MaintenanceRecord>();
+    public virtual ICollection<MaintenanceRecord>? MaintenanceRecords { get; set; } = new List<MaintenanceRecord>();
 
-    public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+    public virtual ICollection<Reservation>? Reservations { get; set; } = new List<Reservation>();
 
-    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+    public virtual ICollection<Review>? Reviews { get; set; } = new List<Review>();
 }

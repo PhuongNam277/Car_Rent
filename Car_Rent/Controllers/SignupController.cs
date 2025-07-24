@@ -48,7 +48,7 @@ namespace Car_Rent.Controllers
                 FullName = fullname,
                 Username = username,
                 Email = email,
-                Role = "User", // Mặc định là User, có thể thay đổi nếu cần
+                RoleId = 2, // Mặc định là User, có thể thay đổi nếu cần
                 PasswordHash = hashedPassword // Mã hóa password nếu cần
             };
 

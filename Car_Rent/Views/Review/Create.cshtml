@@ -1,0 +1,55 @@
+﻿@model Car_Rent.Models.Review
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<h1 class="h3 mb-3">Create Review</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="CarId" class="form-label"></label>
+                <select asp-for="CarId" class="form-select" asp-items="ViewBag.CarId"></select>
+                <span asp-validation-for="CarId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="UserId" class="form-label"></label>
+                <select asp-for="UserId" class="form-select" asp-items="ViewBag.UserId"></select>
+                <span asp-validation-for="UserId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Rating" class="form-label"></label>
+                <input asp-for="Rating" class="form-control" />
+                <span asp-validation-for="Rating" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Comment" class="form-label"></label>
+                <input asp-for="Comment" class="form-control" />
+                <span asp-validation-for="Comment" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="JobName" class="form-label"></label>
+                <input asp-for="JobName" class="form-control" />
+                <span asp-validation-for="JobName" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-success">Create</button>
+            <a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

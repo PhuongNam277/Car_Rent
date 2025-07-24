@@ -1,11 +1,12 @@
 ﻿<nav class="pc-sidebar">
     <div class="navbar-wrapper">
         <div class="m-header flex items-center py-4 px-6 h-header-height">
-            <a asp-action="Index" asp-controller="Admin" class="b-brand flex items-center gap-3">
+            <a asp-action="Index" asp-controller="Admin" style="color: white" class="b-brand flex items-center gap-3">
                 <!-- ========   Change your logo from here   ============ -->
-                <img src="~/Admin/dist/assets/images/logo-white.svg" class="img-fluid logo logo-lg" alt="logo" />
+                @* <img src="~/Admin/dist/assets/images/logo-white.svg" class="img-fluid logo logo-lg" alt="logo" /> *@
+                Admin Dashboard
 
-                <img src="~/Admin/dist/assets/images/favicon.svg" class="img-fluid logo logo-sm" alt="logo" />
+                @* <img src="~/Admin/dist/assets/images/favicon.svg" class="img-fluid logo logo-sm" alt="logo" /> *@
             </a>
         </div>
         <div class="navbar-content h-[calc(100vh_-_74px)] py-2.5">
@@ -26,20 +27,20 @@
                     <label>Common</label>
                     <i data-feather="feather"></i>
                 </li>
-                <li class="pc-item pc-hasmenu">
-                    <a href="~/Admin/dist/elements/bc_color.html" class="pc-link">
+                <li class="pc-item pc-hasmenu"> 
+                    <a asp-controller="Reservation" asp-action="Index" class="pc-link">
                         <span class="pc-micon"> <i data-feather="edit"></i></span>
                         <span class="pc-mtext">Reservations</span>
                     </a>
                 </li>
                 <li class="pc-item pc-hasmenu">
-                    <a href="~/Admin/dist/elements/bc_typography.html" class="pc-link">
+                    <a asp-controller="Car" asp-action="AdminIndex" class="pc-link">
                         <span class="pc-micon"> <i data-feather="type"></i></span>
                         <span class="pc-mtext">Cars</span>
                     </a>
                 </li>
                 <li class="pc-item pc-hasmenu">
-                    <a href="~/Admin/dist/elements/icon-feather.html" class="pc-link">
+                    <a asp-controller="Category" asp-action="Index" class="pc-link">
                         <span class="pc-micon"> <i data-feather="feather"></i></span>
                         <span class="pc-mtext">Categories</span>
                     </a>
@@ -49,72 +50,54 @@
                     <label>Marketing</label>
                     <i data-feather="monitor"></i>
                 </li>
-                <li class="pc-item pc-hasmenu">
-                    <a href="~/Admin/dist/pages/login-v1.html" class="pc-link" target="_blank">
-                        <span class="pc-micon"> <i data-feather="lock"></i></span>
+                <li class="pc-item">
+                    <a asp-action="Index" asp-controller="Role" class="pc-link">
+                        <span class="pc-micon">
+                            <i data-feather="home"></i>
+                        </span>
+                        <span class="pc-mtext">Roles</span>
+                    </a>
+                </li>
+                <li class="pc-item">
+                    <a asp-action="Index" asp-controller="User" class="pc-link">
+                        <span class="pc-micon">
+                            <i data-feather="home"></i>
+                        </span>
+                        <span class="pc-mtext">User</span>
+                    </a>
+                </li>
+                <li class="pc-item">
+                    <a asp-action="AdminIndex" asp-controller="Blog" class="pc-link">
+                        <span class="pc-micon">
+                            <i data-feather="home"></i>
+                        </span>
                         <span class="pc-mtext">Blogs</span>
                     </a>
                 </li>
-                <li class="pc-item pc-hasmenu">
-                    <a href="~/Admin/dist/pages/register-v1.html" class="pc-link" target="_blank">
-                        <span class="pc-micon"> <i data-feather="user-plus"></i></span>
+                <li class="pc-item">
+                    <a asp-action="Index" asp-controller="Comment" class="pc-link">
+                        <span class="pc-micon">
+                            <i data-feather="home"></i>
+                        </span>
                         <span class="pc-mtext">Comments</span>
                     </a>
                 </li>
-                <li class="pc-item pc-hasmenu">
-                    <a href="~/Admin/dist/pages/register-v1.html" class="pc-link" target="_blank">
-                        <span class="pc-micon"> <i data-feather="user-plus"></i></span>
+                <li class="pc-item">
+                    <a asp-action="Index" asp-controller="Review" class="pc-link">
+                        <span class="pc-micon">
+                            <i data-feather="home"></i>
+                        </span>
                         <span class="pc-mtext">Reviews</span>
                     </a>
                 </li>
-                @* <li class="pc-item pc-caption"> *@
-                @*     <label>Other</label> *@
-                @*     <i data-feather="sidebar"></i> *@
-                @* </li> *@
-                @* <li class="pc-item pc-hasmenu"> *@
-                @*     <a href="#!" class="pc-link"> *@
-                @*         <span class="pc-micon"> <i data-feather="align-right"></i> </span><span class="pc-mtext">Menu levels</span><span class="pc-arrow"><i class="ti ti-chevron-right"></i></span> *@
-                @*     </a> *@
-                @*     <ul class="pc-submenu"> *@
-                @*         <li class="pc-item"><a class="pc-link" href="#!">Level 2.1</a></li> *@
-                @*         <li class="pc-item pc-hasmenu"> *@
-                @*             <a href="#!" class="pc-link">Level 2.2<span class="pc-arrow"><i class="ti ti-chevron-right"></i></span></a> *@
-                @*             <ul class="pc-submenu"> *@
-                @*                 <li class="pc-item"><a class="pc-link" href="#!">Level 3.1</a></li> *@
-                @*                 <li class="pc-item"><a class="pc-link" href="#!">Level 3.2</a></li> *@
-                @*                 <li class="pc-item pc-hasmenu"> *@
-                @*                     <a href="#!" class="pc-link">Level 3.3<span class="pc-arrow"><i class="ti ti-chevron-right"></i></span></a> *@
-                @*                     <ul class="pc-submenu"> *@
-                @*                         <li class="pc-item"><a class="pc-link" href="#!">Level 4.1</a></li> *@
-                @*                         <li class="pc-item"><a class="pc-link" href="#!">Level 4.2</a></li> *@
-                @*                     </ul> *@
-                @*                 </li> *@
-                @*             </ul> *@
-                @*         </li> *@
-                @*         <li class="pc-item pc-hasmenu"> *@
-                @*             <a href="#!" class="pc-link">Level 2.3<span class="pc-arrow"><i class="ti ti-chevron-right"></i></span></a> *@
-                @*             <ul class="pc-submenu"> *@
-                @*                 <li class="pc-item"><a class="pc-link" href="#!">Level 3.1</a></li> *@
-                @*                 <li class="pc-item"><a class="pc-link" href="#!">Level 3.2</a></li> *@
-                @*                 <li class="pc-item pc-hasmenu"> *@
-                @*                     <a href="#!" class="pc-link">Level 3.3<span class="pc-arrow"><i class="ti ti-chevron-right"></i></span></a> *@
-                @*                     <ul class="pc-submenu"> *@
-                @*                         <li class="pc-item"><a class="pc-link" href="#!">Level 4.1</a></li> *@
-                @*                         <li class="pc-item"><a class="pc-link" href="#!">Level 4.2</a></li> *@
-                @*                     </ul> *@
-                @*                 </li> *@
-                @*             </ul> *@
-                @*         </li> *@
-                @*     </ul> *@
-                @* </li> *@
-                @* <li class="pc-item"> *@
-                @*     <a href="~/Admin/dist/other/sample-page.html" class="pc-link"> *@
-                @*         <span class="pc-micon"> *@
-                @*             <i data-feather="sidebar"></i> *@
-                @*         </span> *@
-                @*         <span class="pc-mtext">Sample page</span> *@
-                @*     </a> *@
-                @* </li> *@
+                <li class="pc-item">
+                    <a asp-action="Index" asp-controller="Payment" class="pc-link">
+                        <span class="pc-micon">
+                            <i data-feather="home"></i>
+                        </span>
+                        <span class="pc-mtext">Payment</span>
+                    </a>
+                </li>
             </ul>
         </div>
     </div>

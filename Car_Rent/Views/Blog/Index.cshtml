@@ -33,27 +33,30 @@
         <div class="row g-4">
             @foreach (var blog in Model.Blogs)
             {
-                <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.1s">
-                    <div class="blog-item">
-                        <div class="blog-img">
-                            <img src="~/Main/img/blog-1.jpg" class="img-fluid rounded-top w-100" alt="Image">
-                        </div>
-                        <div class="blog-content rounded-bottom p-4">
-                            <div class="blog-date">@blog.PublishedDate?.ToString("dd MMM yyyy")</div>
-                            <div class="blog-comment my-3">
-                                <div class="small"><span class="fa fa-user text-primary"></span><span class="ms-2">@blog.Author.Username</span></div>
-                                <div class="small">
-                                    <span class="fa fa-comment-alt text-primary"></span><span class="ms-2">
-                                        @Model.Comments.Count(c => c.BlogId == blog.BlogId) Comments
-                                    </span>
-                                </div>
+                if(blog.Status == "Published")
+                {
+                    <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.1s">
+                        <div class="blog-item">
+                            <div class="blog-img">
+                                <img src="~/Main/img/blog-1.jpg" class="img-fluid rounded-top w-100" alt="Image">
                             </div>
-                            <a href="#" class="h4 d-block mb-3">@blog.Title</a>
-                            <p class="mb-3">@blog.Content.Substring(0, Math.Min(100, blog.Content.Length))...</p>
-                            <a href="#" class="">Read More  <i class="fa fa-arrow-right"></i></a>
+                            <div class="blog-content rounded-bottom p-4">
+                                <div class="blog-date">@blog.PublishedDate?.ToString("dd MMM yyyy")</div>
+                                <div class="blog-comment my-3">
+                                    <div class="small"><span class="fa fa-user text-primary"></span><span class="ms-2">@blog.Author.Username</span></div>
+                                    <div class="small">
+                                        <span class="fa fa-comment-alt text-primary"></span><span class="ms-2">
+                                            @Model.Comments.Count(c => c.BlogId == blog.BlogId) Comments
+                                        </span>
+                                    </div>
+                                </div>
+                                <a href="#" class="h4 d-block mb-3">@blog.Title</a>
+                                <p class="mb-3">@blog.Content.Substring(0, Math.Min(100, blog.Content.Length))...</p>
+                                <a href="#" class="">Read More  <i class="fa fa-arrow-right"></i></a>
+                            </div>
                         </div>
                     </div>
-                </div>
+                }
             }
         </div>
     </div>

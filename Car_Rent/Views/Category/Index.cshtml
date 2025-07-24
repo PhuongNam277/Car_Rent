@@ -1,40 +1,35 @@
 ﻿@model IEnumerable<Car_Rent.Models.Category>
 
 @{
-    ViewData["Title"] = "Index";
-    Layout = "~/Views/Shared/MainLayout.cshtml";
+    ViewData["Title"] = "Category List";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Categories</h2>
+    <a asp-action="Create" style="margin-top:12px" class="btn btn-success">Create New</a>
+</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
+<table class="table table-bordered table-hover table-striped">
+    <thead class="table-dark">
         <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.CategoryName)
-            </th>
-            <th></th>
+            <th>@Html.DisplayNameFor(model => model.First().CategoryName)</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-    @foreach (var item in Model) {
+        @foreach (var item in Model)
+        {
             <tr>
+                <td>@Html.DisplayFor(modelItem => item.CategoryName)</td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.CategoryName)
-                </td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.CategoryId">Edit</a> |
-                    <a asp-action="Details" asp-route-id="@item.CategoryId">Details</a> |
-                    <a asp-action="Delete" asp-route-id="@item.CategoryId">Delete</a>
+                    <div class="btn-group">
+                        <a asp-action="Edit" asp-route-id="@item.CategoryId" class="btn btn-sm btn-primary">Edit</a>
+                        <a asp-action="Details" asp-route-id="@item.CategoryId" class="btn btn-sm btn-info text-white">Details</a>
+                        <a asp-action="Delete" asp-route-id="@item.CategoryId" class="btn btn-sm btn-danger">Delete</a>
+                    </div>
                 </td>
             </tr>
-    }
+        }
     </tbody>
-</table
-
-<p>
-    <a asp-controller="Main" asp-action="Index">Back to home</a>
-</p>
+</table>

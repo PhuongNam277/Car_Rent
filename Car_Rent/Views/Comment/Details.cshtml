@@ -1,0 +1,30 @@
+﻿@model Car_Rent.Models.Comment
+
+@{
+    ViewData["Title"] = "Comment Details";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<div class="card shadow">
+    <div class="card-header bg-info text-white">
+        <h4 class="mb-0">Comment Details</h4>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Blog ID</dt>
+            <dd class="col-sm-9">@Model.BlogId</dd>
+
+            <dt class="col-sm-3">Author</dt>
+            <dd class="col-sm-9">@Model.AuthorName</dd>
+
+            <dt class="col-sm-3">Content</dt>
+            <dd class="col-sm-9">@Model.Content</dd>
+
+            <dt class="col-sm-3">Created At</dt>
+            <dd class="col-sm-9">@Model.CreatedAt</dd>
+        </dl>
+
+        <a asp-action="Edit" asp-route-id="@Model.CommentId" class="btn btn-primary">Edit</a>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
+    </div>
+</div>

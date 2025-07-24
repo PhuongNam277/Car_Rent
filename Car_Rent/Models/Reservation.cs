@@ -21,9 +21,9 @@ public partial class Reservation
 
     public string? Status { get; set; }
 
-    public virtual Car Car { get; set; } = null!;
+    public virtual Car? Car { get; set; } = null!;
 
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public virtual ICollection<Payment>? Payments { get; set; } = new List<Payment>();
 
-    public virtual User User { get; set; } = null!;
+    public virtual User? User { get; set; } = null!;
 }

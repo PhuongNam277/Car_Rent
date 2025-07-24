@@ -1,5 +1,6 @@
 ﻿    using System;
     using System.Collections.Generic;
+using System.Data;
 
     namespace Car_Rent.Models;
 
@@ -17,7 +18,9 @@
 
         public string? PhoneNumber { get; set; }
 
-        public string? Role { get; set; }
+        public int? RoleId { get; set; }  // Nullable nếu có thể chưa gán
+
+        public virtual Role? Role { get; set; }  // Navigation property
 
         public DateTime? CreatedDate { get; set; }
 

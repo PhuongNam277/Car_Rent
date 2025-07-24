@@ -1,0 +1,39 @@
+﻿@model IEnumerable<Car_Rent.Models.Comment>
+
+@{
+    ViewData["Title"] = "Comment List";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Comments</h2>
+    <a class="btn btn-success" style="margin-top:12px" asp-action="Create">Create New</a>
+</div>
+
+<table class="table table-bordered table-striped align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.BlogId)</th>
+            <th>@Html.DisplayNameFor(model => model.AuthorName)</th>
+            <th>@Html.DisplayNameFor(model => model.Content)</th>
+            <th>@Html.DisplayNameFor(model => model.CreatedAt)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.BlogId</td>
+                <td>@item.AuthorName</td>
+                <td>@item.Content</td>
+                <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@item.CommentId">Edit</a>
+                    <a class="btn btn-sm btn-info text-white" asp-action="Details" asp-route-id="@item.CommentId">Details</a>
+                    <a class="btn btn-sm btn-danger" asp-action="Delete" asp-route-id="@item.CommentId">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

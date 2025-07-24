@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Car_Rent.Models;
@@ -18,9 +19,11 @@ public partial class Blog
 
     public DateTime? PublishedDate { get; set; }
 
-    public string? Status { get; set; }
+    [Required]
+    [RegularExpression("Draft|Published|Archived", ErrorMessage = "Status is invalid")]
+    public string Status { get; set; } = "Draft";
 
     [ForeignKey("AuthorId")]
-    public virtual User Author { get; set; } = null!;
+    public virtual User? Author { get; set; } = null!;
 
 }
