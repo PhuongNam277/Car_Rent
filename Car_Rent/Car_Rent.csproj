@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\admin-assets\" />
+    <Folder Include="wwwroot\images\cars\" />
   </ItemGroup>
 
 </Project>

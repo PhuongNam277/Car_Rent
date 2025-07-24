@@ -71,10 +71,29 @@ namespace Car_Rent.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("CarId,CarName,Brand,Model,LicensePlate,CategoryId,ImageUrl,RentalPricePerDay,Status,SeatNumber,EnergyType,SellDate,EngineType,DistanceTraveled,TransmissionType")] Car car)
+        public async Task<IActionResult> Create(Car car, IFormFile ImageFile)
         {
             if (ModelState.IsValid)
             {
+                // Upload ảnh
+                if (ImageFile != null && ImageFile.Length > 0)
+                {
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageFile.FileName);
+                    var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/cars");
+
+                    if (!Directory.Exists(uploadPath))
+                        Directory.CreateDirectory(uploadPath);
+
+                    var filePath = Path.Combine(uploadPath, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await ImageFile.CopyToAsync(stream);
+                    }
+
+                    car.ImageUrl = "/images/cars/" + fileName;
+                }
+
                 _context.Add(car);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(AdminIndex));
@@ -105,7 +124,7 @@ namespace Car_Rent.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CarId,CarName,Brand,Model,LicensePlate,CategoryId,ImageUrl,RentalPricePerDay,Status,SeatNumber,EnergyType,SellDate,EngineType,DistanceTraveled,TransmissionType")] Car car)
+        public async Task<IActionResult> Edit(int id, Car car, IFormFile? ImageFile)
         {
             if (id != car.CarId)
             {
@@ -116,6 +135,32 @@ namespace Car_Rent.Controllers
             {
                 try
                 {
+                    // Lấy bản ghi cũ để giữ nguyên ảnh nếu không upload mới
+                    var existingCar = await _context.Cars.AsNoTracking().FirstOrDefaultAsync(c => c.CarId == id);
+
+                    if (ImageFile != null && ImageFile.Length > 0)
+                    {
+                        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageFile.FileName);
+                        var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/cars");
+
+                        if (!Directory.Exists(uploadPath))
+                            Directory.CreateDirectory(uploadPath);
+
+                        var filePath = Path.Combine(uploadPath, fileName);
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await ImageFile.CopyToAsync(stream);
+                        }
+
+                        car.ImageUrl = "/images/cars/" + fileName;
+                    }
+                    else
+                    {
+                        // Không chọn ảnh mới => giữ nguyên ảnh cũ
+                        car.ImageUrl = existingCar?.ImageUrl;
+                    }
+
                     _context.Update(car);
                     await _context.SaveChangesAsync();
                 }

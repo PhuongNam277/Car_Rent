@@ -8,7 +8,7 @@
 <h2>Edit Car</h2>
 <hr />
 
-<form asp-action="Edit">
+<form asp-action="Edit" enctype="multipart/form-data">
     <input type="hidden" asp-for="CarId" />
     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
@@ -43,10 +43,16 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="ImageUrl" class="form-label"></label>
-        <input asp-for="ImageUrl" class="form-control" />
-        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+        <label class="form-label">Current Image</label><br />
+        <img src="@Model.ImageUrl" alt="Current Image" style="max-height: 200px;" />
     </div>
+
+
+    <div class="mb-3">
+        <label class="form-label">Upload New Image (optional)</label>
+        <input type="file" name="ImageFile" class="form-control" />
+    </div>
+
 
     <div class="mb-3">
         <label asp-for="RentalPricePerDay" class="form-label"></label>

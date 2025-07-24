@@ -12,7 +12,7 @@
         <h4 class="mb-0">Car Details</h4>
     </div>
     <div class="card-body">
-        <form asp-action="Create">
+        <form asp-action="Create" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
             <div class="mb-3">
                 <label asp-for="CarName" class="form-label"></label>
@@ -39,9 +39,8 @@
                 <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.CategoryId"></select>
             </div>
             <div class="mb-3">
-                <label asp-for="ImageUrl" class="form-label"></label>
-                <input asp-for="ImageUrl" class="form-control" />
-                <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                <label class="form-label">Car Image</label>
+                <input type="file" name="ImageFile" class="form-control" />
             </div>
             <div class="mb-3">
                 <label asp-for="RentalPricePerDay" class="form-label"></label>
