@@ -8,7 +8,7 @@
 <div class="container mt-4">
     <h2>Create Blog</h2>
     <hr />
-    <form asp-action="Create">
+    <form asp-action="Create" enctype="multipart/form-data">
         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
         <div class="mb-3">
@@ -24,9 +24,8 @@
         </div>
 
         <div class="mb-3">
-            <label asp-for="ImageUrl" class="form-label"></label>
-            <input asp-for="ImageUrl" class="form-control" />
-            <span asp-validation-for="ImageUrl" class="text-danger"></span>
+            <label class="form-label">Blog Image</label>
+            <input type="file" name="ImageFile" class="form-control" />
         </div>
 
         <div class="mb-3">

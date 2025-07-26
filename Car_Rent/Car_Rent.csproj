@@ -33,6 +33,7 @@
   <ItemGroup>
     <Folder Include="wwwroot\admin-assets\" />
     <Folder Include="wwwroot\images\cars\" />
+    <Folder Include="wwwroot\images\blogs\" />
   </ItemGroup>
 
 </Project>

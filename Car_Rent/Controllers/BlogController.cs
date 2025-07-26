@@ -78,11 +78,29 @@ namespace Car_Rent.Controllers
         // POST: Blog/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("BlogId, Title, Content, ImageUrl, AuthorId, PublishedDate, Status")] Blog blog)
+        public async Task<IActionResult> Create(Blog blog, IFormFile ImageFile)
         {
             if (ModelState.IsValid)
             {
-                
+                // Upload image
+                if (ImageFile != null && ImageFile.Length > 0)
+                {
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageFile.FileName);
+                    var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/blogs");
+
+                    if (!Directory.Exists(uploadPath))
+                        Directory.CreateDirectory(uploadPath);
+
+                    var filePath = Path.Combine(uploadPath, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await ImageFile.CopyToAsync(stream);
+                    }
+
+                    blog.ImageUrl = "/images/blogs/" + fileName;
+                }
+
 
                 blog.PublishedDate = DateTime.Now;
                 _context.Add(blog);
@@ -116,7 +134,7 @@ namespace Car_Rent.Controllers
         // POST: Blog/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("BlogId, Title, Content, ImageUrl, AuthorId, PublishedDate, Status")] Blog blog)
+        public async Task<IActionResult> Edit(int id, Blog blog, IFormFile? ImageFile)
         {
             if (id != blog.BlogId)
             {
@@ -127,6 +145,31 @@ namespace Car_Rent.Controllers
             {
                 try
                 {
+                    // Lấy bản ghi cũ để giữ nguyên ảnh nếu không upload mới
+                    var existingBlog = await _context.Blogs.AsNoTracking().FirstOrDefaultAsync(c => c.BlogId == id);
+
+                    if (ImageFile != null && ImageFile.Length > 0)
+                    {
+                        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageFile.FileName);
+                        var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/blogs");
+
+                        if (!Directory.Exists(uploadPath))
+                            Directory.CreateDirectory(uploadPath);
+
+                        var filePath = Path.Combine(uploadPath, fileName);
+
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await ImageFile.CopyToAsync(stream);
+                        }
+
+                        blog.ImageUrl = "/images/blogs/" + fileName;
+                    }
+                    else
+                    {
+                        // Không chọn ảnh mới => giữ nguyên ảnh cũ
+                        blog.ImageUrl = existingBlog?.ImageUrl;
+                    }
                     _context.Update(blog);
                     await _context.SaveChangesAsync();
                 }

@@ -27,7 +27,16 @@
                 <tr>
                     <td>@item.Title</td>
                     <td>@item.Content</td>
-                    <td>@item.ImageUrl</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            <img src="@item.ImageUrl" alt="Car Image" class="img-thumbnail" style="max-width: 80px; max-height: 60px;" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">No image</span>
+                        }
+                    </td>
                     <td>@item.PublishedDate</td>
                     <td>@item.Status</td>
                     <td>@item.Author?.Username</td>
