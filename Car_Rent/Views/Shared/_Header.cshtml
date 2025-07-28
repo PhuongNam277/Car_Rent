@@ -44,15 +44,29 @@
                     </div>
 
                 </div>
-                <a asp-controller="Login" asp-action="Index" class="btn btn-primary rounded-pill py-2 px-4">
-                    @if(!string.IsNullOrEmpty(username)) {
-                        @($"Hi, {username}")
+                @* <a asp-controller="Login" asp-action="Index" class="btn btn-primary rounded-pill py-2 px-4"> *@
+                @*     @if(!string.IsNullOrEmpty(username)) { *@
+                @*         @($"Hi, {username}") *@
 
-                    }
-                    else {
-                        <text>Login</text>
-                    }
-                </a>
+                @*     } *@
+                @*     else { *@
+                @*         <text>Login</text> *@
+                @*     } *@
+                @* </a> *@
+
+                @if (!string.IsNullOrEmpty(username))
+                {
+                    <span class="btn btn-primary rounded-pill py-2 px-4 disabled" style="pointer-events: none;">
+                        @($"Hi, {username}")
+                    </span>
+                }
+                else
+                {
+                    <a asp-controller="Login" asp-action="Index" class="btn btn-primary rounded-pill py-2 px-4">
+                        Login
+                    </a>
+                }
+
 
                 @if (username == "Admin")
                 {

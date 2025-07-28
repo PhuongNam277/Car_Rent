@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Car_Rent.Models;
 
@@ -19,7 +20,13 @@ public partial class Reservation
 
     public decimal TotalPrice { get; set; }
 
-    public string? Status { get; set; }
+    [Required]
+    [RegularExpression("Confirmed|Cancelled|Completed|Rejected|InProgress", ErrorMessage = "Status is invalid")]
+    public string? Status { get; set; } = "Pending";
+
+    public string? FromCity { get; set; }
+    public string? ToCity { get; set; }
+
 
     public virtual Car? Car { get; set; } = null!;
 

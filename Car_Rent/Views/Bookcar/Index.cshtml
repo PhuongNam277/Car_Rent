@@ -25,13 +25,14 @@
                                         <div class="row g-3">
                                             <div class="col-12">
                                                 <select id="categorySelect" class="form-select" aria-label="Default select example">
-                                                    <option selected>Select Your Car type</option>
+                                                    <option selected>Select Your Car Type</option>
                                                     @foreach (var c in Model.Categories)
                                                     {
-                                                        <option value="@c.CategoryId">@c.CategoryName</option>
+                                                        var isSelected = (ViewBag.SelectedCategoryId != null && c.CategoryId == (int)ViewBag.SelectedCategoryId);
+                                                        var selectedText = isSelected ? "selected" : "";
+                                                        @Html.Raw($"<option value='{c.CategoryId}' {selectedText}>{c.CategoryName}</option>")
+    
                                                     }
-
-
                                                 </select>
                                             </div>
                                             <div class="col-12">
@@ -39,7 +40,9 @@
                                                     <option selected>Select Your Car Brand</option>
                                                     @foreach(var car in Model.Cars)
                                                     {
-                                                        <option value="@car.CarId">@car.CarName</option>
+                                                        var isSelected = (ViewBag.SelectedCarId != null && car.CarId == (int)ViewBag.SelectedCarId);
+                                                        var selectedText = isSelected ? "selected" : "";
+                                                        @Html.Raw($"<option value='{car.CarId}' {selectedText}>{car.CarName}</option>")
                                                     }
 
                                                 </select>

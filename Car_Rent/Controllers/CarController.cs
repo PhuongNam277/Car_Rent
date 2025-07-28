@@ -23,11 +23,13 @@ namespace Car_Rent.Controllers
 
             ViewData["ActivePage"] = "Pages";
 
-            var cars = await _context.Cars.ToListAsync();
+            var carEntities = await _context.Cars
+                .Include(c => c.Category) // Include the Category navigation property
+                .ToListAsync();
 
             var carViewModels = new CarViewModel
             {
-                Cars = cars
+                Cars = carEntities
             };
 
             return View(carViewModels);

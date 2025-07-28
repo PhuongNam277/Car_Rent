@@ -42,6 +42,31 @@
     </div>
 
     <div class="mb-3">
+        <label asp-for="FromCity" class="form-label"></label>
+        <input asp-for="FromCity" class="form-control" />
+        <span asp-validation-for="FromCity" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ToCity" class="form-label"></label>
+        <input asp-for="ToCity" class="form-control" />
+        <span asp-validation-for="ToCity" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Status" class="form-label"></label>
+        <select asp-for="Status" class="form-select">
+            <option value="Confirmed">Confirmed</option>
+            <option value="Cancelled">Cancelled</option>
+            <option value="Completed">Completed</option>
+            <option value="Rejected">Rejected</option>
+            <option value="InProgress">InProgress</option>
+
+        </select>
+        <span asp-validation-for="Status" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
         <label asp-for="TotalPrice" class="form-label"></label>
         <input asp-for="TotalPrice" class="form-control" />
         <span asp-validation-for="TotalPrice" class="text-danger"></span>

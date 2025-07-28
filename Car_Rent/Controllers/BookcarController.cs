@@ -13,19 +13,25 @@ namespace Car_Rent.Controllers
             _context = context;
         } 
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? carId, int? categoryId)
         {
             var viewModel = new CategoryCarModel
             {
-                Categories = await _context.Categories.ToListAsync(),
-                Cars = await _context.Cars.ToListAsync()
+                Categories = _context.Categories.ToList(),
+                Cars = categoryId != null
+            ? _context.Cars.Where(c => c.CategoryId == categoryId).ToList()
+            : _context.Cars.ToList()
             };
+
+            ViewBag.SelectedCarId = carId;
+            ViewBag.SelectedCategoryId = categoryId;
             return View(viewModel);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetCarsByCategory(int categoryId)
         {
+
             var cars = await _context.Cars
                 .Where(c => c.CategoryId == categoryId)
                 .Select(c => new { c.CarId, c.CarName })

@@ -87,7 +87,10 @@
                                     <i class="fa fa-road text-dark"></i> <span class="text-body ms-1">@car.DistanceTraveled km</span>
                                 </div>
                             </div>
-                            <a asp-controller="Bookcar" asp-action="Index" class="btn btn-primary rounded-pill d-flex justify-content-center py-3">Book Now</a>
+                            <a asp-controller="Bookcar" asp-action="Index"
+                               asp-route-carId="@car.CarId"
+                               asp-route-categoryId="@car.CategoryId"
+                            class="btn btn-primary rounded-pill d-flex justify-content-center py-3">Book Now</a>
                         </div>
                     </div>
                 </div>
