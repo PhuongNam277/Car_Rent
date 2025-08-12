@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Car_Rent.Models;
+using Car_Rent.DTOs;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Car_Rent.Controllers
 {
@@ -162,6 +164,187 @@ namespace Car_Rent.Controllers
 
         // ConfirmPayment method
 
+        private int? GetUserId()
+        {
+            var claim = User.FindFirst("UserId");
+            if (claim == null)
+            {
+                return null;
+            }
+            return int.TryParse(claim.Value, out var id) ? id : (int?)null;
+        }
 
+        // Get : ConfirmPayment
+        [HttpGet]
+        public async Task<IActionResult> ConfirmPayment()
+        {
+            // Get data from TempData by BookNow set
+            var json = TempData["ConfirmReservation"] as string;
+
+            // Use Fresh until submit
+            if (json != null) TempData.Keep("ConfirmReservation");
+
+            if (string.IsNullOrEmpty(json))
+            {
+                TempData["FailedMessage"] = "No reservation data found. Please try again.";
+                return RedirectToAction("Index", "Bookcar");
+            }
+
+            var req = System.Text.Json.JsonSerializer.Deserialize<ReserveRequest>(json);
+
+            if (req == null)
+            {
+                TempData["FailedMessage"] = "Invalid reservation data. Please try again.";
+                return RedirectToAction("Index", "Bookcar");
+            }
+
+            var car = await _context.Cars
+                .FirstOrDefaultAsync(c => c.CarId == req.CarId);
+
+            ViewBag.CarName = car?.CarName ?? $"Car #{req.CarId}"; // Default car name if not found
+
+            return View(req);
+        }
+
+        // POST: /Payment/PayCash => Save to DB
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PayCash()
+        {
+            if (!User.Identity?.IsAuthenticated ?? true)
+            {
+                return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("ConfirmPayment", "Payment") });
+            }
+
+            var userId = GetUserId();
+
+            if (userId == null)
+            {
+                TempData["FailedMessage"] = "User not found. Please log in again.";
+                await HttpContext.SignOutAsync("MyCookieAuth");
+                return RedirectToAction("Index", "Login");
+            }
+
+            
+
+            var json = TempData["ConfirmReservation"] as string;
+            if (string.IsNullOrEmpty(json))
+            {
+                TempData["FailedMessage"] = "No reservation data found. Please try again.";
+                return RedirectToAction("Index", "Bookcar");
+            }
+
+            var req = System.Text.Json.JsonSerializer.Deserialize<ReserveRequest>(json);
+            Console.WriteLine(req); // Debugging line
+            if (req == null)
+            {
+                TempData["FailedMessage"] = "Invalid reservation data. Please try again.";
+                return RedirectToAction("Index", "Bookcar");
+            }
+
+            // Check car
+            //var car = await _context.Cars
+            //    .Where(c => c.CarId == req.CarId)
+            //    .Select(c => new { c.RentalPricePerDay })
+            //    .FirstOrDefaultAsync();
+
+            //if (car == null)
+            //{
+            //    TempData["FailedMessage"] = "Car not found. Please try again.";
+            //    return RedirectToAction("Index", "Bookcar");
+            //}
+
+            // Save to DB
+            var startDateTime = CombineDateTime(req.StartDate, req.StartTime);
+            var endDateTime = CombineDateTime(req.EndDate, req.EndTime);
+
+            if (startDateTime >= endDateTime)
+            {
+                ModelState.AddModelError("", "Start date and time must be before end date and time.");
+                return RedirectToAction("Index", new { carId = req.CarId, categoryId = req.CategoryId });
+            }
+
+            //var total = CalculateTotalPrice(startDateTime, endDateTime, car.RentalPricePerDay);
+            //Console.WriteLine($"Total Price: {total}"); // Debugging line
+            //ViewBag.TotalPrice = CalculateTotalPrice(req.StartDate, req.EndDate, car?.RentalPricePerDay ?? 0m);
+
+
+            var reservation = new Reservation
+            {
+                UserId = userId.Value,
+                CarId = req.CarId,
+                ReservationDate = DateTime.Now,
+                StartDate = startDateTime,
+                EndDate = endDateTime,
+                FromCity = req.FromCity,
+                ToCity = req.ToCity,
+                Status = "Pending",
+                TotalPrice = req.TotalPrice
+
+            };
+
+            _context.Reservations.Add(reservation);
+            await _context.SaveChangesAsync();
+
+            // Save to payment
+            var payment = new Payment
+            {
+                ReservationId = reservation.ReservationId,
+                PaymentDate = DateTime.Now,
+                Amount = reservation.TotalPrice,
+                PaymentMethod = "Cash",
+                Status = "Pending"
+            };
+
+            _context.Payments.Add(payment);
+            await _context.SaveChangesAsync();
+
+            // Clean TempData
+            TempData.Remove("ConfirmReservation");
+
+            // Display success message
+            return RedirectToAction(nameof(Success), new { reservationId = reservation.ReservationId });
+        }
+
+        // Combine datetime method
+        private static DateTime CombineDateTime(DateTime date, string timeHHMM)
+        {
+            if (!TimeSpan.TryParse(timeHHMM, out var ts)) ts = TimeSpan.Zero;
+            return date.Date.Add(ts);
+        }
+
+        // Calculate total price method
+        private decimal CalculateTotalPrice(DateTime startDate, DateTime endDate, decimal pricePerDay)
+        {
+            var totalDays = (endDate - startDate).TotalDays;
+            if (totalDays <= 0) return 0;
+            var billableDays = Math.Max(1, (int)Math.Ceiling(totalDays)); // tối thiểu 1 ngày
+            return Math.Round(billableDays * pricePerDay, 2);
+        }
+
+        // GET: /Payment/Success
+        [HttpGet]
+        public async Task<IActionResult> Success(int reservationId)
+        {
+            var res = await _context.Reservations
+                .Include(r => r.Car)
+                .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
+
+            if (res == null) return RedirectToAction("Index", "Bookcar");
+            return View(res);
+        }
+
+        // POST: /Payment/PayMomo (developing)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult PayMomo()
+        {
+            // Implement Momo payment logic here
+            // This is a placeholder for the actual implementation
+            TempData["FailedMessage"] = "Momo payment is not implemented yet.";
+            TempData.Keep("ConfirmReservation");
+            return RedirectToAction("ConfirmPayment", "Payment");
+
+        }
     }
 }

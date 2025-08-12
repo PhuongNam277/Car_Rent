@@ -1,0 +1,22 @@
+﻿@model Car_Rent.Models.Reservation
+@{
+    ViewData["Title"] = "Order Successfully";
+    Layout = "~/Views/Shared/MainLayout.cshtml";
+}
+
+
+<div class="container my-4">
+    <div class="alert alert-success">
+        <h4 class="alert-heading">Order Successfully!</h4>
+        <p>Your order id: <strong>#@Model.ReservationId</strong></p>
+        <hr />
+        <p><strong>Car name:</strong> @(Model.Car?.CarName ?? ("Car #" + Model.CarId))</p>
+        <p><strong>From:</strong> @Model.FromCity → @Model.ToCity</p>
+        <p><strong>Time:</strong> @Model.StartDate.ToString("dd/MM/yyyy HH:mm") - @Model.EndDate.ToString("dd/MM/yyyy HH:mm")</p>
+        <p><strong>Total Price:</strong> @Model.TotalPrice USD</p>
+        <p><strong>Status:</strong> @Model.Status</p>
+    </div>
+
+    <a class="btn btn-primary" asp-controller="Main" asp-action="Index">Return Home</a>
+    <a class="btn btn-outline-secondary ms-2" asp-controller="Bookcar" asp-action="Index">Order More Car</a>
+</div>

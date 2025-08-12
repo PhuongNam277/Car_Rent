@@ -1,0 +1,62 @@
+﻿@model Car_Rent.DTOs.ReserveRequest
+@{
+    ViewData["Title"] = "Confirm Payment";
+    Layout = "~/Views/Shared/MainLayout.cshtml";
+    var carName = ViewBag.CarName as string ?? ("Car #" + Model.CarId);
+}
+
+<div class="container my-4">
+    <h3 class="mb-3">Xác nhận đặt xe</h3>
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info">@TempData["InfoMessage"]</div>
+    }
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">@carName</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>From:</strong> @Model.FromCity</p>
+                    <p><strong>To:</strong> @Model.ToCity</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Start Date:</strong> @Model.StartDate.ToString("dd/MM/yyyy HH:mm")</p> 
+                    <p><strong>End Date:</strong> @Model.EndDate.ToString("dd/MM/yyyy HH:mm")</p>
+                </div>
+            </div>
+            <p class="mt-2"><strong>Total Price:</strong> @Model.TotalPrice USD</p>
+        </div>
+    </div>
+
+    <h5 class="mb-3">Choose payment method</h5>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6>Pay When Get Car</h6>
+                    <p class="text-muted mb-3">Confirm reservation, pay when you get car.</p>
+                    <form asp-action="PayCash" asp-controller="Payment" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-primary w-100">Order Now</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 border-secondary">
+                <div class="card-body">
+                    <h6>Pay with MoMo</h6>
+                    <p class="text-muted mb-3">This method is developing.</p>
+                    <form asp-action="PayMomo" asp-controller="Payment" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-secondary w-100" disabled>MoMo (Developing)</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

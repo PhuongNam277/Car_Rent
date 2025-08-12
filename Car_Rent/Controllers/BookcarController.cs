@@ -81,7 +81,7 @@ namespace Car_Rent.Controllers
             // Connect date and time
             var startDateTime = CombineDateTime(req.StartDate, req.StartTime);
             var endDateTime = CombineDateTime(req.EndDate, req.EndTime);
-            if(startDateTime >= endDateTime)
+            if (startDateTime >= endDateTime)
             {
                 ModelState.AddModelError("", "Start date and time must be before end date and time.");
                 return RedirectToAction("Index", new { carId = req.CarId, categoryId = req.CategoryId });
@@ -96,31 +96,54 @@ namespace Car_Rent.Controllers
                 return RedirectToAction("Index", new { carId = req.CarId, categoryId = req.CategoryId });
             }
 
-            var reservation = new Reservation
-            {
-                UserId = userId.Value,
-                CarId = req.CarId.Value,
-                FromCity = req.FromCity,
-                ToCity = req.ToCity,
-                StartDate = startDateTime,
-                EndDate = endDateTime,
-                Status = "Pending",
-                ReservationDate = DateTime.Now
-            };
+            //var reservation = new Reservation
+            //{
+            //    UserId = userId.Value,
+            //    CarId = req.CarId,
+            //    FromCity = req.FromCity,
+            //    ToCity = req.ToCity,
+            //    StartDate = startDateTime,
+            //    EndDate = endDateTime,
+            //    Status = "Pending",
+            //    TotalPrice = CalculateTotalPrice(startDateTime, endDateTime, car.RentalPricePerDay),
+            //    ReservationDate = DateTime.Now
+            //};
 
-            _context.Reservations.Add(reservation);
-            await _context.SaveChangesAsync();
+            //_context.Reservations.Add(reservation);
+            //await _context.SaveChangesAsync();
 
-            // Redirect to payment page
-            return RedirectToAction("ConfirmPayment", "Payment", new { reservationId = reservation.ReservationId});
+            //// Redirect to payment page
+            //return RedirectToAction("ConfirmPayment", "Payment", new { reservationId = reservation.ReservationId});
+
+            // Send to Confirmation page with reservation details
+            //var totalPrice = CalculateTotalPrice(startDateTime, endDateTime, car.RentalPricePerDay);
+
+            decimal total = CalculateTotalPrice(startDateTime, endDateTime, car.RentalPricePerDay);
+            req.StartDate = startDateTime;
+            req.EndDate = endDateTime;
+            req.TotalPrice = total; // Format as currency
+
+            // Use TempData to pass data to the next request
+            TempData["ConfirmReservation"] = System.Text.Json.JsonSerializer.Serialize(req);
+            return RedirectToAction("ConfirmPayment", "Payment");
+
         }
 
 
-        // Combine datetime method
+
+        //Combine datetime method
         private static DateTime CombineDateTime(DateTime date, string timeHHMM)
         {
             if (!TimeSpan.TryParse(timeHHMM, out var ts)) ts = TimeSpan.Zero;
             return date.Date.Add(ts);
+        }
+
+        //Calculate total price method
+        private decimal CalculateTotalPrice(DateTime startDate, DateTime endDate, decimal pricePerDay)
+        {
+            var totalDays = (endDate - startDate).TotalDays;
+            if (totalDays < 0) return 0; // Invalid date range
+            return Math.Round((decimal)totalDays * pricePerDay, 2);
         }
 
 
