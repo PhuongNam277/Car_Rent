@@ -159,5 +159,9 @@ namespace Car_Rent.Controllers
         {
             return _context.Payments.Any(e => e.PaymentId == id);
         }
+
+        // ConfirmPayment method
+
+
     }
 }

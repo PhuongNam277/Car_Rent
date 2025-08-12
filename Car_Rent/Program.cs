@@ -15,6 +15,9 @@ builder.Services.AddAuthentication("MyCookieAuth")
         options.Cookie.Name = "UserLoginCookie"; // Tên cookie
         options.LoginPath = "/Login/Index"; // Đường dẫn đến trang đăng nhập
         options.AccessDeniedPath = "/Login/AccessDenied"; // Đường dẫn đến trang từ chối truy cập
+        options.Cookie.HttpOnly = true; // Đảm bảo cookie chỉ được truy cập từ server
+        options.SlidingExpiration = true; // Kích hoạt tính năng gia hạn thời gian hết hạn cookie
+        options.ExpireTimeSpan = TimeSpan.FromHours(2); // Thời gian hết hạn cookie
     });
 
 builder.Services.AddAuthorization();
