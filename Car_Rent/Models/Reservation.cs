@@ -21,7 +21,7 @@ public partial class Reservation
     public decimal TotalPrice { get; set; }
 
     [Required]
-    [RegularExpression("Confirmed|Cancelled|Completed|Rejected|InProgress", ErrorMessage = "Status is invalid")]
+    [RegularExpression("Pending|Confirmed|Cancelled|Completed|Rejected|InProgress", ErrorMessage = "Status is invalid")]
     public string? Status { get; set; } = "Pending";
 
     public string? FromCity { get; set; }

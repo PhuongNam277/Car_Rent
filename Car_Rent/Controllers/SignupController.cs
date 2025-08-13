@@ -63,8 +63,8 @@ namespace Car_Rent.Controllers
             HttpContext.Session.SetString("PendingUser", JsonSerializer.Serialize(user));
 
             // Gửi email xác nhận cho người dùng
-            var emailBody = $"Mã OTP của bạn là: {otp}";
-            await _emailService.SendEmailAsync(email, "Xác thực tài khoản", emailBody);
+            var emailBody = $"Your OTP code is: {otp}";
+            await _emailService.SendEmailAsync(email, "Verify your account", emailBody);
 
             return RedirectToAction("ConfirmOtp", new { email });
         }

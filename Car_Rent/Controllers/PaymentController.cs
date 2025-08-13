@@ -14,10 +14,13 @@ namespace Car_Rent.Controllers
     public class PaymentController : Controller
     {
         private readonly CarRentalDbContext _context;
+        private readonly EmailService _emailService;
 
-        public PaymentController(CarRentalDbContext context)
+
+        public PaymentController(CarRentalDbContext context, EmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // GET: Payment
@@ -326,12 +329,49 @@ namespace Car_Rent.Controllers
         [HttpGet]
         public async Task<IActionResult> Success(int reservationId)
         {
-            var res = await _context.Reservations
-                .Include(r => r.Car)
-                .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
+            // Get user email
+            var userId = GetUserId();
 
-            if (res == null) return RedirectToAction("Index", "Bookcar");
-            return View(res);
+            if (userId == null)
+            {
+                TempData["FailedMessage"] = "User not found. Please log in again.";
+                await HttpContext.SignOutAsync("MyCookieAuth");
+                return RedirectToAction("Index", "Login");
+            }
+
+            var user = await _context.Users
+                .Where(u => u.UserId == userId)
+                .Select(u => new { u.Email })
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                TempData["FailedMessage"] = "User not found. Please log in again.";
+                await HttpContext.SignOutAsync("MyCookieAuth");
+                return RedirectToAction("Index", "Login");
+            }
+
+            // Send email confirmation
+            var emailBody = $"Your reservation with ID {reservationId} has been successfully created. " +
+                            $"You can view your reservation details in your account.";
+            await _emailService.SendEmailAsync(user.Email, "Reservation Confirmation", emailBody);
+
+
+
+
+            //var res = await _context.Reservations
+            //    .Include(r => r.Car)
+            //    .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
+
+
+            //if (res == null) return RedirectToAction("Index", "Bookcar");
+            //return View(res);
+
+            TempData["Success"]= "Your reservation has been successfully created. " +
+                                 "A confirmation email has been sent to your registered email address." +
+                                 "This is your reservation detail";
+
+            return RedirectToAction("Details", "MyReservation", new { id = reservationId });
         }
 
         // POST: /Payment/PayMomo (developing)

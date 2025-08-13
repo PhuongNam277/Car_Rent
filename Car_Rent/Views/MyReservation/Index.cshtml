@@ -1,0 +1,109 @@
+﻿@model IEnumerable<Car_Rent.Models.Reservation>
+@{
+    ViewData["Title"] = "My Reservations";
+    Layout = "~/Views/Shared/MainLayout.cshtml";
+    var total = (int)(ViewBag.TotalItems ?? 0);
+    var page = (int)(ViewBag.Page ?? 1);
+    var pageSize = (int)(ViewBag.PageSize ?? 10);
+    var totalPages = (int)Math.Ceiling((double)total / pageSize);
+    string? status = ViewBag.Status, route = ViewBag.Route, sortBy = ViewBag.SortBy;
+    DateTime? from = ViewBag.From, to = ViewBag.To;
+}
+
+<h3 class="mb-3">My Reservations</h3>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="status" class="form-select">
+            <option value="">-- All statuses --</option>
+            @foreach (var st in new[] { "Pending", "Confirmed", "InProgress", "Completed", "Cancelled", "Rejected" })
+            {
+                <option value="@st" selected="@(status==st)">@st</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto"><input type="date" name="from" class="form-control" value="@from?.ToString()" /></div>
+    <div class="col-auto"><input type="date" name="to" class="form-control" value="@to?.ToString()" /></div>
+    <div class="col-auto"><input type="text" name="route" class="form-control" placeholder="From/To city" value="@route" /></div>
+    <div class="col-auto">
+        <select name="sortBy" class="form-select">
+            <option value="StartDateDesc" selected="@(sortBy=="StartDateDesc")">Newest</option>
+            <option value="StartDateAsc" selected="@(sortBy=="StartDateAsc")">Oldest</option>
+            <option value="TotalPriceAsc" selected="@(sortBy=="TotalPriceAsc")">Price ↑</option>
+            <option value="TotalPriceDesc" selected="@(sortBy=="TotalPriceDesc")">Price ↓</option>
+        </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-primary">Filter</button></div>
+</form>
+
+@if (TempData["Success"] is not null)
+{
+     <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] is not null)
+{
+     <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Car</th>
+            <th>Time</th>
+            <th>Route</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var x in Model)
+        {
+            <tr>
+                <td>#@x.ReservationId</td>
+                <td>@x.Car?.CarName</td>
+                <td>@x.StartDate - @x.EndDate</td>
+                <td>@x.FromCity → @x.ToCity</td>
+                <td>
+                    <span class="badge bg-@(
+          (x.Status ?? "Pending") switch {
+            "Pending" => "secondary",
+            "Confirmed" => "info",
+            "InProgress" => "primary",
+            "Completed" => "dark",
+            "Cancelled" => "danger",
+            "Rejected" => "warning",
+            _ => "secondary"
+          })">@x.Status</span>
+                </td>
+                <td>@x.TotalPrice USD</td>
+                <td class="text-nowrap">
+                    <a asp-action="Details" asp-route-id="@x.ReservationId" class="btn btn-sm btn-outline-secondary">Details</a>
+                    @if ((x.Status ?? "") is "Pending" or "Confirmed")
+                    {
+                        <form asp-action="Cancel" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@x.ReservationId" />
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Cancel reservation #@x.ReservationId ?')">Cancel</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (totalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i==page?"active":"")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize, status, from = from?.ToString("yyyy-MM-dd"), to = to?.ToString("yyyy-MM-dd"), route, sortBy })">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

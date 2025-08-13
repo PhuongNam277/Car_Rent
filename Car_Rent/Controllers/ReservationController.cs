@@ -18,6 +18,8 @@ namespace Car_Rent.Controllers
             _context = context;
         }
 
+
+
         // GET: Reservation
         public async Task<IActionResult> Index()
         {
