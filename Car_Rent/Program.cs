@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Car_Rent.Interfaces;
+using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CarRentalDbContext>(
@@ -21,6 +22,8 @@ builder.Services.AddAuthentication("MyCookieAuth")
     });
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
 
 

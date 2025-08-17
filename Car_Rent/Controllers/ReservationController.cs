@@ -21,10 +21,23 @@ namespace Car_Rent.Controllers
 
 
         // GET: Reservation
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string search)
         {
-            var carRentalDbContext = _context.Reservations.Include(r => r.Car).Include(r => r.User);
-            return View(await carRentalDbContext.ToListAsync());
+            //var carRentalDbContext = _context.Reservations.Include(r => r.Car).Include(r => r.User);
+            //return View(await carRentalDbContext.ToListAsync());
+
+            var query = _context.Reservations
+                .Include(r => r.Car)
+                .Include(r => r.User)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(r => r.User.Username.Contains(search) || r.Car.CarName.Contains(search));
+            }
+
+            var reservations = await query.ToListAsync();
+            return View(reservations);
         }
 
         // GET: Reservation/Details/5

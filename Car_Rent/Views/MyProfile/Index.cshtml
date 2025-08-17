@@ -83,22 +83,31 @@
                 <div class="card-body">
                     <form asp-action="ChangePassword" asp-controller="MyProfile" method="post">
                         @Html.AntiForgeryToken()
+
                         <div class="mb-3">
                             <label class="form-label">Current password</label>
-                            <input asp-for="@pwdReq.CurrentPassword" class="form-control" type="password" />
+                            <input asp-for="@pwdReq.CurrentPassword" class="form-control pw-field" type="password" />
                             <span asp-validation-for="@pwdReq.CurrentPassword" class="text-danger"></span>
-
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label">New password</label>
-                            <input asp-for="@pwdReq.NewPassword" class="form-control" type="password" />
+                            <input asp-for="@pwdReq.NewPassword" class="form-control pw-field" type="password" />
                             <span asp-validation-for="@pwdReq.NewPassword" class="text-danger"></span>
                         </div>
+
                         <div class="mb-3">
                             <label class="form-label">Confirm new password</label>
-                            <input asp-for="@pwdReq.ConfirmNewPassword" class="form-control" type="password" />
+                            <input asp-for="@pwdReq.ConfirmNewPassword" class="form-control pw-field" type="password" />
                             <span asp-validation-for="@pwdReq.ConfirmNewPassword" class="text-danger"></span>
                         </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="toggleAllPw">
+                            <label class="form-check-label" for="toggleAllPw">Show password</label>
+                        </div>
+
+
                         <button type="submit" class="btn btn-warning">Update password</button>
                     </form>
                 </div>
@@ -125,4 +134,18 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // Bắt sự kiện change từ checkbox, dù form có render lại bằng partial/Ajax
+        document.addEventListener('change', function (e) {
+            if (e.target && e.target.id === 'toggleAllPw') {
+                const isShow = e.target.checked;
+                document.querySelectorAll('.pw-field').forEach(function (input) {
+                    if (input && (input.type === 'password' || input.type === 'text')) {
+                        input.type = isShow ? 'text' : 'password';
+                    }
+                });
+            }
+        });
+    </script>
 }
