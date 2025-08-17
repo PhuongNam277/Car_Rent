@@ -23,7 +23,7 @@ namespace Car_Rent.Controllers
             _emailService = emailService;
         }
 
-        // GET: Payment
+        // GET: Payment ( For Admin Page)
         public async Task<IActionResult> Index()
         {
             var carRentalDbContext = _context.Payments.Include(p => p.Reservation);
@@ -271,7 +271,7 @@ namespace Car_Rent.Controllers
             //Console.WriteLine($"Total Price: {total}"); // Debugging line
             //ViewBag.TotalPrice = CalculateTotalPrice(req.StartDate, req.EndDate, car?.RentalPricePerDay ?? 0m);
 
-
+            // Create a reservation object
             var reservation = new Reservation
             {
                 UserId = userId.Value,

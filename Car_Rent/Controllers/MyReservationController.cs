@@ -87,7 +87,7 @@ namespace Car_Rent.Controllers
         // POST: /MyReservation/Cancel/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Cancel(int id, string reason = "User cancelled from  My Reservations")
+        public async Task<IActionResult> Cancel(int id, string reason = "User cancelled from My Reservations")
         {
             var uid = GetUserId();
             if(uid is null) return RedirectToAction("Index", "Login");

@@ -39,7 +39,7 @@
                         <a href="#" class="nav-link @(ViewData["ActivePage"]?.ToString() == "Pages" ? "active" : "") dropdown-toggle" data-bs-toggle="dropdown">More</a>
                         <div class="dropdown-menu m-0">
                             <a asp-controller="MyReservation" asp-action="Index" class="dropdown-item">My Reservations</a>
-                            <a asp-controller="Profile" asp-action="Index" class="dropdown-item">My Profile</a>
+                            <a asp-controller="MyProfile" asp-action="Index" class="dropdown-item">My Profile</a>
                             <a asp-controller="Login" asp-action="Logout" class="dropdown-item">Log out</a>
                         </div>
                     </div>

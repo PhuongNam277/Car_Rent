@@ -1,0 +1,47 @@
+﻿@model Car_Rent.ViewModels.Profile.ConfirmEmailChangeViewModel
+@{
+    ViewData["Title"] = "Confirm email change";
+    Layout = "~/Views/Shared/MainLayout.cshtml";
+}
+<div class="container my-4">
+    <h2 class="mb-4">Confirm email change</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="ConfirmEmailChange" asp-controller="MyProfile" method="post">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label class="form-label">New email</label>
+                    <input asp-for="NewEmail" class="form-control" readonly />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">OTP code</label>
+                    <input asp-for="Otp" class="form-control" maxlength="6" />
+                    <span asp-validation-for="Otp" class="text-danger"></span>
+                </div>
+                <button class="btn btn-primary" type="submit">Confirm</button>
+                <a asp-action="Index" asp-controller="MyProfile" class="btn btn-outline-secondary ms-2">Back to profile</a>
+            </form>
+            <p class="text-muted mt-3">OTP expires in 10 minutes.</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Car_Rent.Security;
 
 namespace Car_Rent.Controllers
 {
@@ -32,17 +33,22 @@ namespace Car_Rent.Controllers
 
                 if (user != null)
                 {
-                    string hashedPassword = HashPassword(model.Password);
 
-                    if (user.PasswordHash == hashedPassword)
+                    // Verify (new PBKDF2 format or SHA-256 old format)
+                    if (PasswordHasherUtil.VerifyPassword(model.Password, user.PasswordHash))
                     {
-                        // Tạo danh tính người dùng
+                        // If it is legacy or need to up iterations then rehash and update
+                        if(PasswordHasherUtil.NeedsRehash(user.PasswordHash))
+                        {
+                            user.PasswordHash = PasswordHasherUtil.HashPassword(model.Password);
+                            await _context.SaveChangesAsync();
+                        }
+
+                        // Create claims
                         var claims = new List<Claim>
                         {
                             new Claim(ClaimTypes.Name, user.Username),
-                            //new Claim(ClaimTypes.Role, user.Role ?? "User"), // Mặc định là User nếu không có vai trò
                             new Claim("UserId", user.UserId.ToString())
-
                         };
 
                         var identity = new ClaimsIdentity(claims, "MyCookieAuth");
@@ -60,11 +66,6 @@ namespace Car_Rent.Controllers
                             }
                             return Redirect(returnUrl);
                         }
-
-
-
-                        //HttpContext.Session.SetString("UserId", user.UserId.ToString());
-                        //HttpContext.Session.SetString("Username", user.Username.ToString());
 
                         return RedirectToAction("Index", "Main");
                     }
@@ -88,15 +89,6 @@ namespace Car_Rent.Controllers
             await HttpContext.SignOutAsync("MyCookieAuth");
 
             return RedirectToAction("Index", "Main");
-        }
-
-        private string HashPassword(string password)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
-            }
         }
 
         // Action Denied

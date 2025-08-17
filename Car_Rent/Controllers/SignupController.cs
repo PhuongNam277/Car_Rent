@@ -4,6 +4,7 @@ using Car_Rent.Models;
 using Microsoft.AspNetCore.Mvc;
 using Car_Rent.Interfaces;
 using System.Text.Json;
+using Car_Rent.Security;
 
 namespace Car_Rent.Controllers
 {
@@ -28,7 +29,7 @@ namespace Car_Rent.Controllers
 
         // Action POST để nhận dữ liệu từ form đăng ký và lưu vào cơ sở dữ liệu
         [HttpPost]
-        public async Task<IActionResult> Index(string fullname, string email, string password, string username)
+        public async Task<IActionResult> Index(string fullname, string email, string phoneNumber, string password, string username)
         {
             // Kiểm tra xem người dùng đã tồn tại chưa
             var existingUser = await _userService.GetUserByEmailAsync(email);
@@ -40,7 +41,8 @@ namespace Car_Rent.Controllers
             }
 
             // Ma hoa mat khau
-            string hashedPassword = HashPassword(password);
+            //string hashedPassword = HashPassword(password);
+            string hashedPassword = PasswordHasherUtil.HashPassword(password);
 
             // Tạo đối tượng User và lưu vào cơ sở dữ liệu
             var user = new User
@@ -48,6 +50,7 @@ namespace Car_Rent.Controllers
                 FullName = fullname,
                 Username = username,
                 Email = email,
+                PhoneNumber = phoneNumber,
                 RoleId = 2, // Mặc định là User, có thể thay đổi nếu cần
                 PasswordHash = hashedPassword // Mã hóa password nếu cần
             };
@@ -119,15 +122,6 @@ namespace Car_Rent.Controllers
             // Tạo mã OTP ngẫu nhiên (hoặc có thể dùng một thư viện để tạo OTP)
             Random random = new Random();
             return random.Next(100000, 999999).ToString();
-        }
-
-        private string HashPassword(string password)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-                return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
-            }
         }
     }
 }

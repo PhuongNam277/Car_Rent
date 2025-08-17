@@ -4,50 +4,52 @@
     Layout = "~/Views/Shared/MainLayout.cshtml";
 }
 
-<h3>Reservation #@Model.ReservationId</h3>
-<div class="mb-3">
-    <strong>Car:</strong> @Model.Car?.CarName <br />
-    <strong>Time:</strong> @Model.StartDate - @Model.EndDate <br />
-    <strong>Route:</strong> @Model.FromCity → @Model.ToCity <br />
-    <strong>Status:</strong> @Model.Status <br />
-    <strong>Total:</strong> @Model.TotalPrice.ToString() USD
-</div>
+<div class="container my-4">
+    <h3>Reservation #@Model.ReservationId</h3>
+    <div class="mb-3">
+        <strong>Car:</strong> @Model.Car?.CarName <br />
+        <strong>Time:</strong> @Model.StartDate - @Model.EndDate <br />
+        <strong>Route:</strong> @Model.FromCity → @Model.ToCity <br />
+        <strong>Status:</strong> @Model.Status <br />
+        <strong>Total:</strong> @Model.TotalPrice.ToString() USD
+    </div>
 
-@if (Model.Payments?.Any() == true)
-{
-    <h5>Payments</h5>
-    <table class="table table-sm">
-        <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
-        <tbody>
-            @foreach (var p in Model.Payments)
-            {
-                <tr>
-                    <td>@p.PaymentDate</td>
-                    <td>@p.Amount.ToString() USD</td>
-                    <td>@p.PaymentMethod</td>
-                    <td>@p.Status</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-
-<div class="mt-3">
-    <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
-    @if ((Model.Status ?? "") is "Pending" or "Confirmed")
+    @if (Model.Payments?.Any() == true)
     {
-        <form asp-controller="MyReservations" asp-action="Cancel" method="post" class="d-inline">
-            <input type="hidden" name="id" value="@Model.ReservationId" />
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-outline-danger"
-                    onclick="return confirm('Cancel reservation #@Model.ReservationId ?')">
-                Cancel
-            </button>
-        </form>
+        <h5>Payments</h5>
+        <table class="table table-sm">
+            <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+            <tbody>
+                @foreach (var p in Model.Payments)
+                {
+                    <tr>
+                        <td>@p.PaymentDate</td>
+                        <td>@p.Amount.ToString() USD</td>
+                        <td>@p.PaymentMethod</td>
+                        <td>@p.Status</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     }
-    @* Nếu có flow Thanh toán lại (chưa triển khai), anh để nút ở đây *@
-    @* <form asp-controller="Payment" asp-action="PayMomo" method="post" class="d-inline">
+
+    <div class="mt-3">
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+        @if ((Model.Status ?? "") is "Pending" or "Confirmed")
+        {
+            <form asp-controller="MyReservations" asp-action="Cancel" method="post" class="d-inline">
+                <input type="hidden" name="id" value="@Model.ReservationId" />
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger"
+                        onclick="return confirm('Cancel reservation #@Model.ReservationId ?')">
+                    Cancel
+                </button>
+            </form>
+        }
+        @* Nếu có flow Thanh toán lại (chưa triển khai), anh để nút ở đây *@
+        @* <form asp-controller="Payment" asp-action="PayMomo" method="post" class="d-inline">
        @Html.AntiForgeryToken()
        <button class="btn btn-primary">Pay again</button>
      </form> *@
+    </div>
 </div>

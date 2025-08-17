@@ -1,0 +1,128 @@
+﻿@model Car_Rent.ViewModels.Profile.ProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+    Layout = "~/Views/Shared/MainLayout.cshtml";
+    var updateReq = (Car_Rent.ViewModels.Profile.ProfileUpdateRequest)ViewBag.ProfileUpdateRequest;
+    var pwdReq = (Car_Rent.ViewModels.Profile.ChangePasswordRequest)ViewBag.ChangePasswordRequest;
+    var emailReq = (Car_Rent.ViewModels.Profile.RequestEmailChangeViewModel)ViewBag.RequestEmailChangeViewModel;
+}
+
+<div class="container my-4">
+    <h2 class="mb-4">My Profile</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Profile card -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header"><strong>Profile</strong></div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="@(Model.AvatarUrl ?? "/img/avatar-placeholder.png")"
+                             alt="Avatar" class="rounded-circle me-3" style="width:72px;height:72px;object-fit:cover;">
+                        <div>
+                            <div class="fw-bold">@Model.FullName</div>
+                            <div class="text-muted">@Model.Username</div>
+                            <div class="text-muted small">@Model.RoleName</div>
+                        </div>
+                    </div>
+
+                    <dl class="row">
+                        <dt class="col-sm-3">Email</dt>
+                        <dd class="col-sm-9">@Model.Email</dd>
+
+                        <dt class="col-sm-3">Phone</dt>
+                        <dd class="col-sm-9">@Model.PhoneNumber</dd>
+
+                        <dt class="col-sm-3">Created</dt>
+                        <dd class="col-sm-9">@Model.CreatedDate?.ToString("yyyy-MM-dd HH:mm")</dd>
+                    </dl>
+
+                    <hr />
+                    <form asp-action="Update" asp-controller="MyProfile" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">Full name</label>
+                            <input asp-for="@updateReq.FullName" class="form-control" value="@updateReq.FullName" />
+                            <span asp-validation-for="@updateReq.FullName" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input asp-for="@updateReq.PhoneNumber" class="form-control" value="@updateReq.PhoneNumber" />
+                            <span asp-validation-for="@updateReq.PhoneNumber" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Avatar</label>
+                            <input asp-for="@updateReq.Avatar" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,.gif" />
+                            <div class="form-text">Max 2MB. jpg / png / webp / gif.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security card -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><strong>Change password</strong></div>
+                <div class="card-body">
+                    <form asp-action="ChangePassword" asp-controller="MyProfile" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">Current password</label>
+                            <input asp-for="@pwdReq.CurrentPassword" class="form-control" type="password" />
+                            <span asp-validation-for="@pwdReq.CurrentPassword" class="text-danger"></span>
+
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New password</label>
+                            <input asp-for="@pwdReq.NewPassword" class="form-control" type="password" />
+                            <span asp-validation-for="@pwdReq.NewPassword" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm new password</label>
+                            <input asp-for="@pwdReq.ConfirmNewPassword" class="form-control" type="password" />
+                            <span asp-validation-for="@pwdReq.ConfirmNewPassword" class="text-danger"></span>
+                        </div>
+                        <button type="submit" class="btn btn-warning">Update password</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header"><strong>Change email</strong></div>
+                <div class="card-body">
+                    <p class="text-muted">We will send an OTP to your new email to confirm the change.</p>
+                    <form asp-action="RequestEmailChange" asp-controller="MyProfile" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">New email</label>
+                            <input asp-for="@emailReq.NewEmail" class="form-control" type="email" />
+                            <span asp-validation-for="@emailReq.NewEmail" class="text-danger"></span>
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Send OTP</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
