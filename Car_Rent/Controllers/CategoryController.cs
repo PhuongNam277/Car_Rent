@@ -19,9 +19,17 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Category
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string search)
         {
-            return View(await _context.Categories.ToListAsync());
+            var query = _context.Categories.AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(c => c.CategoryName.Contains(search));
+            }
+
+            var categoriesEntity = await query.ToListAsync();
+            return View(categoriesEntity);
         }
 
         // GET: Category/Details/5

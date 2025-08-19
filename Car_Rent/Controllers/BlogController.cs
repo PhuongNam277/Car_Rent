@@ -42,10 +42,20 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Blog
-        public async Task<IActionResult> AdminIndex()
+        public async Task<IActionResult> AdminIndex(string search)
         {
-            var carRentalDbContext = _context.Blogs.Include(u => u.Author);
-            return View(await carRentalDbContext.ToListAsync());
+            var query = _context.Blogs
+                .Include(b => b.Author)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(b => b.Title.Contains(search) || b.Content.Contains(search) || b.Author.FullName.Contains(search));
+
+            }
+
+            var blogs = await query.ToListAsync();
+            return View(blogs);
         }
 
         // GET: Blog/Details/5

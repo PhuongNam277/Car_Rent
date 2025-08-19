@@ -33,7 +33,8 @@ namespace Car_Rent.Controllers
 
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(r => r.User.Username.Contains(search) || r.Car.CarName.Contains(search));
+                query = query.Where(r => r.User.Username.Contains(search) || r.Car.CarName.Contains(search) ||
+                                    r.FromCity.Contains(search) || r.ToCity.Contains(search) || r.TotalPrice.ToString().Contains(search));
             }
 
             var reservations = await query.ToListAsync();

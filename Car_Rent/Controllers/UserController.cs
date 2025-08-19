@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Car_Rent.Models;
+using System.Data;
 
 namespace Car_Rent.Controllers
 {
@@ -17,12 +18,21 @@ namespace Car_Rent.Controllers
         {
             _context = context;
         }
-
+        
         // GET: User
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string search)
         {
-            var carRentalDbContext = _context.Users.Include(u => u.Role);
-            return View(await carRentalDbContext.ToListAsync());
+            var query = _context.Users.Include(u => u.Role).AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(u => u.FullName.Contains(search) || u.Username.Contains(search) || u.Email.Contains(search)
+                || u.PhoneNumber.Contains(search));
+            }
+            
+            var users = await query.ToListAsync();
+
+            return View(users);
         }
 
         // GET: User/Details/5

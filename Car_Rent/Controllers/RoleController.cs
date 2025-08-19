@@ -19,9 +19,19 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Role
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string search)
         {
-            return View(await _context.Roles.ToListAsync());
+
+            var query = _context.Roles.AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(r => r.RoleName.Contains(search));
+            }
+
+            var roles = await query.ToListAsync();
+
+            return View(roles);
         }
 
         // GET: Role/Details/5

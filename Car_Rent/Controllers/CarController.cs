@@ -36,10 +36,19 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Car
-        public async Task<IActionResult> AdminIndex()
+        public async Task<IActionResult> AdminIndex(string search)
         {
-            var carRentalDbContext = _context.Cars.Include(c => c.Category);
-            return View(await carRentalDbContext.ToListAsync());
+            var query = _context.Cars
+                .Include(c => c.Category)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(c => c.CarName.Contains(search) || c.Brand.Contains(search) || c.Model.Contains(search));
+            }
+
+            var carEntities = await query.ToListAsync();
+            return View(carEntities);
         }
 
         // GET: Car/Details/5

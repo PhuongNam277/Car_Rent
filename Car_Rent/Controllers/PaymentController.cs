@@ -26,8 +26,6 @@ namespace Car_Rent.Controllers
         // GET: Payment ( For Admin Page)
         public async Task<IActionResult> Index(string search)
         {
-            //var carRentalDbContext = _context.Payments.Include(p => p.Reservation);
-            //return View(await carRentalDbContext.ToListAsync());
 
             var query = _context.Payments
                 .Include(p => p.Reservation)

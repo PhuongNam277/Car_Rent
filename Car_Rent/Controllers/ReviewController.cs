@@ -19,10 +19,21 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Review
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string search)
         {
-            var carRentalDbContext = _context.Reviews.Include(r => r.Car).Include(r => r.User);
-            return View(await carRentalDbContext.ToListAsync());
+            var query = _context.Reviews
+                .Include(r => r.Car)
+                .Include(r => r.User)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(r => r.User.Username.Contains(search) || r.Car.CarName.Contains(search) ||
+                                        r.Rating.ToString().Contains(search) || r.Comment.Contains(search));
+            }
+
+            var reviews = await query.ToListAsync();
+            return View(reviews);
         }
 
         // GET: Review/Details/5
