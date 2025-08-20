@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Car_Rent.Models;
+using Car_Rent.Application.Common;
 
 namespace Car_Rent.Controllers
 {
@@ -21,7 +22,7 @@ namespace Car_Rent.Controllers
 
 
         // GET: Reservation
-        public async Task<IActionResult> Index(string search)
+        public async Task<IActionResult> Index(string search, string? sortBy = "DateDesc", int page = 1, int pageSize = 3)
         {
             //var carRentalDbContext = _context.Reservations.Include(r => r.Car).Include(r => r.User);
             //return View(await carRentalDbContext.ToListAsync());
@@ -37,8 +38,25 @@ namespace Car_Rent.Controllers
                                     r.FromCity.Contains(search) || r.ToCity.Contains(search) || r.TotalPrice.ToString().Contains(search));
             }
 
-            var reservations = await query.ToListAsync();
-            return View(reservations);
+            // Sorting logic
+            query = sortBy switch
+            {
+                "DateAsc" => query.OrderBy(r => r.ReservationDate),
+                "PriceAsc" => query.OrderBy(r => r.TotalPrice),
+                "PriceDesc" => query.OrderByDescending(r => r.TotalPrice),
+                "StartDateAsc" => query.OrderBy(r => r.StartDate),
+                _ => query.OrderByDescending(r => r.ReservationDate) // Default sort by ReservationDate descending
+            };
+
+            // Pagination logic
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.SortBy = sortBy;
+            ViewBag.TotalItems = total;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            return View(items);
         }
 
         // GET: Reservation/Details/5

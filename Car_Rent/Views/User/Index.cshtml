@@ -5,44 +5,43 @@
     Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
 }
 
-<div class="container mt-4">
-    <h1 class="mb-4">Users</h1>
-
-    <p>
-        <a asp-action="Create" class="btn btn-primary">Create New</a>
-    </p>
-
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>@Html.DisplayNameFor(model => model.First().FullName)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Username)</th>
-                <th>@Html.DisplayNameFor(model => model.First().PasswordHash)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Email)</th>
-                <th>@Html.DisplayNameFor(model => model.First().PhoneNumber)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Role)</th>
-                <th>@Html.DisplayNameFor(model => model.First().CreatedDate)</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.FullName</td>
-                    <td>@item.Username</td>
-                    <td>@item.PasswordHash</td>
-                    <td>@item.Email</td>
-                    <td>@item.PhoneNumber</td>
-                    <td>@item.Role?.RoleName</td>
-                    <td>@item.CreatedDate?.ToString("dd/MM/yyyy")</td>
-                    <td>
-                        <a asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-warning">Edit</a>
-                        <a asp-action="Details" asp-route-id="@item.UserId" class="btn btn-sm btn-info">Details</a>
-                        <a asp-action="Delete" asp-route-id="@item.UserId" class="btn btn-sm btn-danger">Delete</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Users</h2>
+    <a asp-action="Create" style="margin-top:12px" class="btn btn-success">Create New</a>
 </div>
+
+<table class="table table-bordered table-hover table-striped">
+    <thead class="table-white">
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.First().FullName)</th>
+            <th>@Html.DisplayNameFor(model => model.First().Username)</th>
+            <th>@Html.DisplayNameFor(model => model.First().PasswordHash)</th>
+            <th>@Html.DisplayNameFor(model => model.First().Email)</th>
+            <th>@Html.DisplayNameFor(model => model.First().PhoneNumber)</th>
+            <th>@Html.DisplayNameFor(model => model.First().Role)</th>
+            <th>@Html.DisplayNameFor(model => model.First().CreatedDate)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.FullName</td>
+                <td>@item.Username</td>
+                <td>@item.PasswordHash</td>
+                <td>@item.Email</td>
+                <td>@item.PhoneNumber</td>
+                <td>@item.Role?.RoleName</td>
+                <td>@item.CreatedDate?.ToString("dd/MM/yyyy")</td>
+                <td>
+                    <div class="btn-group">
+                        <a asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-primary">Edit</a>
+                        <a asp-action="Details" asp-route-id="@item.UserId" class="btn btn-sm btn-info text-white">Details</a>
+                        <a asp-action="Delete" asp-route-id="@item.UserId" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this user?');">Delete</a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
