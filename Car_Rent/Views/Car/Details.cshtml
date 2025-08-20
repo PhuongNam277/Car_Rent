@@ -1,35 +1,33 @@
 ﻿@model Car_Rent.Models.Car
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Car Details";
     Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
 }
 
-<h1 class="mb-4 text-primary">Car Details</h1>
-
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">Car Information</h4>
+<div class="card shadow">
+    <div class="card-header bg-info text-white">
+        <h4 class="mb-0">Car Details</h4>
     </div>
     <div class="card-body">
-        <dl class="row mb-0">
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.CarName)</dt>
+        <dl class="row">
+            <dt class="col-sm-3">Car Name</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.CarName)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.Brand)</dt>
+            <dt class="col-sm-3">Brand</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.Brand)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.Model)</dt>
+            <dt class="col-sm-3">Model</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.Model)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.LicensePlate)</dt>
+            <dt class="col-sm-3">License Plate</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.LicensePlate)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.ImageUrl)</dt>
+            <dt class="col-sm-3">Image</dt>
             <dd class="col-sm-9">
                 @if (!string.IsNullOrEmpty(Model.ImageUrl))
                 {
-                    <img src="@Model.ImageUrl" alt="Car Image" class="img-fluid rounded border" style="max-width: 200px;" />
+                    <img src="@Model.ImageUrl" alt="Car Image" class="img-thumbnail rounded border" style="max-width: 200px;" />
                 }
                 else
                 {
@@ -37,40 +35,35 @@
                 }
             </dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.RentalPricePerDay)</dt>
+            <dt class="col-sm-3">Rental Price Per Day</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.RentalPricePerDay)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.Status)</dt>
+            <dt class="col-sm-3">Status</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.Status)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.SeatNumber)</dt>
+            <dt class="col-sm-3">Seat Number</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.SeatNumber)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.EnergyType)</dt>
+            <dt class="col-sm-3">Energy Type</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.EnergyType)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.SellDate)</dt>
+            <dt class="col-sm-3">Sell Date</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.SellDate)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.EngineType)</dt>
+            <dt class="col-sm-3">Engine Type</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.EngineType)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.DistanceTraveled)</dt>
+            <dt class="col-sm-3">Distance Traveled</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.DistanceTraveled)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.TransmissionType)</dt>
+            <dt class="col-sm-3">Transmission Type</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.TransmissionType)</dd>
 
-            <dt class="col-sm-3 fw-bold">@Html.DisplayNameFor(model => model.Category)</dt>
+            <dt class="col-sm-3">Category</dt>
             <dd class="col-sm-9">@Html.DisplayFor(model => model.Category.CategoryId)</dd>
         </dl>
+
+        <a asp-action="Edit" asp-route-id="@Model.CarId" class="btn btn-primary">Edit</a>
+        <a asp-action="AdminIndex" class="btn btn-secondary ms-2">Back to List</a>
     </div>
-</div>
-<div class="d-flex gap-2">
-    <a asp-action="Edit" asp-route-id="@Model?.CarId" class="btn btn-warning">
-        <i class="bi bi-pencil-square"></i> Edit
-    </a>
-    <a asp-action="AdminIndex" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Back to List
-    </a>
 </div>

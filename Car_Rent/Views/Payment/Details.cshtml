@@ -5,25 +5,38 @@
     Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
 }
 
-<h2>Payment Details</h2>
-<hr />
+<div class="card shadow">
+    <div class="card-header bg-info text-white">
+        <h4 class="mb-0">Payment Details</h4>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Payment Date</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.PaymentDate)</dd>
 
-<dl class="row">
-    <dt class="col-sm-2">Payment Date</dt>
-    <dd class="col-sm-10">@Html.DisplayFor(model => model.PaymentDate)</dd>
+            <dt class="col-sm-3">Amount</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.Amount)</dd>
 
-    <dt class="col-sm-2">Amount</dt>
-    <dd class="col-sm-10">@Html.DisplayFor(model => model.Amount)</dd>
+            <dt class="col-sm-3">Payment Method</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.PaymentMethod)</dd>
 
-    <dt class="col-sm-2">Payment Method</dt>
-    <dd class="col-sm-10">@Html.DisplayFor(model => model.PaymentMethod)</dd>
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.Status)</dd>
 
-    <dt class="col-sm-2">Status</dt>
-    <dd class="col-sm-10">@Html.DisplayFor(model => model.Status)</dd>
+            <dt class="col-sm-3">Reservation</dt>
+            <dd class="col-sm-9">
+                @if (Model.Reservation != null)
+                {
+                    <span>#@Model.Reservation.ReservationId</span>
+                }
+                else
+                {
+                    <span class="text-muted">N/A</span>
+                }
+            </dd>
+        </dl>
 
-    <dt class="col-sm-2">Reservation</dt>
-    <dd class="col-sm-10">@Html.DisplayFor(model => model.Reservation.ReservationId)</dd>
-</dl>
-
-<a asp-action="Edit" asp-route-id="@Model?.PaymentId" class="btn btn-primary">Edit</a>
-<a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
+        <a asp-action="Edit" asp-route-id="@Model.PaymentId" class="btn btn-primary">Edit</a>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
+    </div>
+</div>

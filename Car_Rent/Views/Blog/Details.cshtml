@@ -1,33 +1,45 @@
 ﻿@model Car_Rent.Models.Blog
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Blog Details";
     Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
 }
 
-<div class="container mt-4">
-    <h2>Blog Details</h2>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-3">Title</dt>
-        <dd class="col-sm-9">@Model.Title</dd>
+<div class="card shadow">
+    <div class="card-header bg-info text-white">
+        <h4 class="mb-0">Blog Details</h4>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Title</dt>
+            <dd class="col-sm-9">@Model.Title</dd>
 
-        <dt class="col-sm-3">Content</dt>
-        <dd class="col-sm-9">@Model.Content</dd>
+            <dt class="col-sm-3">Content</dt>
+            <dd class="col-sm-9" style="white-space:pre-wrap">@Model.Content</dd>
 
-        <dt class="col-sm-3">Image</dt>
-        <dd class="col-sm-9">@Model.ImageUrl</dd>
+            <dt class="col-sm-3">Image</dt>
+            <dd class="col-sm-9">
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <img src="@Model.ImageUrl" alt="Blog Image" class="img-thumbnail rounded border" style="max-width: 220px;" />
+                }
+                else
+                {
+                    <span class="text-muted">No image</span>
+                }
+            </dd>
 
-        <dt class="col-sm-3">Published Date</dt>
-        <dd class="col-sm-9">@Model.PublishedDate</dd>
+            <dt class="col-sm-3">Published Date</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.PublishedDate)</dd>
 
-        <dt class="col-sm-3">Status</dt>
-        <dd class="col-sm-9">@Model.Status</dd>
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.Status)</dd>
 
-        <dt class="col-sm-3">Author</dt>
-        <dd class="col-sm-9">@Model.Author?.Username</dd>
-    </dl>
+            <dt class="col-sm-3">Author</dt>
+            <dd class="col-sm-9">@Model.Author?.Username</dd>
+        </dl>
 
-    <a asp-action="Edit" asp-route-id="@Model.BlogId" class="btn btn-primary">Edit</a>
-    <a asp-action="AdminIndex" class="btn btn-secondary ms-2">Back to List</a>
+        <a asp-action="Edit" asp-route-id="@Model.BlogId" class="btn btn-primary">Edit</a>
+        <a asp-action="AdminIndex" class="btn btn-secondary ms-2">Back to List</a>
+    </div>
 </div>

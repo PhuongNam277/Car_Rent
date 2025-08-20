@@ -1,28 +1,21 @@
 ﻿@model Car_Rent.Models.Role
 
 @{
-    ViewData["Title"] = "Role Detail";
+    ViewData["Title"] = "Role Details";
     Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
 }
 
-<div class="container mt-4">
-    <h2 class="mb-4">Role Detail</h2>
+<div class="card shadow">
+    <div class="card-header bg-info text-white">
+        <h4 class="mb-0">Role Details</h4>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Role Name</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(model => model.RoleName)</dd>
+        </dl>
 
-    <dl class="row">
-        <dt class="col-sm-3">
-            @Html.DisplayNameFor(model => model.RoleName)
-        </dt>
-        <dd class="col-sm-9">
-            @Html.DisplayFor(model => model.RoleName)
-        </dd>
-    </dl>
-
-    <div class="mt-3">
-        <a asp-action="Edit" asp-route-id="@Model?.RoleId" class="btn btn-warning">
-            <i class="bi bi-pencil-square"></i> Edit
-        </a>
-        <a asp-action="Index" class="btn btn-secondary ms-2">
-            <i class="bi bi-arrow-left"></i> Back
-        </a>
+        <a asp-action="Edit" asp-route-id="@Model.RoleId" class="btn btn-primary">Edit</a>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
     </div>
 </div>

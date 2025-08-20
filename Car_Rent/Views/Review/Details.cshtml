@@ -1,37 +1,36 @@
 ﻿@model Car_Rent.Models.Review
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Review Details";
     Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
 }
 
-<h1 class="h3 mb-3">Review Details</h1>
-
-<div class="card">
+<div class="card shadow">
+    <div class="card-header bg-info text-white">
+        <h4 class="mb-0">Review Details</h4>
+    </div>
     <div class="card-body">
         <dl class="row">
-            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Rating)</dt>
-            <dd class="col-sm-9">@Html.DisplayFor(model => model.Rating)</dd>
+            <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Rating)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.Rating)</dd>
 
-            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Comment)</dt>
-            <dd class="col-sm-9">@Html.DisplayFor(model => model.Comment)</dd>
+            <dt class="col-sm-3">@Html.DisplayNameFor(m => m.Comment)</dt>
+            <dd class="col-sm-9" style="white-space:pre-wrap">@Html.DisplayFor(m => m.Comment)</dd>
 
-            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.ReviewDate)</dt>
-            <dd class="col-sm-9">@Html.DisplayFor(model => model.ReviewDate)</dd>
+            <dt class="col-sm-3">@Html.DisplayNameFor(m => m.ReviewDate)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.ReviewDate)</dd>
 
-            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.JobName)</dt>
-            <dd class="col-sm-9">@Html.DisplayFor(model => model.JobName)</dd>
+            <dt class="col-sm-3">@Html.DisplayNameFor(m => m.JobName)</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.JobName)</dd>
 
-            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Car)</dt>
-            <dd class="col-sm-9">@Html.DisplayFor(model => model.Car.CarId)</dd>
+            <dt class="col-sm-3">Car</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.Car.CarName)</dd>
 
-            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.User)</dt>
-            <dd class="col-sm-9">@Html.DisplayFor(model => model.User.UserId)</dd>
+            <dt class="col-sm-3">User</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.User.Username)</dd>
         </dl>
 
-        <div class="mt-3">
-            <a asp-action="Edit" asp-route-id="@Model?.ReviewId" class="btn btn-primary">Edit</a>
-            <a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
-        </div>
+        <a asp-action="Edit" asp-route-id="@Model.ReviewId" class="btn btn-primary">Edit</a>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Back to List</a>
     </div>
 </div>
