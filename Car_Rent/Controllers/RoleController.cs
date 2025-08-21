@@ -19,7 +19,7 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Role
-        public async Task<IActionResult> Index(string search)
+        public async Task<IActionResult> Index(string search, string? sortBy = "NameAsc", int page = 1, int pageSize = 10)
         {
 
             var query = _context.Roles.AsQueryable();
@@ -29,9 +29,22 @@ namespace Car_Rent.Controllers
                 query = query.Where(r => r.RoleName.Contains(search));
             }
 
-            var roles = await query.ToListAsync();
+            // Sorting logic
+            query = sortBy switch
+            {
+                "NameDesc" => query.OrderByDescending(r => r.RoleName),
+                _ => query.OrderBy(r => r.RoleName)
+            };
 
-            return View(roles);
+            // Pagination logic
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.SortBy = sortBy;
+            ViewBag.TotalItems = total;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            return View(items);
         }
 
         // GET: Role/Details/5

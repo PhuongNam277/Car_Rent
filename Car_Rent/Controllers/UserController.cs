@@ -20,7 +20,7 @@ namespace Car_Rent.Controllers
         }
         
         // GET: User
-        public async Task<IActionResult> Index(string search)
+        public async Task<IActionResult> Index(string search, string? sortBy = "UsernameAsc", int page = 1, int pageSize = 10)
         {
             var query = _context.Users.Include(u => u.Role).AsQueryable();
 
@@ -29,10 +29,25 @@ namespace Car_Rent.Controllers
                 query = query.Where(u => u.FullName.Contains(search) || u.Username.Contains(search) || u.Email.Contains(search)
                 || u.PhoneNumber.Contains(search));
             }
-            
-            var users = await query.ToListAsync();
 
-            return View(users);
+            // Sorting logic
+            query = sortBy switch
+            {
+                "UsernameDesc" => query.OrderByDescending(u => u.Username),
+                "CreatedDateAsc" => query.OrderBy(u => u.CreatedDate),
+                "CreatedDateDesc" => query.OrderByDescending(u => u.CreatedDate),
+                _ => query.OrderBy(u => u.Username)
+            };
+
+            // Pagination logic
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.SortBy = sortBy;
+            ViewBag.TotalItems = total;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            return View(items);
         }
 
         // GET: User/Details/5

@@ -19,7 +19,7 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Comment
-        public async Task<IActionResult> Index(string search)
+        public async Task<IActionResult> Index(string search, string? sortBy = "CreatedDateDesc", int page = 1, int pageSize = 10)
         {
             var query = _context.Comments
                 .AsQueryable();
@@ -29,8 +29,22 @@ namespace Car_Rent.Controllers
                 query = query.Where(c => c.AuthorName.Contains(search) || c.Content.Contains(search));
             }
 
-            var comments = await query.ToListAsync();
-            return View(comments);
+            // Sorting logic
+            query = sortBy switch
+            {
+                "CreatedDateAsc" => query.OrderBy(c => c.CreatedAt),
+                _ => query.OrderByDescending(c => c.CreatedAt)
+            };
+
+            // Pagination logic
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.SortBy = sortBy;
+            ViewBag.TotalItems = total;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            return View(items);
         }
 
         // GET: Comment/Details/5

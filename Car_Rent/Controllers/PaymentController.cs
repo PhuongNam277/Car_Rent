@@ -24,7 +24,7 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Payment ( For Admin Page)
-        public async Task<IActionResult> Index(string search)
+        public async Task<IActionResult> Index(string search, string? sortBy = "PaymentDateDesc", int page = 1, int pageSize = 10)
         {
 
             var query = _context.Payments
@@ -40,7 +40,24 @@ namespace Car_Rent.Controllers
                 p.Reservation.ToCity.Contains(search));
             }
 
-            return View(await query.ToListAsync());
+            // Sorting logic
+            query = sortBy switch
+            {
+                "PaymentDateAsc" => query.OrderBy(p => p.PaymentDate),
+                "AmountAsc" => query.OrderBy(p => p.Amount),
+                "AmountDesc" => query.OrderByDescending(p => p.Amount),
+                _ => query.OrderByDescending(p => p.PaymentDate)
+            };
+
+            // Pagination logic
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.SortBy = sortBy;
+            ViewBag.TotalItems = total;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            return View(items);
         }
 
         // GET: Payment/Details/5

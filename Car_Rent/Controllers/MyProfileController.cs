@@ -119,7 +119,7 @@ namespace Car_Rent.Controllers
             }
 
             await _context.SaveChangesAsync();
-            TempData["Succes"] = "Profile updated successfully.";
+            TempData["Success"] = "Profile updated successfully.";
             return RedirectToAction(nameof(Index));
         }
 

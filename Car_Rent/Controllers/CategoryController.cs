@@ -19,7 +19,7 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Category
-        public async Task<IActionResult> Index(string search)
+        public async Task<IActionResult> Index(string search, string? sortBy = "NameAsc", int page = 1, int pageSize = 10)
         {
             var query = _context.Categories.AsQueryable();
 
@@ -28,8 +28,22 @@ namespace Car_Rent.Controllers
                 query = query.Where(c => c.CategoryName.Contains(search));
             }
 
-            var categoriesEntity = await query.ToListAsync();
-            return View(categoriesEntity);
+            // Sorting logic
+            query = sortBy switch
+            {
+                "NameDesc" => query.OrderByDescending(c => c.CategoryName),
+                _ => query.OrderBy(c => c.CategoryName)
+            };
+
+            // Pagination logic
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.SortBy = sortBy;
+            ViewBag.TotalItems = total;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            return View(items);
         }
 
         // GET: Category/Details/5

@@ -19,7 +19,7 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Review
-        public async Task<IActionResult> Index(string search)
+        public async Task<IActionResult> Index(string search, string? sortBy = "ReviewDateDesc", int page = 1, int pageSize = 10)
         {
             var query = _context.Reviews
                 .Include(r => r.Car)
@@ -32,8 +32,24 @@ namespace Car_Rent.Controllers
                                         r.Rating.ToString().Contains(search) || r.Comment.Contains(search));
             }
 
-            var reviews = await query.ToListAsync();
-            return View(reviews);
+            // Sorting logic
+            query = sortBy switch
+            {
+                "RatingAsc" => query.OrderBy(r => r.Rating),
+                "RatingDesc" => query.OrderByDescending(r => r.Rating),
+                "ReviewDateAsc" => query.OrderBy(r => r.ReviewDate),
+                _ => query.OrderByDescending(r => r.ReviewDate)
+            };
+
+            // Pagination logic
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.SortBy = sortBy;
+            ViewBag.TotalItems = total;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            return View(items);
         }
 
         // GET: Review/Details/5

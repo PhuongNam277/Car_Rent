@@ -3,12 +3,29 @@
 @{
     ViewData["Title"] = "Category List";
     Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+    var total = (int)(ViewBag.TotalItems ?? 0);
+    var page = (int)(ViewBag.Page ?? 1);
+    var pageSize = (int)(ViewBag.PageSize ?? 10);
+    var totalPages = (int)Math.Ceiling((double)total / pageSize);
+    string? sortBy = ViewBag.SortBy;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Categories</h2>
     <a asp-action="Create" style="margin-top:12px" class="btn btn-success">Create New</a>
 </div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="sortBy" class="form-select">
+            <option value="NameDesc" selected="@(sortBy=="NameDesc")">Name ↓</option>
+            <option value="NameAsc" selected="@(sortBy=="NameAsc")">Name ↑</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-primary">Filter</button>
+    </div>
+</form>
 
 <table class="table table-bordered table-hover table-striped">
     <thead class="table-white">
@@ -33,3 +50,39 @@
         }
     </tbody>
 </table>
+
+@if (totalPages > 1)
+{
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+
+            <!-- First -->
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = 1, pageSize, sortBy })">« First</a>
+            </li>
+
+            <!-- Prev -->
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = page - 1, pageSize, sortBy })">‹ Prev</a>
+            </li>
+
+            <!-- Page numbers -->
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == page ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize, sortBy })">@i</a>
+                </li>
+            }
+
+            <!-- Next -->
+            <li class="page-item @(page == totalPages ? "disabled" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = page + 1, pageSize, sortBy })">Next ›</a>
+            </li>
+
+            <!-- Last -->
+            <li class="page-item @(page == totalPages ? "disabled" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { page = totalPages, pageSize, sortBy })">Last »</a>
+            </li>
+        </ul>
+    </nav>
+}

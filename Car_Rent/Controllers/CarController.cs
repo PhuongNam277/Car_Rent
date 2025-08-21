@@ -36,7 +36,7 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Car
-        public async Task<IActionResult> AdminIndex(string search)
+        public async Task<IActionResult> AdminIndex(string? search, string? sortBy = "NameAsc", int page = 1, int pageSize = 10)
         {
             var query = _context.Cars
                 .Include(c => c.Category)
@@ -44,11 +44,27 @@ namespace Car_Rent.Controllers
 
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(c => c.CarName.Contains(search) || c.Brand.Contains(search) || c.Model.Contains(search));
+                query = query.Where(c => c.CarName.Contains(search) || c.Brand.Contains(search) || c.Model.Contains(search) || c.RentalPricePerDay.ToString().Contains(search));
             }
 
-            var carEntities = await query.ToListAsync();
-            return View(carEntities);
+            // Sorting logic
+            query = sortBy switch
+            {
+                "NameDesc" => query.OrderByDescending(c => c.CarName),
+                "RentalPriceAsc" => query.OrderBy(c => c.RentalPricePerDay),
+                "RentalPriceDesc" => query.OrderByDescending(c => c.RentalPricePerDay),
+                _ => query.OrderBy(c => c.CarName)
+            };
+
+            // Pagination logic
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.SortBy = sortBy;
+            ViewBag.TotalItems = total;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            return View(items);
         }
 
         // GET: Car/Details/5

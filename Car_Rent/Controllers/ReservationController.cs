@@ -22,7 +22,7 @@ namespace Car_Rent.Controllers
 
 
         // GET: Reservation
-        public async Task<IActionResult> Index(string search, string? sortBy = "DateDesc", int page = 1, int pageSize = 3)
+        public async Task<IActionResult> Index(string search, string? sortBy = "DateDesc", int page = 1, int pageSize = 10)
         {
             //var carRentalDbContext = _context.Reservations.Include(r => r.Car).Include(r => r.User);
             //return View(await carRentalDbContext.ToListAsync());
@@ -35,7 +35,7 @@ namespace Car_Rent.Controllers
             if (!string.IsNullOrEmpty(search))
             {
                 query = query.Where(r => r.User.Username.Contains(search) || r.Car.CarName.Contains(search) ||
-                                    r.FromCity.Contains(search) || r.ToCity.Contains(search) || r.TotalPrice.ToString().Contains(search));
+                                    r.FromCity.Contains(search) || r.ToCity.Contains(search) || r.TotalPrice.ToString().Contains(search) || r.Status.Contains(search));
             }
 
             // Sorting logic

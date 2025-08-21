@@ -42,7 +42,7 @@ namespace Car_Rent.Controllers
         }
 
         // GET: Blog
-        public async Task<IActionResult> AdminIndex(string search)
+        public async Task<IActionResult> AdminIndex(string search, string? sortBy = "PublishedDateDesc", int page = 1, int pageSize = 10)
         {
             var query = _context.Blogs
                 .Include(b => b.Author)
@@ -54,8 +54,24 @@ namespace Car_Rent.Controllers
 
             }
 
-            var blogs = await query.ToListAsync();
-            return View(blogs);
+            // Sorting logic
+            query = sortBy switch
+            {
+                "TitleAsc" => query.OrderBy(b => b.Title),
+                "PublishedDateAsc" => query.OrderBy(b => b.PublishedDate),
+                "TitleDesc" => query.OrderByDescending(b => b.Title),
+                _ => query.OrderByDescending(b => b.PublishedDate)
+            };
+
+            // Pagination logic
+            var total = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            ViewBag.SortBy = sortBy;
+            ViewBag.TotalItems = total;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            return View(items);
         }
 
         // GET: Blog/Details/5
