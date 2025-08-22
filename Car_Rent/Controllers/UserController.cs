@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Car_Rent.Models;
 using System.Data;
+using Microsoft.AspNetCore.Identity.Data;
+using Car_Rent.Security;
+using Car_Rent.ViewModels.Profile;
 
 namespace Car_Rent.Controllers
 {
@@ -184,5 +187,55 @@ namespace Car_Rent.Controllers
         {
             return _context.Users.Any(e => e.UserId == id);
         }
+
+        // GET: User/ResetPassword/5
+        public async Task<IActionResult> ResetPassword(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var user = await _context.Users.FindAsync(id.Value);
+            if (user == null) return NotFound();
+
+            ViewBag.UserId = user.UserId;
+            ViewBag.Username = user.Username;
+            return View(new RequestResetPassword());
+        }
+
+
+        //POST: User/ResetPassword/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(int id, RequestResetPassword request)
+        {
+            if (id <= 0 || request == null) return BadRequest("Invalid user ID or request data.");
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound("User not found.");
+
+            if (!ModelState.IsValid)
+            {
+                // set lại để view có route id & title
+                ViewBag.UserId = id;
+                ViewBag.Username = user.Username;
+                return View(request);
+            }
+
+            // Confirm khớp (dù đã có [Compare], mình vẫn nên guard phía server)
+            if (request.NewPassword != request.ConfirmNewPassword)
+            {
+                ModelState.AddModelError(nameof(request.ConfirmNewPassword), "Passwords do not match.");
+                ViewBag.UserId = id;
+                ViewBag.Username = user.Username;
+                return View(request);
+            }
+
+            user.PasswordHash = PasswordHasherUtil.HashPassword(request.NewPassword);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Password reset successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+
     }
 }

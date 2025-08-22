@@ -54,4 +54,19 @@ namespace Car_Rent.ViewModels.Profile
         [Required, StringLength(6, MinimumLength =6, ErrorMessage = "OTP must be 6 characters long.")]
         public string Otp { get; set; } = "";
     }
+
+    public class RequestResetPassword
+    {
+        [Required]
+        [MinLength(8, ErrorMessage = "New password must be at least 8 characters long.")]
+        [DataType(DataType.Password)]
+        [Display(Name = "New password")]
+        public string NewPassword { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirm new password")]
+        [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match.")]
+        public string ConfirmNewPassword { get; set; } = "";
+    }
 }
