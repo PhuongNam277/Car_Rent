@@ -140,6 +140,27 @@ namespace Car_Rent.Controllers
                 try
                 {
                     _context.Update(reservation);
+                    // If Status = "Completed"
+                    if(string.Equals(reservation.Status, "Completed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // update payment
+                        var payment = await _context.Payments.
+                            FirstOrDefaultAsync(p => p.ReservationId == reservation.ReservationId);
+
+                        if(payment != null)
+                        {
+                            payment.Status = "Paid";
+                        }
+
+                        // Update the car's status to "Available"
+                        var car = await _context.Cars.FindAsync(reservation.CarId);
+                        if (car != null)
+                        {
+                            car.Status = "Available";
+                            _context.Update(car);
+                        }
+                    }
+
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)

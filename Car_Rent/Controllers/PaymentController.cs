@@ -329,6 +329,17 @@ namespace Car_Rent.Controllers
                 Status = "Pending"
             };
 
+            // Set car to unavailable
+            var car = await _context.Cars.FindAsync(req.CarId);
+            if (car == null)
+            {
+                TempData["FailedMessage"] = "Car not found. Please try again.";
+                return RedirectToAction("Index", "Bookcar");
+            }
+
+            car.Status = "Rented";
+            _context.Cars.Update(car);
+
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Car_Rent.Interfaces;
 using System.Text.Json;
 using Car_Rent.Security;
+using System.Text.RegularExpressions;
 
 namespace Car_Rent.Controllers
 {
@@ -29,7 +30,7 @@ namespace Car_Rent.Controllers
 
         // Action POST để nhận dữ liệu từ form đăng ký và lưu vào cơ sở dữ liệu
         [HttpPost]
-        public async Task<IActionResult> Index(string fullname, string email, string phoneNumber, string password, string username)
+        public async Task<IActionResult> Index(string fullname, string email, string phoneNumber, string password, string username, string confirmPassword)
         {
             // Kiểm tra xem người dùng đã tồn tại chưa
             var existingUser = await _userService.GetUserByEmailAsync(email);
@@ -37,6 +38,21 @@ namespace Car_Rent.Controllers
             {
                 TempData["ExistedUsername"] = "Username existed, please try with different username!";
 
+                return View();
+            }
+
+            // Regex to check password: at least 8 characters, 1 uppercase letter and 1 number
+            var passwordPattern = "^(?=.*[A-Z])(?=.*\\d).{8,}$";
+            if(!System.Text.RegularExpressions.Regex.IsMatch(password, passwordPattern))
+            {
+                TempData["PasswordError"] = "Password must be at least 8 characters, contain 1 uppercase letter and 1 digit.";
+                return View();
+            }
+
+            // Make sure confirm password matches password
+            if (confirmPassword != password)
+            {
+                TempData["ConfirmPasswordError"] = "Confirm password is not match with password";
                 return View();
             }
 

@@ -10,6 +10,20 @@
 	</script>
 }
 
+@if (TempData["PasswordError"] != null)
+{
+	<script>
+		alert('@TempData["PasswordError"]');
+	</script>
+}
+
+@if (TempData["ConfirmPasswordError"] != null)
+{
+	<script>
+		alert('@TempData["ConfirmPasswordError"]');
+	</script>
+}
+
 <div class="limiter">
 	<div class="container-login100" style="background-image: url('~/Login/images/bg-01.jpg');">
 		<div class="wrap-login100 p-l-55 p-r-55 p-t-65 p-b-54">
@@ -48,11 +62,11 @@
 					<span class="focus-input100" data-symbol="&#xf190;"></span>
 				</div>
 
-				@* <div class="wrap-input100 validate-input m-b-23" data-validate="RePassword is required">
-					<span class="label-input100">RePassword</span>
-					<input class="input100" type="password" name="pass" placeholder="Type your re-password">
+				<div class="wrap-input100 validate-input m-b-23" data-validate="Confirm password is required">
+					<span class="label-input100">Confirm Password</span>
+					<input class="input100" type="password" name="confirmPassword" placeholder="Type your confirm password">
 					<span class="focus-input100" data-symbol="&#xf190;"></span>
-				</div> *@
+				</div>
 
 				<div class="container-login100-form-btn">
 					<div class="wrap-login100-form-btn">
