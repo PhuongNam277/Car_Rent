@@ -229,6 +229,7 @@ public partial class CarRentalDbContext : DbContext
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
             entity.Property(e => e.PhoneNumber).HasMaxLength(15);
             entity.Property(e => e.Username).HasMaxLength(50);
+            entity.Property(e => e.IsBlocked).HasDefaultValue(false);
 
 
             entity.HasOne(u => u.Role)

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Car_Rent.Interfaces;
 using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CarRentalDbContext>(
@@ -19,7 +20,35 @@ builder.Services.AddAuthentication("MyCookieAuth")
         options.Cookie.HttpOnly = true; // Đảm bảo cookie chỉ được truy cập từ server
         options.SlidingExpiration = true; // Kích hoạt tính năng gia hạn thời gian hết hạn cookie
         options.ExpireTimeSpan = TimeSpan.FromHours(2); // Thời gian hết hạn cookie
+        options.Events = new Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationEvents
+        {
+            OnValidatePrincipal = async context =>
+            {
+                var userIdStr = context.Principal.FindFirst("UserId")?.Value;
+                if (!int.TryParse(userIdStr, out var userId)) return;
+
+                var db = context.HttpContext.RequestServices.GetRequiredService<CarRentalDbContext>();
+                var isBlocked = await db.Users
+                                        .Where(u => u.UserId == userId)
+                                        .Select(u => u.IsBlocked)
+                                        .FirstOrDefaultAsync();
+
+                if (isBlocked)
+                {
+                    context.RejectPrincipal(); // Từ chối quyền truy cập nếu người dùng bị chặn
+                    await context.HttpContext.SignOutAsync("MyCookieAuth"); // Đăng xuất người dùng
+                }
+            }
+        };
+
     });
+
+// (tuỳ chọn) Policy chỉ cho Admin thao tác
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireClaim("Role", "Admin"));
+});
 
 builder.Services.AddAuthorization();
 

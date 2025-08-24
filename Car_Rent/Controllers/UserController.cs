@@ -10,6 +10,7 @@ using System.Data;
 using Microsoft.AspNetCore.Identity.Data;
 using Car_Rent.Security;
 using Car_Rent.ViewModels.Profile;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Car_Rent.Controllers
 {
@@ -236,6 +237,63 @@ namespace Car_Rent.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(AuthenticationSchemes = "MyCookieAuth", Roles = "Admin")]
+
+        public async Task<IActionResult> Block(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // not allow block self
+            var currentUserIdStr = User.FindFirst("UserId")?.Value;
+            if (int.TryParse(currentUserIdStr, out var currentUserId) && currentUserId == id)
+            {
+                TempData["Error"] = "You cannot block yourself.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!user.IsBlocked)
+            {
+                user.IsBlocked = true;
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"User '{user.Username}' has been blocked successfully.";
+            }
+            else
+            {
+                TempData["Info"] = $"User '{user.Username}' has already been blocked.";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(AuthenticationSchemes = "MyCookieAuth", Roles = "Admin")]
+
+        public async Task<IActionResult> Unblock (int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            if(user.IsBlocked)
+            {
+                user.IsBlocked = false;
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"User '{user.Username}' has been unblocked successfully.";
+            }
+            else
+            {
+                TempData["Info"] = $"User '{user.Username}' is not blocked.";
+            }
+            return RedirectToAction(nameof(Index));
+        }
 
     }
 }

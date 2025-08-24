@@ -24,6 +24,8 @@ using System.Data;
 
         public DateTime? CreatedDate { get; set; }
 
+        public bool IsBlocked { get; set; } = false;
+
         public virtual ICollection<Blog> Blogs { get; set; } = new List<Blog>();
 
         public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();

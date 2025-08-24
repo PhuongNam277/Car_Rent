@@ -27,61 +27,80 @@ namespace Car_Rent.Controllers
         [HttpPost]
         public async Task<IActionResult> Index(LoginViewModel model, string? returnUrl = null)
         {
-            if (ModelState.IsValid)
-            {
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == model.Username);
-
-                if (user != null)
-                {
-
-                    // Verify (new PBKDF2 format or SHA-256 old format)
-                    if (PasswordHasherUtil.VerifyPassword(model.Password, user.PasswordHash))
-                    {
-                        // If it is legacy or need to up iterations then rehash and update
-                        if(PasswordHasherUtil.NeedsRehash(user.PasswordHash))
-                        {
-                            user.PasswordHash = PasswordHasherUtil.HashPassword(model.Password);
-                            await _context.SaveChangesAsync();
-                        }
-
-                        // Create claims
-                        var claims = new List<Claim>
-                        {
-                            new Claim(ClaimTypes.Name, user.Username),
-                            new Claim("UserId", user.UserId.ToString())
-                        };
-
-                        var identity = new ClaimsIdentity(claims, "MyCookieAuth");
-                        var principal = new ClaimsPrincipal(identity);
-
-                        // Đăng nhập người dùng
-                        await HttpContext.SignInAsync("MyCookieAuth", principal);
-
-                        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                        {
-                            // Nếu returnUrl là action POST thì tránh redirect
-                            if (returnUrl.ToLower().Contains("/contact/send"))
-                            {
-                                return RedirectToAction("Index", "Contact");
-                            }
-                            return Redirect(returnUrl);
-                        }
-
-                        return RedirectToAction("Index", "Main");
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("", "Tên đăng nhập hoặc mật khẩu không đúng.");
-                    }
-                }
-            }
-            else
+            if (!ModelState.IsValid)
             {
                 ModelState.AddModelError("", "Tên đăng nhập hoặc mật khẩu không đúng.");
+                return View(model);
             }
 
-            return View(model);
+            // PHẢI Include Role để lấy RoleName
+            var user = await _context.Users
+                                     .Include(u => u.Role)
+                                     .FirstOrDefaultAsync(u => u.Username == model.Username);
+
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Tên đăng nhập hoặc mật khẩu không đúng.");
+                return View(model);
+            }
+
+            // Chặn tài khoản bị block
+            if (user.IsBlocked)
+            {
+                ModelState.AddModelError("", "Your account has been blocked. Please contact support.");
+                return View(model);
+            }
+
+            // Verify password
+            if (!PasswordHasherUtil.VerifyPassword(model.Password, user.PasswordHash))
+            {
+                ModelState.AddModelError("", "Tên đăng nhập hoặc mật khẩu không đúng.");
+                return View(model);
+            }
+
+            // Nâng cấp hash nếu cần
+            if (PasswordHasherUtil.NeedsRehash(user.PasswordHash))
+            {
+                user.PasswordHash = PasswordHasherUtil.HashPassword(model.Password);
+                await _context.SaveChangesAsync();
+            }
+
+            // LẤY RoleName và chuẩn hoá
+            var roleName = (user.Role?.RoleName ?? "User").Trim(); // ví dụ: "Admin", "User", "SuperAdmin"
+
+            // TẠO CLAIMS ĐẦY ĐỦ (phải có ClaimTypes.Role)
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, roleName),        // QUAN TRỌNG cho [Authorize(Roles="...")]
+                new Claim("UserId", user.UserId.ToString())  // anh đang dùng ở OnValidatePrincipal
+                // có thể thêm Email/FullName nếu cần
+            };
+
+            var identity = new ClaimsIdentity(claims, "MyCookieAuth");
+            var principal = new ClaimsPrincipal(identity);
+
+            // (tuỳ) remember-me
+            //var authProps = new AuthenticationProperties
+            //{
+            //    IsPersistent = model.RememberMe, // nếu có field RememberMe
+            //    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2)
+            //};
+
+            await HttpContext.SignInAsync("MyCookieAuth", principal);
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                if (returnUrl.ToLower().Contains("/contact/send"))
+                    return RedirectToAction("Index", "Contact");
+
+                return Redirect(returnUrl);
+            }
+
+            return RedirectToAction("Index", "Main");
         }
+
 
         [Authorize]
         public async Task<IActionResult> Logout()
@@ -94,7 +113,16 @@ namespace Car_Rent.Controllers
         // Action Denied
         public IActionResult AccessDenied()
         {
+            Response.StatusCode = 403;
             return View();
+        }
+
+        [Authorize(AuthenticationSchemes = "MyCookieAuth")] // hoặc Roles="Admin"
+        [HttpGet("/debug/whoami")]
+        public IActionResult WhoAmI()
+        {
+            var lines = User.Claims.Select(c => $"{c.Type} = {c.Value}");
+            return Content(string.Join(Environment.NewLine, lines), "text/plain");
         }
     } 
 }

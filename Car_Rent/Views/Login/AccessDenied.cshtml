@@ -1,0 +1,9 @@
+﻿@{
+    ViewData["Title"] = "Access Denied";
+    Layout = "~/Views/Shared/MainLayout.cshtml"; // hoặc AdminLayout nếu muốn
+}
+<div class="container my-5">
+    <h2 class="text-danger">403 - Access Denied</h2>
+    <p>Bạn không có quyền truy cập trang này.</p>
+    <a asp-controller="Main" asp-action="Index" class="btn btn-primary">Về trang chủ</a>
+</div>

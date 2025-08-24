@@ -36,6 +36,7 @@
             <th>@Html.DisplayNameFor(model => model.First().FullName)</th>
             <th>@Html.DisplayNameFor(model => model.First().Username)</th>
             @* <th>@Html.DisplayNameFor(model => model.First().PasswordHash)</th> *@
+            <th>Status</th>
             <th>@Html.DisplayNameFor(model => model.First().Email)</th>
             <th>@Html.DisplayNameFor(model => model.First().PhoneNumber)</th>
             <th>@Html.DisplayNameFor(model => model.First().Role)</th>
@@ -50,6 +51,16 @@
                 <td>@item.FullName</td>
                 <td>@item.Username</td>
                 @* <td>@item.PasswordHash</td> *@
+                <td>
+                    @if (item.IsBlocked)
+                    {
+                        <span class="badge bg-danger">Blocked</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                </td>
                 <td>@item.Email</td>
                 <td>@item.PhoneNumber</td>
                 <td>@item.Role?.RoleName</td>
@@ -60,6 +71,27 @@
                         <a asp-action="Details" asp-route-id="@item.UserId" class="btn btn-sm btn-info text-white">Details</a>
                         <a asp-action="Delete" asp-route-id="@item.UserId" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this user?');">Delete</a>
                         <a asp-action="ResetPassword" asp-route-id="@item.UserId" class="btn btn-sm btn-primary">Reset Password</a>
+                        @if (!item.IsBlocked)
+                        {
+                            <form asp-action="Block" asp-route-id="@item.UserId" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('Block user @item.Username ?');">
+                                    Block
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form asp-action="Unblock" asp-route-id="@item.UserId" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-success"
+                                        onclick="return confirm('Unblock user @item.Username ?');">
+                                    Unblock
+                                </button>
+                            </form>
+                        }
+
                     </div>
                 </td>
             </tr>
