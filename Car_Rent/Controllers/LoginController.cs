@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Car_Rent.Security;
 using Car_Rent.ViewModels.Auth;
+using static System.Net.WebRequestMethods;
 
 namespace Car_Rent.Controllers
 {
@@ -46,13 +47,13 @@ namespace Car_Rent.Controllers
             {
                 var errors = ModelState.Values
                     .SelectMany(v => v.Errors)
-                    .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "Thông tin không hợp lệ. " : e.ErrorMessage)
+                    .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? "Invalid information. " : e.ErrorMessage)
                     .Distinct()
                     .ToList();
 
                 TempData["ErrorMessage"] = errors.Count > 0
                     ? string.Join("\n", errors)
-                    : "Vui lòng kiem tra lại thông tin.";
+                    : "Please check the information again.";
                 return View(model);
             }
 
@@ -63,21 +64,21 @@ namespace Car_Rent.Controllers
 
             if (user == null)
             {
-                TempData["ErrorMessage"] = "Tên đăng nhập hoặc mật khẩu không đúng.";
+                TempData["ErrorMessage"] = "Incorrect username or password.";
                 return View(model);
             }
 
             // Chặn tài khoản bị block
             if (user.IsBlocked)
             {
-                TempData["ErrorMessage"] = "Tài khoản của bạn đã bị khoá. Vui lòng liên hệ quản trị viên.";
+                TempData["ErrorMessage"] = "Your account has been locked. Please contact the administrator.";
                 return View(model);
             }
 
             // Verify password
             if (!PasswordHasherUtil.VerifyPassword(model.Password, user.PasswordHash))
             {
-                TempData["ErrorMessage"] = "Tên đăng nhập hoặc mật khẩu không đúng.";
+                TempData["ErrorMessage"] = "Incorrect username or password.";
                 return View(model);
             }
 
@@ -113,7 +114,6 @@ namespace Car_Rent.Controllers
 
             await HttpContext.SignInAsync("MyCookieAuth", principal);
 
-            TempData["SuccessMessage"] = "Đăng nhập thành công.";
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
@@ -263,7 +263,68 @@ namespace Car_Rent.Controllers
 
         }
 
+        // B3 : Dat lai mat khau
+        [HttpGet]
+        public IActionResult ResetPassword()
+        {
+            var verified = HttpContext.Session.GetInt32(K_Verified) == 1;
+            var exp = GetExpireUtc();
+            var used = HttpContext.Session.GetInt32(K_Used) == 1;
 
+            if (!verified || exp == null || UtcNow() > exp || used)
+            {
+                ClearPwResetSession();
+                TempData["ErrorMessage"] = "Invalid or expired password reset session. Please try again.";
+                return RedirectToAction(nameof(ForgotPassword));
+            }
+
+            return View(new ResetPasswordRequest());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordRequest req)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "Please check the information again.";
+                return View(req);
+            }
+
+            var verified = HttpContext.Session.GetInt32(K_Verified) == 1;
+            var used = HttpContext.Session.GetInt32(K_Used) == 1;
+            var exp = GetExpireUtc();
+            var userId = HttpContext.Session.GetInt32(K_UserId);
+
+            if (!verified || used || exp == null || UtcNow() > exp || userId == null)
+            {
+                ClearPwResetSession();
+                TempData["ErrorMessage"] = "Invalid or expired password reset session. Please try again.";
+                return RedirectToAction(nameof(ForgotPassword));
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId.Value);
+            if (user == null)
+            {
+                ClearPwResetSession();
+                TempData["ErrorMessage"] = "User account not found. Please try again.";
+                return RedirectToAction(nameof(ForgotPassword));
+            }
+
+            user.PasswordHash = PasswordHasherUtil.HashPassword(req.NewPassword);
+            await _context.SaveChangesAsync();
+
+            // Send email
+            var emailBody = $@"
+            <p>Hello {user.Username},</p>
+            <p>Your password was reset successfully.</p>
+            <p>Now you can login your account with your new password. Thank you for using our services</p>";
+            await _emailService.SendEmailAsync(user.Email, "Password Reset Successfully", emailBody);
+
+            HttpContext.Session.SetInt32(K_Used, 1); // mark used
+            ClearPwResetSession();
+            return RedirectToAction(nameof(Index));
+        }
 
         // Helpers
         private static string GenerateOtp6()
@@ -306,12 +367,5 @@ namespace Car_Rent.Controllers
             HttpContext.Session.Remove(K_Verified);
             HttpContext.Session.Remove(K_Used);
         }
-
-
-
-
-
-
-
     }
 }

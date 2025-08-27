@@ -1,0 +1,33 @@
+﻿@using Car_Rent.ViewModels.Auth
+@model VerifyOtpRequest
+@{
+    ViewData["Title"] = "Verify OTP";
+    Layout = "~/Views/Shared/Login/LoginLayout.cshtml";
+}
+@if (TempData["ErrorMessage"] != null)
+{
+     <script>alert('@TempData["ErrorMessage"]');</script>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+     <script>alert('@TempData["SuccessMessage"]');</script>
+}
+
+<form asp-action="VerifyOtp" method="post" class="login100-form validate-form">
+    @Html.AntiForgeryToken()
+    <span class="login100-form-title p-b-49">Enter OTP</span>
+    <div class="wrap-input100 m-b-23">
+        <span class="label-input100">6-digit OTP</span>
+        <input class="input100" asp-for="Otp" placeholder="Enter the code sent to your email" />
+    </div>
+    <div class="container-login100-form-btn">
+        <div class="wrap-login100-form-btn">
+            <div class="login100-form-bgbtn"></div>
+            <button class="login100-form-btn">Verify</button>
+        </div>
+    </div>
+    <div class="text-center p-t-8 p-b-31">
+        <a asp-action="ForgotPassword">Resend code</a> |
+        <a asp-action="Index">Back to Login</a>
+    </div>
+</form>
