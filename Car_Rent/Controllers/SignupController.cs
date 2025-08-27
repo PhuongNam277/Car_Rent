@@ -36,7 +36,7 @@ namespace Car_Rent.Controllers
             var existingUser = await _userService.GetUserByEmailAsync(email);
             if (existingUser != null)
             {
-                TempData["ExistedUsername"] = "Username existed, please try with different username!";
+                TempData["ErrorMessage"] = "Username existed, please try with different username!";
 
                 return View();
             }
@@ -45,20 +45,28 @@ namespace Car_Rent.Controllers
             var passwordPattern = "^(?=.*[A-Z])(?=.*\\d).{8,}$";
             if(!System.Text.RegularExpressions.Regex.IsMatch(password, passwordPattern))
             {
-                TempData["PasswordError"] = "Password must be at least 8 characters, contain 1 uppercase letter and 1 digit.";
+                TempData["ErrorMessage"] = "Password must be at least 8 characters, contain 1 uppercase letter and 1 digit.";
                 return View();
             }
 
             // Make sure confirm password matches password
             if (confirmPassword != password)
             {
-                TempData["ConfirmPasswordError"] = "Confirm password is not match with password";
+                TempData["ErrorMessage"] = "Confirm password is not match with password";
                 return View();
             }
 
             // Ma hoa mat khau
             //string hashedPassword = HashPassword(password);
             string hashedPassword = PasswordHasherUtil.HashPassword(password);
+
+            // Chặn cứng Gmail-only (case-insensitive)
+            var pattern = @"^[^@\s]+@gmail\.com$";
+            if (!Regex.IsMatch(email ?? "", pattern, RegexOptions.IgnoreCase))
+            {
+                TempData["ErrorMessage"] = "Only @gmail.com emails are allowed.";
+                return RedirectToAction(nameof(Index));
+            }
 
             // Tạo đối tượng User và lưu vào cơ sở dữ liệu
             var user = new User

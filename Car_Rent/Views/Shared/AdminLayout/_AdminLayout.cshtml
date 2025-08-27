@@ -9,6 +9,7 @@
 <!-- [Body] Start -->
 @RenderSection("Scripts", required: false)
 <body>
+
     <!-- [ Pre-loader ] start -->
     @await Html.PartialAsync("_Preloader.cshtml")
     <!-- [ Pre-loader ] End -->
@@ -42,6 +43,8 @@
             </div>
             <!-- [ breadcrumb ] end -->
             <!-- [ Main Content ] start -->
+            @* Alerts*@
+            @await Html.PartialAsync("_Alerts.cshtml")
             @RenderBody()
             <!-- [ Main Content ] end -->
         </div>
