@@ -1,0 +1,42 @@
+﻿@model Car_Rent.Models.Contact
+
+@{
+    ViewData["Title"] = "Contact Details";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+
+<div class="card shadow">
+    <div class="card-header bg-info text-white">
+        <h4 class="mb-0">Contact Details</h4>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9">@Model.Name</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@Model.Email</dd>
+
+            <dt class="col-sm-3">Phone Number</dt>
+            <dd class="col-sm-9">@Model.PhoneNumber</dd>
+
+            <dt class="col-sm-3">Project</dt>
+            <dd class="col-sm-9">@Model.Project</dd>
+
+            <dt class="col-sm-3">Subject</dt>
+            <dd class="col-sm-9">@Model.Subject</dd>
+
+            <dt class="col-sm-3">Message</dt>
+            <dd class="col-sm-9" style="white-space:pre-wrap">@Model.Message</dd>
+
+            <dt class="col-sm-3">Submitted Date</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.SubmittedDate)</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@Html.DisplayFor(m => m.Status)</dd>
+        </dl>
+
+        <a asp-action="Edit" asp-route-id="@Model.ContactId" class="btn btn-primary">Edit</a>
+        <a asp-action="AdminIndex" class="btn btn-secondary ms-2">Back to List</a>
+    </div>
+</div>
