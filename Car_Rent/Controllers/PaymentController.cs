@@ -29,15 +29,19 @@ namespace Car_Rent.Controllers
 
             var query = _context.Payments
                 .Include(p => p.Reservation)
+                .ThenInclude(r => r.PickupLocation)
+                .Include(p => p.Reservation)
+                .ThenInclude(r => r.DropoffLocation)
                 .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(search))
+            if(!string.IsNullOrWhiteSpace(search))
             {
                 query = query.Where(p =>
-                p.PaymentMethod.Contains(search) ||
-                p.Status.Contains(search) ||
-                p.Reservation.FromCity.Contains(search) ||
-                p.Reservation.ToCity.Contains(search));
+                    (p.PaymentMethod != null && p.PaymentMethod.Contains(search)) ||
+                    (p.Status != null && p.Status.Contains(search)) ||
+                    (p.Reservation.PickupLocation != null && p.Reservation.PickupLocation.Name.Contains(search)) ||
+                    (p.Reservation.DropoffLocation != null && p.Reservation.DropoffLocation.Name.Contains(search))
+                );
             }
 
             // Sorting logic
@@ -236,29 +240,31 @@ namespace Car_Rent.Controllers
 
             ViewBag.CarName = car?.CarName ?? $"Car #{req.CarId}"; // Default car name if not found
 
+            var pickup = await _context.Locations.FirstOrDefaultAsync(l => l.LocationId == req.PickupLocationId);
+            var dropoff = await _context.Locations.FirstOrDefaultAsync(l => l.LocationId == req.DropoffLocationId);
+
+            ViewBag.PickupName = pickup?.Name ?? $"Station #{req.PickupLocationId}";
+            ViewBag.DropoffName = dropoff?.Name ?? $"Station #{req.DropoffLocationId}";
+
             return View(req);
         }
 
-        // POST: /Payment/PayCash => Save to DB
+
+        // POST: /Payment/PayCash
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PayCash()
         {
             if (!User.Identity?.IsAuthenticated ?? true)
-            {
                 return RedirectToAction("Index", "Login", new { returnUrl = Url.Action("ConfirmPayment", "Payment") });
-            }
 
             var userId = GetUserId();
-
             if (userId == null)
             {
                 TempData["FailedMessage"] = "User not found. Please log in again.";
                 await HttpContext.SignOutAsync("MyCookieAuth");
                 return RedirectToAction("Index", "Login");
             }
-
-            
 
             var json = TempData["ConfirmReservation"] as string;
             if (string.IsNullOrEmpty(json))
@@ -268,87 +274,97 @@ namespace Car_Rent.Controllers
             }
 
             var req = System.Text.Json.JsonSerializer.Deserialize<ReserveRequest>(json);
-            Console.WriteLine(req); // Debugging line
             if (req == null)
             {
                 TempData["FailedMessage"] = "Invalid reservation data. Please try again.";
                 return RedirectToAction("Index", "Bookcar");
             }
 
-            // Check car
-            //var car = await _context.Cars
-            //    .Where(c => c.CarId == req.CarId)
-            //    .Select(c => new { c.RentalPricePerDay })
-            //    .FirstOrDefaultAsync();
-
-            //if (car == null)
-            //{
-            //    TempData["FailedMessage"] = "Car not found. Please try again.";
-            //    return RedirectToAction("Index", "Bookcar");
-            //}
-
-            // Save to DB
             var startDateTime = CombineDateTime(req.StartDate, req.StartTime);
             var endDateTime = CombineDateTime(req.EndDate, req.EndTime);
-
             if (startDateTime >= endDateTime)
             {
-                ModelState.AddModelError("", "Start date and time must be before end date and time.");
-                return RedirectToAction("Index", new { carId = req.CarId, categoryId = req.CategoryId });
+                TempData["FailedMessage"] = "Start date and time must be before end date and time.";
+                return RedirectToAction("Index", "Bookcar");
             }
 
-            //var total = CalculateTotalPrice(startDateTime, endDateTime, car.RentalPricePerDay);
-            //Console.WriteLine($"Total Price: {total}"); // Debugging line
-            //ViewBag.TotalPrice = CalculateTotalPrice(req.StartDate, req.EndDate, car?.RentalPricePerDay ?? 0m);
-
-            // Create a reservation object
-            var reservation = new Reservation
-            {
-                UserId = userId.Value,
-                CarId = req.CarId,
-                ReservationDate = DateTime.Now,
-                StartDate = startDateTime,
-                EndDate = endDateTime,
-                FromCity = req.FromCity,
-                ToCity = req.ToCity,
-                Status = "Pending",
-                TotalPrice = req.TotalPrice
-
-            };
-
-            _context.Reservations.Add(reservation);
-            await _context.SaveChangesAsync();
-
-            // Save to payment
-            var payment = new Payment
-            {
-                ReservationId = reservation.ReservationId,
-                PaymentDate = DateTime.Now,
-                Amount = reservation.TotalPrice,
-                PaymentMethod = "Cash",
-                Status = "Pending"
-            };
-
-            // Set car to unavailable
-            var car = await _context.Cars.FindAsync(req.CarId);
+            var car = await _context.Cars.FirstOrDefaultAsync(c => c.CarId == req.CarId);
             if (car == null)
             {
                 TempData["FailedMessage"] = "Car not found. Please try again.";
                 return RedirectToAction("Index", "Bookcar");
             }
 
-            car.Status = "Rented";
-            _context.Cars.Update(car);
+            if (req.DropoffLocationId == 0)
+                req.DropoffLocationId = req.PickupLocationId;
 
-            _context.Payments.Add(payment);
-            await _context.SaveChangesAsync();
+            if (car.BaseLocationId != req.PickupLocationId)
+            {
+                TempData["FailedMessage"] = "Selected car is not at the pickup station.";
+                return RedirectToAction("Index", "Bookcar");
+            }
 
-            // Clean TempData
-            TempData.Remove("ConfirmReservation");
+            using var tx = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+            try
+            {
+                bool busyNow = await _context.Reservations.AnyAsync(r =>
+                    r.CarId == car.CarId &&
+                    r.Status != "Cancelled" &&
+                    r.StartDate < endDateTime && startDateTime < r.EndDate);
 
-            // Display success message
-            return RedirectToAction(nameof(Success), new { reservationId = reservation.ReservationId });
+                if (busyNow)
+                {
+                    await tx.RollbackAsync();
+                    TempData["FailedMessage"] = "Car just got booked. Please choose another car.";
+                    return RedirectToAction("Index", "Bookcar", new { carId = req.CarId, categoryId = req.CategoryId });
+                }
+
+                //var total = CalculateTotalPrice(startDateTime, endDateTime, car.RentalPricePerDay);
+
+                var reservation = new Reservation
+                {
+                    UserId = userId.Value,
+                    CarId = req.CarId,
+                    ReservationDate = DateTime.Now,
+                    StartDate = startDateTime,
+                    EndDate = endDateTime,
+                    PickupLocationId = req.PickupLocationId,
+                    DropoffLocationId = req.DropoffLocationId,
+                    Status = "Pending",
+                    TotalPrice = req.TotalPrice,
+                    FromCity = "",
+                    ToCity = ""
+                };
+                _context.Reservations.Add(reservation);
+                await _context.SaveChangesAsync();
+
+                var payment = new Payment
+                {
+                    ReservationId = reservation.ReservationId,
+                    PaymentDate = DateTime.Now,
+                    Amount = reservation.TotalPrice,
+                    PaymentMethod = "Cash",
+                    Status = "Pending"
+                };
+                _context.Payments.Add(payment);
+
+                // Tuỳ chính sách: có thể KHÔNG đổi trạng thái xe ở đây (dùng calendar từ Reservation)
+                car.Status = "Rented";
+                _context.Cars.Update(car);
+
+                await _context.SaveChangesAsync();
+                await tx.CommitAsync();
+
+                TempData.Remove("ConfirmReservation");
+                return RedirectToAction(nameof(Success), new { reservationId = reservation.ReservationId });
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
         }
+
 
         // Combine datetime method
         private static DateTime CombineDateTime(DateTime date, string timeHHMM)

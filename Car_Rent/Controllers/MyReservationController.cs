@@ -111,6 +111,14 @@ namespace Car_Rent.Controllers
             // Update status to Cancelled
             res.Status = "Cancelled";
 
+            // Update status car to Available
+            var car = await _context.Cars.FirstOrDefaultAsync(c => c.CarId == res.CarId);
+            if (car != null)
+            {
+                car.Status = "Available";
+            }
+
+
             await _context.SaveChangesAsync();
 
             TempData["Success"] = "Reservation cancelled successfully.";

@@ -21,7 +21,7 @@
                             <div class="col-lg-6 fadeInLeft animated" data-animation="fadeInLeft" data-delay="1s" style="animation-delay: 1s;">
                                 <div class="bg-secondary rounded p-5">
                                     <h4 class="text-white mb-4">CONTINUE CAR RESERVATION</h4>
-                                    <form asp-action="BookNow" asp-controller="Bookcar" method="post">
+                                    <form id="reserveForm" asp-action="BookNow" asp-controller="Bookcar" method="post">
                                         @Html.AntiForgeryToken()
                                         <div class="row g-3">
                                             <div class="col-12">
@@ -51,18 +51,31 @@
                                             <div class="col-12">
                                                 <div class="input-group">
                                                     <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-map-marker-alt"></span> <span class="ms-1">Pick Up</span>
+                                                        <span class="fas fa-map-marker-alt"></span> <span class="ms-1">Pick Up (Station)</span>
                                                     </div>
-                                                    <input class="form-control" name="FromCity" type="text" placeholder="Enter a City or Airport" aria-label="Enter a City or Airport">
+                                                    <select class="form-select" name="PickupLocationId" id="pickupLocationSelect" required>
+                                                        <option value="">Select a Station</option>
+                                                        @foreach (var loc in (IEnumerable<Car_Rent.Models.Location>)ViewBag.Locations)
+                                                        {
+                                                            <option value="@loc.LocationId">@loc.Name</option>
+                                                        }
+                                                    </select>
                                                 </div>
                                             </div>
+                                            <!-- DROPOFF (Station) -->
                                             <div class="col-12">
                                                 <a href="#" class="text-start text-white d-block mb-2">Need a different drop-off location?</a>
                                                 <div class="input-group">
                                                     <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-map-marker-alt"></span><span class="ms-1">Drop off</span>
+                                                        <span class="fas fa-map-marker-alt"></span><span class="ms-1">Drop off (Station)</span>
                                                     </div>
-                                                    <input class="form-control" name="ToCity" type="text" placeholder="Enter a City or Airport" aria-label="Enter a City or Airport">
+                                                    <select class="form-select" name="DropoffLocationId" id="dropoffLocationSelect" required>
+                                                        <option value="">Select a Station</option>
+                                                        @foreach (var loc in (IEnumerable<Car_Rent.Models.Location>)ViewBag.Locations)
+                                                        {
+                                                            <option value="@loc.LocationId">@loc.Name</option>
+                                                        }
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div class="col-12">
@@ -258,6 +271,93 @@
 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(function () {
+      const $form = $('#reserveForm');
+      const $pickup = $form.find('#pickupLocationSelect');
+      const $category = $form.find('#categorySelect');
+      const $car = $form.find('#carSelect');
+      const $startDate = $form.find('input[name="StartDate"]');
+      const $endDate   = $form.find('input[name="EndDate"]');
+      const $startTime = $form.find('select[name="StartTime"]');
+      const $endTime   = $form.find('select[name="EndTime"]');
+      const $bookBtn   = $form.find('button[type="submit"]');
+
+      // Ghi nhớ XE mà anh đã chọn lần gần nhất (dù danh sách có reload)
+      let lastChosenCarId = $car.val() || null;
+
+      function hhmm(v){ return (v && v.length===5) ? v : "12:00"; }
+      function debounce(fn, wait){ let t; return function(){ clearTimeout(t); t=setTimeout(()=>fn.apply(this,arguments),wait); }; }
+      function setLoading(on){
+        if(on){ $car.prop('disabled', true).html('<option selected>Loading...</option>'); $bookBtn.prop('disabled', true); }
+        else  { $car.prop('disabled', false); $bookBtn.prop('disabled', false); }
+      }
+
+      // Khi anh CHỌN lại xe → xoá cảnh báo ngay
+      $car.on('change', function(){
+        lastChosenCarId = $(this).val() || null;
+        $form.find('#carLostMsg').remove();
+      });
+
+      function reloadCars(){
+        const pickupLocationId = $pickup.val();
+        const categoryId = $category.val();
+        const startDateVal = $startDate.val();
+        const endDateVal   = $endDate.val();
+        const startTimeVal = hhmm($startTime.val());
+        const endTimeVal   = hhmm($endTime.val());
+        if(!pickupLocationId || !startDateVal || !endDateVal) return;
+
+        const hadSelection = !!lastChosenCarId;        // trước đó có chọn xe không?
+        setLoading(true);
+
+        $.get('/Bookcar/AvailableCars', {
+          pickupLocationId, categoryId, startDate: startDateVal, endDate: endDateVal,
+          startTime: startTimeVal, endTime: endTimeVal
+        })
+        .done(function(data){
+          let foundOld = false;
+          $car.empty().append('<option value="">Select Your Car</option>');
+          data.forEach(function(item){
+            if(lastChosenCarId && String(item.carId) === String(lastChosenCarId)) foundOld = true;
+            $car.append($('<option/>', { value: item.carId, text: item.carName }));
+          });
+
+          // Nếu xe cũ còn → tự chọn lại & xoá cảnh báo
+          if(foundOld){
+            $car.val(lastChosenCarId);
+            $form.find('#carLostMsg').remove();
+          } else {
+            // Nếu TRƯỚC ĐÓ CÓ lựa chọn, nhưng giờ không còn trong list → cảnh báo
+            $form.find('#carLostMsg').remove();
+            if(hadSelection){
+              $car.after('<small id="carLostMsg" class="text-warning ms-2">Xe anh vừa chọn không còn phù hợp với lựa chọn hiện tại.</small>');
+            }
+            // Không ép cảnh báo nếu chưa từng chọn xe
+            lastChosenCarId = null; // reset, đợi anh chọn lại
+          }
+        })
+        .fail(function(){ alert('Cannot load available cars.'); })
+        .always(function(){ setLoading(false); });
+      }
+
+      const reloadCarsDebounced = debounce(reloadCars, 300);
+
+      // Triggers
+      $pickup.on('change', function(){
+        reloadCarsDebounced();
+        $form.find('#dropoffLocationSelect').val($(this).val()); // MVP: đồng bộ drop-off
+      });
+      $category.on('change', reloadCarsDebounced);
+      $startDate.on('change', reloadCarsDebounced);
+      $endDate.on('change', reloadCarsDebounced);
+      $startTime.on('change', reloadCarsDebounced);
+      $endTime.on('change', reloadCarsDebounced);
+    });
+</script>
+
+
+
 <script>
     $(document).ready(function () {
         $("#categorySelect").change(function () {

@@ -42,15 +42,15 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="FromCity" class="form-label"></label>
-        <input asp-for="FromCity" class="form-control" />
-        <span asp-validation-for="FromCity" class="text-danger"></span>
+        <label asp-for="PickupLocationId" class="form-label"></label>
+        <select asp-for="PickupLocationId" class="form-select" asp-items="ViewBag.PickupLocationId"></select>
+        <span asp-validation-for="PickupLocationId" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="ToCity" class="form-label"></label>
-        <input asp-for="ToCity" class="form-control" />
-        <span asp-validation-for="ToCity" class="text-danger"></span>
+        <label asp-for="DropoffLocationId" class="form-label"></label>
+        <select asp-for="DropoffLocationId" class="form-select" asp-items="ViewBag.DropoffLocationId"></select>
+        <span asp-validation-for="DropoffLocationId" class="text-danger"></span>
     </div>
 
     <div class="mb-3">

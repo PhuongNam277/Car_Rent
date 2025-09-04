@@ -42,4 +42,9 @@ public partial class Car
     public virtual ICollection<Reservation>? Reservations { get; set; } = new List<Reservation>();
 
     public virtual ICollection<Review>? Reviews { get; set; } = new List<Review>();
+
+    // New
+    public int BaseLocationId { get; set; }
+    public virtual Location BaseLocation { get; set; } = null!;
+    //public virtual Category? Category { get; set; } = null!;
 }

@@ -33,4 +33,13 @@ public partial class Reservation
     public virtual ICollection<Payment>? Payments { get; set; } = new List<Payment>();
 
     public virtual User? User { get; set; } = null!;
+
+    // New
+    public int? PickupLocationId { get; set; }
+    public int? DropoffLocationId { get; set; }
+
+    public virtual Location? PickupLocation { get; set; } = null!;
+    public virtual Location? DropoffLocation { get; set; } = null!;
+
+
 }

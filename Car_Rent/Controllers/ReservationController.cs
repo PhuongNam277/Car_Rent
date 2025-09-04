@@ -13,10 +13,12 @@ namespace Car_Rent.Controllers
     public class ReservationController : Controller
     {
         private readonly CarRentalDbContext _context;
+        private readonly ILogger<ReservationController> _logger;
 
-        public ReservationController(CarRentalDbContext context)
+        public ReservationController(CarRentalDbContext context, ILogger<ReservationController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
 
@@ -30,6 +32,8 @@ namespace Car_Rent.Controllers
             var query = _context.Reservations
                 .Include(r => r.Car)
                 .Include(r => r.User)
+                .Include(r => r.PickupLocation)
+                .Include(r => r.DropoffLocation)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
@@ -92,7 +96,7 @@ namespace Car_Rent.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ReservationId,UserId,CarId,ReservationDate,StartDate,EndDate,TotalPrice,FromCity, ToCity, Status")] Reservation reservation)
+        public async Task<IActionResult> Create([Bind("ReservationId,UserId,CarId,ReservationDate,StartDate,EndDate,TotalPrice,FromCity, ToCity, Status, PickupLocationId, DropoffLocationId")] Reservation reservation)
         {
             if (ModelState.IsValid)
             {
@@ -120,6 +124,10 @@ namespace Car_Rent.Controllers
             }
             ViewData["CarId"] = new SelectList(_context.Cars, "CarId", "CarName", reservation.CarId);
             ViewData["UserId"] = new SelectList(_context.Users, "UserId", "Username", reservation.UserId);
+
+            // NEW:
+            ViewData["PickupLocationId"] = new SelectList(_context.Locations.Where(l => l.IsActive), "LocationId", "Name", reservation.PickupLocationId);
+            ViewData["DropoffLocationId"] = new SelectList(_context.Locations.Where(l => l.IsActive), "LocationId", "Name", reservation.DropoffLocationId); 
             return View(reservation);
         }
 

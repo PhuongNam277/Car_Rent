@@ -39,6 +39,9 @@ public partial class CarRentalDbContext : DbContext
 
     public virtual DbSet<Role> Roles { get; set; } = null!;
 
+    public virtual DbSet<Location> Locations { get; set; } // NEW
+
+
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -91,6 +94,13 @@ public partial class CarRentalDbContext : DbContext
                 .HasForeignKey(d => d.CategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Cars__CategoryId__412EB0B6");
+
+            entity.HasOne(d => d.BaseLocation)
+          .WithMany(p => p.Cars)
+          .HasForeignKey(d => d.BaseLocationId)
+          .OnDelete(DeleteBehavior.Restrict)
+          .HasConstraintName("FK_Cars_Locations_BaseLocationId");
+
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -191,6 +201,19 @@ public partial class CarRentalDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Reservati__UserI__45F365D3");
+
+            entity.HasOne(d => d.PickupLocation)
+          .WithMany(p => p.PickupReservations)
+          .HasForeignKey(d => d.PickupLocationId)
+          .OnDelete(DeleteBehavior.Restrict)
+          .HasConstraintName("FK_Reservations_Locations_Pickup");
+
+            entity.HasOne(d => d.DropoffLocation)
+                  .WithMany(p => p.DropoffReservations)
+                  .HasForeignKey(d => d.DropoffLocationId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .HasConstraintName("FK_Reservations_Locations_Dropoff");
+
         });
 
         modelBuilder.Entity<Review>(entity =>
@@ -243,6 +266,15 @@ public partial class CarRentalDbContext : DbContext
         {
             entity.HasKey(e => e.RoleId);
             entity.Property(e => e.RoleName).HasMaxLength(50).IsRequired();
+        });
+
+        modelBuilder.Entity<Location>(entity =>
+        {
+            entity.HasKey(e => e.LocationId);
+            entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Address).HasMaxLength(255);
+            entity.Property(e => e.City).HasMaxLength(100);
+            entity.Property(e => e.TimeZone).HasMaxLength(50);
         });
 
         OnModelCreatingPartial(modelBuilder);
