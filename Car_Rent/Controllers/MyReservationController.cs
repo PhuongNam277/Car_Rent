@@ -33,15 +33,21 @@ namespace Car_Rent.Controllers
 
             var q = _context.Reservations.AsNoTracking()
                 .Include(r => r.Car)
+                .Include(r => r.PickupLocation)
+                .Include(r => r.DropoffLocation)
                 .Where(r => r.UserId == uid.Value);
 
             if(!string.IsNullOrWhiteSpace(status)) q = q.Where(r => r.Status == status);
             if (from.HasValue) q = q.Where(r => r.StartDate >= from.Value);
             if(to.HasValue) q = q.Where(r => r.EndDate <= to.Value);
-            if(!string.IsNullOrWhiteSpace(route))
+            if (!string.IsNullOrWhiteSpace(route))
             {
                 var r = route.Trim();
-                q = q.Where(x => (x.FromCity ?? "").Contains(r) || (x.ToCity ?? "").Contains(r));
+                q = q.Where(x =>
+                    (x.PickupLocation != null && x.PickupLocation.Name.Contains(r)) ||
+                    (x.DropoffLocation != null && x.DropoffLocation.Name.Contains(r)) ||
+                    ((x.FromCity ?? "").Contains(r)) || ((x.ToCity ?? "").Contains(r))
+                );
             }
 
             q = sortBy switch
@@ -56,6 +62,8 @@ namespace Car_Rent.Controllers
             var items = await q.Skip((page -1) * pageSize).Take(pageSize).ToListAsync();
 
 
+
+
             ViewBag.TotalItems = total;
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
@@ -64,6 +72,7 @@ namespace Car_Rent.Controllers
             ViewBag.To = to;
             ViewBag.Route = route;
             ViewBag.SortBy = sortBy;
+
 
             return View(items);
         }
@@ -78,7 +87,12 @@ namespace Car_Rent.Controllers
             var res = await _context.Reservations
                 .Include(r => r.Car)
                 .Include(r => r.Payments)
+                .Include(r => r.PickupLocation)
+                .Include(r => r.DropoffLocation)
                 .FirstOrDefaultAsync(r => r.ReservationId == id && r.UserId == uid.Value);
+
+            ViewBag.PickUpStationName = res?.PickupLocation?.Name ?? "N/A";
+            ViewBag.DropOffStationName = res?.DropoffLocation?.Name ?? "N/A";
 
             if (res is null) return NotFound();
             return View(res);

@@ -2,6 +2,8 @@
 @{
     ViewData["Title"] = $"Reservation #{Model.ReservationId}";
     Layout = "~/Views/Shared/MainLayout.cshtml";
+	var pickUpStationName = ViewBag.PickUpStationName as string ?? ("Location #" + Model.PickupLocationId);
+	var dropOffStationName = ViewBag.DropOffStationName as string ?? ("Location #" + Model.DropoffLocationId);
 }
 
 <div class="container my-4">
@@ -9,7 +11,7 @@
     <div class="mb-3">
         <strong>Car:</strong> @Model.Car?.CarName <br />
         <strong>Time:</strong> @Model.StartDate - @Model.EndDate <br />
-        <strong>Route:</strong> @Model.FromCity → @Model.ToCity <br />
+        <strong>Route:</strong> @pickUpStationName → @dropOffStationName<br />
         <strong>Status:</strong> @Model.Status <br />
         <strong>Total:</strong> @Model.TotalPrice.ToString() USD
     </div>

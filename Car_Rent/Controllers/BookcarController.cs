@@ -61,17 +61,17 @@ namespace Car_Rent.Controllers
             }
 
             var query = _context.Cars
-                .Where(c => c.Status == "Available" && c.BaseLocationId == req.PickupLocationId);
+                .Where(c => c.BaseLocationId == req.PickupLocationId);
 
             if (req.CategoryId.HasValue) query = query.Where(c => c.CategoryId == req.CategoryId.Value);
 
             var cars = await query
-                        .Where(c => !_context.Reservations.Any(r =>
-                            r.CarId == c.CarId &&
-                            r.Status != "Cancelled" &&
-                            r.StartDate < end && start < r.EndDate))
-                        .Select(c => new { c.CarId, c.CarName })
-                        .ToListAsync();
+                .Where(c => !_context.Reservations.Any(r =>
+                    r.CarId == c.CarId &&
+                    r.Status != "Cancelled" &&                  // chỉ loại đơn chưa hủy
+                    r.StartDate < end && start < r.EndDate))    // điều kiện overlap chuẩn
+                .Select(c => new { c.CarId, c.CarName })
+                .ToListAsync();
 
             return Json(cars);
         }

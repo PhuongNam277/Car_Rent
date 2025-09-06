@@ -65,18 +65,18 @@
                     <td>#@x.ReservationId</td>
                     <td>@x.Car?.CarName</td>
                     <td>@x.StartDate - @x.EndDate</td>
-                    <td>@x.FromCity → @x.ToCity</td>
+                    <td>@x.PickupLocation?.Name → @x.DropoffLocation?.Name</td>
                     <td>
                         <span class="badge bg-@(
-          (x.Status ?? "Pending") switch {
-            "Pending" => "secondary",
-            "Confirmed" => "info",
-            "InProgress" => "primary",
-            "Completed" => "dark",
-            "Cancelled" => "danger",
-            "Rejected" => "warning",
-            _ => "secondary"
-          })">@x.Status</span>
+                          (x.Status ?? "Pending") switch {
+                            "Pending" => "secondary",
+                            "Confirmed" => "info",
+                            "InProgress" => "primary",
+                            "Completed" => "dark",
+                            "Cancelled" => "danger",
+                            "Rejected" => "warning",
+                            _ => "secondary"
+                          })">@x.Status</span>
                     </td>
                     <td>@x.TotalPrice USD</td>
                     <td class="text-nowrap">

@@ -24,30 +24,80 @@
                                     <form id="reserveForm" asp-action="BookNow" asp-controller="Bookcar" method="post">
                                         @Html.AntiForgeryToken()
                                         <div class="row g-3">
-                                            <div class="col-12">
-                                                <select id="categorySelect" name="CategoryId" class="form-select" aria-label="Default select example">
-                                                    <option selected>Select Your Car Type</option>
-                                                    @foreach (var c in Model.Categories)
-                                                    {
-                                                        var isSelected = (ViewBag.SelectedCategoryId != null && c.CategoryId == (int)ViewBag.SelectedCategoryId);
-                                                        var selectedText = isSelected ? "selected" : "";
-                                                        @Html.Raw($"<option value='{c.CategoryId}' {selectedText}>{c.CategoryName}</option>")
-    
-                                                    }
-                                                </select>
-                                            </div>
-                                            <div class="col-12">
-                                                <select id="carSelect" name="CarId" class="form-select" aria-label="Default select example">
-                                                    <option selected>Select Your Car Brand</option>
-                                                    @foreach(var car in Model.Cars)
-                                                    {
-                                                        var isSelected = (ViewBag.SelectedCarId != null && car.CarId == (int)ViewBag.SelectedCarId);
-                                                        var selectedText = isSelected ? "selected" : "";
-                                                        @Html.Raw($"<option value='{car.CarId}' {selectedText}>{car.CarName}</option>")
-                                                    }
 
-                                                </select>
+                                            <!-- 1) PICKUP DATE/TIME -->
+                                            <div class="col-12">
+                                                <div class="input-group">
+                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
+                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Pick Up</span>
+                                                    </div>
+                                                    <input class="form-control" name="StartDate" type="date">
+                                                    <select class="form-select ms-3" name="StartTime" aria-label="Pick up time">
+                                                        <option>12:00</option>
+                                                        <option>01:00</option>
+                                                        <option>02:00</option>
+                                                        <option>03:00</option>
+                                                        <option>04:00</option>
+                                                        <option>05:00</option>
+                                                        <option>06:00</option>
+                                                        <option>07:00</option>
+                                                        <option>08:00</option>
+                                                        <option>09:00</option>
+                                                        <option>10:00</option>
+                                                        <option>11:00</option>
+                                                        <option>12:00</option>
+                                                        <option>13:00</option>
+                                                        <option>14:00</option>
+                                                        <option>15:00</option>
+                                                        <option>16:00</option>
+                                                        <option>17:00</option>
+                                                        <option>18:00</option>
+                                                        <option>19:00</option>
+                                                        <option>20:00</option>
+                                                        <option>21:00</option>
+                                                        <option>22:00</option>
+                                                        <option>23:00</option>
+                                                    </select>
+                                                </div>
                                             </div>
+
+                                            <!-- 1) DROPOFF DATE/TIME -->
+                                            <div class="col-12">
+                                                <div class="input-group">
+                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
+                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Drop off</span>
+                                                    </div>
+                                                    <input class="form-control" name="EndDate" type="date">
+                                                    <select class="form-select ms-3" name="EndTime" aria-label="Drop off time">
+                                                        <option>12:00</option>
+                                                        <option>01:00</option>
+                                                        <option>02:00</option>
+                                                        <option>03:00</option>
+                                                        <option>04:00</option>
+                                                        <option>05:00</option>
+                                                        <option>06:00</option>
+                                                        <option>07:00</option>
+                                                        <option>08:00</option>
+                                                        <option>09:00</option>
+                                                        <option>10:00</option>
+                                                        <option>11:00</option>
+                                                        <option>12:00</option>
+                                                        <option>13:00</option>
+                                                        <option>14:00</option>
+                                                        <option>15:00</option>
+                                                        <option>16:00</option>
+                                                        <option>17:00</option>
+                                                        <option>18:00</option>
+                                                        <option>19:00</option>
+                                                        <option>20:00</option>
+                                                        <option>21:00</option>
+                                                        <option>22:00</option>
+                                                        <option>23:00</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <!-- 2) PICKUP (Station) -->
                                             <div class="col-12">
                                                 <div class="input-group">
                                                     <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
@@ -62,7 +112,8 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <!-- DROPOFF (Station) -->
+
+                                            <!-- 2) DROPOFF (Station) -->
                                             <div class="col-12">
                                                 <a href="#" class="text-start text-white d-block mb-2">Need a different drop-off location?</a>
                                                 <div class="input-group">
@@ -78,79 +129,40 @@
                                                     </select>
                                                 </div>
                                             </div>
+
+                                            <!-- 3) CATEGORY -->
                                             <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Pick Up</span>
-                                                    </div>
-                                                    <input class="form-control" name="StartDate" type="date">
-                                                    <select class="form-select ms-3" name="StartTime" aria-label="Default select example">
-                                                        <option>12:00</option>
-                                                        <option>01:00</option>
-                                                        <option>02:00</option>
-                                                        <option>03:00</option>
-                                                        <option>04:00</option>
-                                                        <option>05:00</option>
-                                                        <option>06:00</option>
-                                                        <option>07:00</option>
-                                                        <option>08:00</option>
-                                                        <option>09:00</option>
-                                                        <option>10:00</option>
-                                                        <option>11:00</option>
-                                                        <option>12:00</option>
-                                                        <option>13:00</option>
-                                                        <option>14:00</option>
-                                                        <option>15:00</option>
-                                                        <option>16:00</option>
-                                                        <option>17:00</option>
-                                                        <option>18:00</option>
-                                                        <option>19:00</option>
-                                                        <option>20:00</option>
-                                                        <option>21:00</option>
-                                                        <option>22:00</option>
-                                                        <option>23:00</option>
-                                                    </select>
-                                                </div>
+                                                <select id="categorySelect" name="CategoryId" class="form-select" aria-label="Select car type">
+                                                    <option selected>Select Your Car Type</option>
+                                                    @foreach (var c in Model.Categories)
+                                                    {
+                                                        var isSelected = (ViewBag.SelectedCategoryId != null && c.CategoryId == (int)ViewBag.SelectedCategoryId);
+                                                        var selectedText = isSelected ? "selected" : "";
+                                                        @Html.Raw($"<option value='{c.CategoryId}' {selectedText}>{c.CategoryName}</option>")
+                                                    }
+                                                </select>
                                             </div>
+
+                                            <!-- 3) CAR -->
                                             <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Drop off</span>
-                                                    </div>
-                                                    <input class="form-control" name="EndDate" type="date">
-                                                    <select class="form-select ms-3" name="EndTime" aria-label="Default select example">
-                                                        <option>12:00</option>
-                                                        <option>01:00</option>
-                                                        <option>02:00</option>
-                                                        <option>03:00</option>
-                                                        <option>04:00</option>
-                                                        <option>05:00</option>
-                                                        <option>06:00</option>
-                                                        <option>07:00</option>
-                                                        <option>08:00</option>
-                                                        <option>09:00</option>
-                                                        <option>10:00</option>
-                                                        <option>11:00</option>
-                                                        <option>12:00</option>
-                                                        <option>13:00</option>
-                                                        <option>14:00</option>
-                                                        <option>15:00</option>
-                                                        <option>16:00</option>
-                                                        <option>17:00</option>
-                                                        <option>18:00</option>
-                                                        <option>19:00</option>
-                                                        <option>20:00</option>
-                                                        <option>21:00</option>
-                                                        <option>22:00</option>
-                                                        <option>23:00</option>
-                                                    </select>
-                                                </div>
+                                                <select id="carSelect" name="CarId" class="form-select" aria-label="Select car brand">
+                                                    <option selected>Select Your Car Brand</option>
+                                                    @foreach (var car in Model.Cars)
+                                                    {
+                                                        var isSelected = (ViewBag.SelectedCarId != null && car.CarId == (int)ViewBag.SelectedCarId);
+                                                        var selectedText = isSelected ? "selected" : "";
+                                                        @Html.Raw($"<option value='{car.CarId}' {selectedText}>{car.CarName} - {car.LicensePlate}</option>")
+                                                    }
+                                                </select>
                                             </div>
+
+                                            <!-- SUBMIT -->
                                             <div class="col-12">
                                                 <button type="submit" class="btn btn-light w-100 py-2">Book Now</button>
                                             </div>
                                         </div>
                                     </form>
+
                                 </div>
                             </div>
                             <div class="col-lg-6 d-none d-lg-flex fadeInRight animated" data-animation="fadeInRight" data-delay="1s" style="animation-delay: 1s;">

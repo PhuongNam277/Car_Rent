@@ -136,7 +136,7 @@ namespace Car_Rent.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ReservationId,UserId,CarId,ReservationDate,StartDate,EndDate,TotalPrice,FromCity, ToCity, Status")] Reservation reservation)
+        public async Task<IActionResult> Edit(int id, [Bind("ReservationId,UserId,CarId,ReservationDate,StartDate,EndDate,TotalPrice, Status")] Reservation reservation)
         {
             if (id != reservation.ReservationId)
             {
@@ -147,6 +147,9 @@ namespace Car_Rent.Controllers
             {
                 try
                 {
+                    reservation.FromCity = ".";
+                    reservation.ToCity = ".";
+
                     _context.Update(reservation);
                     // If Status = "Completed"
                     if(string.Equals(reservation.Status, "Completed", StringComparison.OrdinalIgnoreCase))
@@ -165,6 +168,33 @@ namespace Car_Rent.Controllers
                         if (car != null)
                         {
                             car.Status = "Available";
+                            car.BaseLocationId = reservation.DropoffLocationId ?? car.BaseLocationId;
+                            _context.Update(car);
+                        }
+                    }
+                    else if (string.Equals(reservation.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Payment -> Cancelled (hoặc Refunded), Car -> Available ngay
+                        var payment = await _context.Payments.FirstOrDefaultAsync(p => p.ReservationId == reservation.ReservationId);
+                        if (payment != null)
+                        {
+                            payment.Status = "Cancelled"; // or "Refunded" based on your logic
+                        }
+                        var car = await _context.Cars.FindAsync(reservation.CarId);
+                        if (car != null)
+                        {
+                            car.Status = "Available";
+                            _context.Update(car);
+                        }
+
+                    }
+                    else
+                    {
+                        // Update the car's status to "Rented"
+                        var car = await _context.Cars.FindAsync(reservation.CarId);
+                        if (car != null)
+                        {
+                            car.Status = "Rented";
                             _context.Update(car);
                         }
                     }

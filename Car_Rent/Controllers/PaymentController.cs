@@ -243,8 +243,8 @@ namespace Car_Rent.Controllers
             var pickup = await _context.Locations.FirstOrDefaultAsync(l => l.LocationId == req.PickupLocationId);
             var dropoff = await _context.Locations.FirstOrDefaultAsync(l => l.LocationId == req.DropoffLocationId);
 
-            ViewBag.PickupName = pickup?.Name ?? $"Station #{req.PickupLocationId}";
-            ViewBag.DropoffName = dropoff?.Name ?? $"Station #{req.DropoffLocationId}";
+            ViewBag.PickUpName = pickup?.Name ?? $"Station #{req.PickupLocationId}";
+            ViewBag.DropOffName = dropoff?.Name ?? $"Station #{req.DropoffLocationId}";
 
             return View(req);
         }
