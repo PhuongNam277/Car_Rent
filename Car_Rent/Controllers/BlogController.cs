@@ -1,7 +1,14 @@
-﻿using Car_Rent.Models;
+﻿using System.Security.Claims;
+using Car_Rent.Models;
+using Car_Rent.ViewModels.Blog;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Car_Rent.ViewModels;
 
 namespace Car_Rent.Controllers
 {
@@ -251,5 +258,197 @@ namespace Car_Rent.Controllers
         {
             return _context.Blogs.Any(e => e.BlogId == id);
         }
+
+        // Blog Details with comments
+        [HttpGet]
+        public async Task<IActionResult> BlogDetails(int id)
+        {
+            var blog = await _context.Blogs
+                .Include(b => b.Author)
+                .FirstOrDefaultAsync(b => b.BlogId == id && b.Status == "Published");
+
+            if (blog == null) return NotFound();
+
+            var comments = await _context.Comments
+                .AsNoTracking()
+                .Where(c => c.BlogId == id)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+
+            ViewBag.CurrentUserId = GetCurrentUserId();
+            ViewBag.IsAdmin = IsAdmin();
+
+            return View(new ViewModels.Blog.BlogDetailsViewModel
+            {
+                Blog = blog,
+                Comments = comments,
+                NewComment = new ViewModels.Blog.BlogCommentInput { BlogId = id }
+            });
+        }
+
+        // Create comments
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize] // needs login to post comments
+        public async Task<IActionResult> PostComment([Bind(Prefix ="NewComment")]BlogCommentInput input)
+        {
+            if (!ModelState.IsValid) return await ReloadDetailsWithModelState(input.BlogId, input);
+
+            var uid = GetCurrentUserId();
+            var username = await GetCurrentUsernameAsync();
+            if(uid == null || string.IsNullOrWhiteSpace(username))
+            {
+                var returnUrl = Url.Action(nameof(BlogDetails), new {id = input.BlogId});
+                return RedirectToAction("Index", "Login", new { returnUrl });
+            }
+
+            var displayName = input.IsAnonymous ? "Anonymous" : username;
+
+            var comment = new Comment
+            {
+                BlogId = input.BlogId,
+                UserId = (int)uid,
+                AuthorName = displayName,
+                IsAnonymous = input.IsAnonymous,
+                Content = input.Content.Trim(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Comments.Add(comment);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(BlogDetails), new { id = input.BlogId });
+
+        }
+
+        // Edit comment
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> EditComment (int id)
+        {
+            var cmt = await _context.Comments.FirstOrDefaultAsync(c => c.CommentId == id);
+            if (cmt == null) return NotFound();
+
+            if (!CanManageComment(cmt)) return Forbid();
+
+            var vm = new CommentEditInput
+            {
+                CommentId = cmt.CommentId,
+                BlogId = cmt.BlogId,
+                Content = cmt.Content
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> EditComment(CommentEditInput input)
+        {
+            if (!ModelState.IsValid) return View(input);
+
+            var cmt = await _context.Comments.FirstOrDefaultAsync(c => c.CommentId == input.CommentId);
+            if (cmt == null) return NotFound();
+
+            if (!CanManageComment(cmt)) return Forbid();
+
+            cmt.Content = input.Content.Trim();
+            cmt.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            var url = Url.Action(nameof(BlogDetails), new { id = input.BlogId });
+            return Redirect(url + $"#comment-{cmt.CommentId}");
+        }
+
+        // Delete comment
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> DeleteComment(int id, int blogId)
+        {
+            var cmt = await _context.Comments.FirstOrDefaultAsync(c => c.CommentId == id);
+            if (cmt == null) return NotFound();
+
+            if (!CanManageComment(cmt)) return Forbid();
+
+            _context.Comments.Remove(cmt);
+            await _context.SaveChangesAsync();
+
+            var url = Url.Action(nameof(BlogDetails), new { id = blogId });
+            return Redirect(url + "#comment");
+        }
+
+        // Helpers
+        private async Task<IActionResult> ReloadDetailsWithModelState (int blogId, BlogCommentInput input)
+        {
+            var blog = await _context.Blogs
+                .Include(b => b.Author)
+                .FirstOrDefaultAsync(b => b.BlogId == blogId);
+            if (blog == null) return NotFound();
+
+            var comments = await _context.Comments
+                .AsNoTracking()
+                .Where(c => c.BlogId == blogId)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+
+            ViewBag.CurrentUserId = GetCurrentUserId();
+            ViewBag.IsAdmin = IsAdmin();
+
+            return View("BlogDetails", new ViewModels.Blog.BlogDetailsViewModel
+            {
+                Blog = blog,
+                Comments = comments,
+                NewComment = input
+            });
+        }
+        
+        private int? GetCurrentUserId()
+        {
+            var raw = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("UserId");
+            if (int.TryParse(raw, out var id)) return id;
+            return null;
+        }
+
+        private async Task<string?> GetCurrentUsernameAsync()
+        {
+            var name = User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue("Username");
+            if (!string.IsNullOrWhiteSpace(name)) return name;
+
+            var idRaw = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("UserId");
+            if (int.TryParse(idRaw, out var uid))
+            {
+                return await _context.Users
+                    .AsNoTracking()
+                    .Where(u => u.UserId == uid)
+                    .Select(u => u.Username)
+                    .FirstOrDefaultAsync();
+            }
+
+            return null;
+        
+        }
+
+        private bool IsAdmin()
+        {
+            return User.IsInRole("Admin")
+                || User.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin")
+                || User.HasClaim("IsAdmin", "true");
+        }
+
+        private bool CanManageComment(Comment c)
+        {
+            var uid = GetCurrentUserId();
+            return IsAdmin() || (uid != null && c.UserId == uid);
+        }
+
+
+
+
+
+
+
     }
 }

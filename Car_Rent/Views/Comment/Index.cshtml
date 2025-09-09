@@ -45,7 +45,7 @@
                 <td>@item.BlogId</td>
                 <td>@item.AuthorName</td>
                 <td>@item.Content</td>
-                <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>@item.CreatedAt?.ToString("yyyy-MM-dd HH:mm")</td>
                 <td>
                     <a class="btn btn-sm btn-primary" asp-action="Edit" asp-route-id="@item.CommentId">Edit</a>
                     <a class="btn btn-sm btn-info text-white" asp-action="Details" asp-route-id="@item.CommentId">Details</a>

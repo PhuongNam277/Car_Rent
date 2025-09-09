@@ -24,7 +24,7 @@ builder.Services.AddAuthentication("MyCookieAuth")
         {
             OnValidatePrincipal = async context =>
             {
-                var userIdStr = context.Principal.FindFirst("UserId")?.Value;
+                var userIdStr = context.Principal?.FindFirst("UserId")?.Value;
                 if (!int.TryParse(userIdStr, out var userId)) return;
 
                 var db = context.HttpContext.RequestServices.GetRequiredService<CarRentalDbContext>();

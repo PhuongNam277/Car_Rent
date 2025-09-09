@@ -1,0 +1,30 @@
+﻿@model Car_Rent.ViewModels.Blog.CommentEditInput
+@{
+    ViewData["Title"] = "Edit Comment";
+    Layout = "~/Views/Shared/MainLayout.cshtml";
+}
+
+<div class="container py-5" style="max-width: 800px;">
+    <h3 class="mb-4">Edit Comment</h3>
+
+    <form asp-action="EditComment" asp-controller="Blog" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="CommentId" />
+        <input type="hidden" asp-for="BlogId" />
+
+        <div class="mb-3">
+            <label asp-for="Content" class="form-label">Content</label>
+            <textarea asp-for="Content" rows="6" class="form-control"></textarea>
+            <span class="text-danger" asp-validation-for="Content"></span>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a class="btn btn-outline-secondary" asp-action="BlogDetails" asp-route-id="@Model.BlogId">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
