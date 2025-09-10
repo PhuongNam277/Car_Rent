@@ -261,7 +261,7 @@ namespace Car_Rent.Controllers
 
         // Blog Details with comments
         [HttpGet]
-        public async Task<IActionResult> BlogDetails(int id)
+        public async Task<IActionResult> BlogDetails(int id, int page = 1, int pageSize = 5)
         {
             var blog = await _context.Blogs
                 .Include(b => b.Author)
@@ -269,14 +269,31 @@ namespace Car_Rent.Controllers
 
             if (blog == null) return NotFound();
 
-            var comments = await _context.Comments
+            // sap xep moi nhat truoc, binh luan moi se o tren cung
+            bool newestFirst = true;
+
+            var baseQuery = _context.Comments.AsNoTracking().Where(c => c.BlogId == id);
+            var totalComments = await baseQuery.CountAsync();
+
+            var ordered = newestFirst
+                ? baseQuery.OrderByDescending(c => c.CreatedAt)
+                : baseQuery.OrderBy(c => c.CreatedAt);
+
+            var comments = await ordered
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var query = _context.Comments
                 .AsNoTracking()
                 .Where(c => c.BlogId == id)
-                .OrderByDescending(c => c.CreatedAt)
-                .ToListAsync();
+                .OrderByDescending(c => c.CreatedAt);
 
             ViewBag.CurrentUserId = GetCurrentUserId();
             ViewBag.IsAdmin = IsAdmin();
+            ViewBag.TotalComments = totalComments;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
 
             return View(new ViewModels.Blog.BlogDetailsViewModel
             {
@@ -317,7 +334,28 @@ namespace Car_Rent.Controllers
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction(nameof(BlogDetails), new { id = input.BlogId });
+            // Tinh trang can ve
+            // Mac dinh pageSize = 5; neu request co pageSize thi tai su dung
+            int pageSize = 5;
+            if (int.TryParse(HttpContext.Request.Query["pageSize"], out var ps) && ps > 0) pageSize = ps;
+
+            // neu dang sap xep moi nhat truoc -> luon ve trang 1
+            bool newestFirst = true;
+
+            int pageForNewComment;
+            if (newestFirst)
+            {
+                pageForNewComment = 1;
+            }
+            else
+            {
+                // neu doi thu tu thanh cu truoc thi binh luan luon nam o trang cuoi cung
+                var total = await _context.Comments.CountAsync(c => c.BlogId == input.BlogId);
+                pageForNewComment = (int)Math.Ceiling(total / (double) pageSize);
+            }
+
+            var target = Url.Action(nameof(BlogDetails), new { id = input.BlogId, page = pageForNewComment });
+            return LocalRedirect(target + $"#comment-{comment.CommentId}");
 
         }
 
