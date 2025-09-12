@@ -21,6 +21,32 @@ namespace Car_Rent.Hubs
         public override async Task OnConnectedAsync()
         {
             await base.OnConnectedAsync();
+
+            // Neu la staff : tu join lobby + seed danh sach
+            if (Context.User?.IsInRole("Staff") == true)
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, "staff:lobby");
+
+                var openUnassigned = await _chat.GetOpenQueueAsync();
+                await Clients.Caller.SendAsync("SeedQueue", openUnassigned.Select(c => new
+                {
+                    conversationId = c.ConversationId,
+                    customerId = c.CustomerId,
+                    customerName = c.Customer?.Username,
+                    createdAt = c.CreatedAt
+                }));
+
+                // Seed cac cuon chat Open da gan cho Staff hien tai
+                var staffId = int.Parse(Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var mine = await _chat.GetAssignedOpenAsync(staffId);
+                await Clients.Caller.SendAsync("SeedAssigned", mine.Select(c => new
+                {
+                    conversationId = c.ConversationId,
+                    customerId = c.CustomerId,
+                    customerName = c.Customer?.Username,
+                    lastMessageAt = c.LastMessageAt
+                }));
+            }
         }
 
         // Client goi ngay khi vao phong de join group
@@ -60,6 +86,29 @@ namespace Car_Rent.Hubs
             if (!await _chat.IsParticipantAsync(conversationId, userId)) return;
 
             await Clients.Group(GroupName(conversationId)).SendAsync("SomeoneTyping", new { userId, conversationId });
+        }
+
+        [Authorize(AuthenticationSchemes = "MyCookieAuth", Roles = "Staff")]
+        public async Task JoinStaffLobby()
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, "staff:lobby");
+        }
+
+        [Authorize(AuthenticationSchemes = "MyCookieAuth", Roles = "Staff")]
+        public async Task<bool> AcceptConversation(int conversationId)
+        {
+            var staffId = int.Parse(Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var ok = await _chat.TryAssignStaffAsync(conversationId, staffId);
+
+            if (ok)
+            {
+                // Bao cho tat ca staff trong lobby biet: cuoc chat nay da co nguoi nhan
+                await Clients.Group("staff:lobby").SendAsync("ConversationAssigned", new { conversationId, staffId });
+
+                // Bao rieng cho nguoi vua nhan: mo phong chat
+                await Clients.Caller.SendAsync("OpenConversation", new { conversationId });
+            }
+            return ok;
         }
 
     }

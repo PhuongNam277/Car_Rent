@@ -10,5 +10,9 @@ namespace Car_Rent.Interfaces
         Task<ChatMessage> SaveMessageAsync(int conversationId, int senderId, string content);
         Task<List<ChatMessage>> GetRecentMessageAsync(int conversationId, int take = 50);
         Task<int?> PickStaffForCustomerAsync(int customerId); // Don gian, chon 1 staff neu co
+        Task<bool> TryAssignStaffAsync(int conversationId, int staffId);
+        Task<List<Conversation>> GetOpenQueueAsync();
+        Task<List<Conversation>> GetAssignedOpenAsync(int staffId);
+
     }
 }
