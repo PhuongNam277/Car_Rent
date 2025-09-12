@@ -343,7 +343,7 @@
             // Nếu TRƯỚC ĐÓ CÓ lựa chọn, nhưng giờ không còn trong list → cảnh báo
             $form.find('#carLostMsg').remove();
             if(hadSelection){
-              $car.after('<small id="carLostMsg" class="text-warning ms-2">Xe anh vừa chọn không còn phù hợp với lựa chọn hiện tại.</small>');
+              // $car.after('<small id="carLostMsg" class="text-warning ms-2">Xe anh vừa chọn không còn phù hợp với lựa chọn hiện tại.</small>');
             }
             // Không ép cảnh báo nếu chưa từng chọn xe
             lastChosenCarId = null; // reset, đợi anh chọn lại

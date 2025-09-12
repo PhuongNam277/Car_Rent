@@ -6,6 +6,7 @@
 	var total = (int)(ViewBag.TotalItems ?? 0);
 	var page = (int)(ViewBag.Page ?? 1);
 	var pageSize = (int)(ViewBag.PageSize ?? 10);
+	string status = ViewBag.Status as string ?? "All";
 	var totalPages = (int)Math.Ceiling((double)total / pageSize);
 	string? sortBy = ViewBag.SortBy;
  } 
@@ -16,16 +17,30 @@
 </div>
 
 <form method="get" class="row g-2 mb-3">
+    <!-- Lọc trạng thái -->
     <div class="col-auto">
-        <select name="sortBy" class="form-select">
-            <option value="DateDesc" selected="@(sortBy=="DateDesc")">Newest</option>
-            <option value="DateAsc" selected="@(sortBy=="DateAsc")">Oldest</option>
-            <option value="StartDateAsc" selected="@(sortBy=="StartDateAsc")">StartDate ↑</option>
-            <option value="StartDateDesc" selected="@(sortBy=="StartDateDesc")">StartDate ↓</option>
-            <option value="PriceAsc" selected="@(sortBy=="PriceAsc")">Price ↑</option>
-            <option value="PriceDesc" selected="@(sortBy=="PriceDesc")">Price ↓</option>
+        <select name="status" class="form-select">
+            <option value="All" selected="@(status=="All")">All statuses</option>
+            <option value="Pending" selected="@(status=="Pending")">Pending</option>
+            <option value="Completed" selected="@(status=="Completed")">Completed</option>
+            <option value="Cancelled" selected="@(status=="Cancelled")">Cancelled</option>
+            <option value="InProgress" selected="@(status == "InProgress")">InProgress</option>
+
         </select>
     </div>
+
+    <!-- Sắp xếp -->
+    <div class="col-auto">
+        <select name="sortBy" class="form-select">
+            <option value="DateDesc"      selected="@(sortBy=="DateDesc")">Newest</option>
+            <option value="DateAsc"       selected="@(sortBy=="DateAsc")">Oldest</option>
+            <option value="StartDateAsc"  selected="@(sortBy=="StartDateAsc")">StartDate ↑</option>
+            <option value="StartDateDesc" selected="@(sortBy=="StartDateDesc")">StartDate ↓</option>
+            <option value="PriceAsc"      selected="@(sortBy=="PriceAsc")">Price ↑</option>
+            <option value="PriceDesc"     selected="@(sortBy=="PriceDesc")">Price ↓</option>
+        </select>
+    </div>
+
     <div class="col-auto">
         <button class="btn btn-primary">Filter</button>
     </div>

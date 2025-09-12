@@ -24,7 +24,7 @@ namespace Car_Rent.Controllers
 
 
         // GET: Reservation
-        public async Task<IActionResult> Index(string search, string? sortBy = "DateDesc", int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Index(string? search, string? status, string? sortBy = "DateDesc", int page = 1, int pageSize = 10)
         {
             //var carRentalDbContext = _context.Reservations.Include(r => r.Car).Include(r => r.User);
             //return View(await carRentalDbContext.ToListAsync());
@@ -38,8 +38,14 @@ namespace Car_Rent.Controllers
 
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(r => r.User.Username.Contains(search) || r.Car.CarName.Contains(search) ||
-                                    r.FromCity.Contains(search) || r.ToCity.Contains(search) || r.TotalPrice.ToString().Contains(search) || r.Status.Contains(search));
+                query = query.Where(r => r.User.Username.Contains(search) || r.Car.CarName.Contains(search)
+                                     || r.TotalPrice.ToString().Contains(search) || r.Status.Contains(search));
+            }
+
+            // Filter by status
+            if (!string.IsNullOrWhiteSpace(status) && !status.Equals("All", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(r => r.Status == status);
             }
 
             // Sorting logic
@@ -49,7 +55,7 @@ namespace Car_Rent.Controllers
                 "PriceAsc" => query.OrderBy(r => r.TotalPrice),
                 "PriceDesc" => query.OrderByDescending(r => r.TotalPrice),
                 "StartDateAsc" => query.OrderBy(r => r.StartDate),
-                _ => query.OrderByDescending(r => r.ReservationDate) // Default sort by ReservationDate descending
+                 _ => query.OrderByDescending(r => r.ReservationDate) // Default sort by ReservationDate descending
             };
 
             // Pagination logic
@@ -57,6 +63,7 @@ namespace Car_Rent.Controllers
             var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
             ViewBag.SortBy = sortBy;
+            ViewBag.Status = string.IsNullOrWhiteSpace(status) ? "All" : status;
             ViewBag.TotalItems = total;
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
