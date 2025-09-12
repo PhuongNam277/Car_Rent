@@ -496,9 +496,9 @@
                                         </span>
                                     </div>
                                 </div>
-                                <a href="#" class="h4 d-block mb-3">@blog.Title</a>
+                                <a asp-controller="Blog" asp-action="BlogDetails" asp-route-id="@blog.BlogId" class="h4 d-block mb-3">@blog.Title</a>
                                 <p class="mb-3">@blog.Content.Substring(0, Math.Min(100, blog.Content.Length))...</p>
-                                <a href="#" class="">Read More  <i class="fa fa-arrow-right"></i></a>
+                                <a asp-controller="Blog" asp-action="BlogDetails" asp-route-id="@blog.BlogId" class="">Read More  <i class="fa fa-arrow-right"></i></a>
                             </div>
                         </div>
                     </div>

@@ -1,0 +1,109 @@
+﻿@model List<Car_Rent.Models.ChatMessage>
+@{
+    ViewData["Title"] = "Chat";
+    Layout = "~/Views/Shared/MainLayout.cshtml";
+    var convId = (int)ViewBag.ConversationId;
+    var me = (int)ViewBag.CurrentUserId;
+}
+
+<div class="container py-4">
+    <h3 class="mb-3">Hỗ trợ trực tuyến</h3>
+
+    <div id="chatBox" class="border rounded p-3 mb-3" style="height: 55vh; overflow:auto;">
+        @foreach (var m in Model)
+        {
+            var isMine = m.SenderId == me;
+            <div class="d-flex mb-2 @(isMine ? "justify-content-end" : "justify-content-start")">
+                <div class="px-3 py-2 rounded-3 @(isMine ? "bg-primary text-white" : "bg-light")" style="max-width:70%;">
+                    <div class="small">@m.Content</div>
+                    <div class="text-muted small mt-1">@m.SentAt.ToLocalTime().ToString("HH:mm dd/MM")</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex gap-2">
+        <input id="messageInput" class="form-control" placeholder="Nhập tin nhắn..." />
+        <button id="sendBtn" class="btn btn-primary">Gửi</button>
+    </div>
+
+    <div id="typing" class="text-muted small mt-2" style="display:none;">Đang nhập...</div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const convId = @ViewBag.ConversationId;
+          const me = @ViewBag.CurrentUserId;
+          const chatBox = document.getElementById('chatBox');
+          const input   = document.getElementById('messageInput');
+          const sendBtn = document.getElementById('sendBtn');
+
+          const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/chat")
+            .withAutomaticReconnect()
+            .build();
+
+          let joined = false;
+          sendBtn.disabled = true;
+
+          connection.on("ReceiveMessage", (m) => {
+            const wrap = document.createElement('div');
+            wrap.className = 'd-flex mb-2 ' + (m.senderId === me ? 'justify-content-end' : 'justify-content-start');
+
+            const bubble = document.createElement('div');
+            bubble.className = 'px-3 py-2 rounded-3 ' + (m.senderId === me ? 'bg-primary text-white' : 'bg-light');
+            bubble.style.maxWidth = '70%';
+
+            const body = document.createElement('div');
+            body.className = 'small';
+            body.textContent = m.content;
+
+            const time = document.createElement('div');
+            time.className = 'text-muted small mt-1';
+            const dt = new Date(m.sentAt);
+            time.textContent = dt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' ' + dt.toLocaleDateString();
+
+            bubble.appendChild(body); bubble.appendChild(time);
+            wrap.appendChild(bubble); chatBox.appendChild(wrap);
+            chatBox.scrollTop = chatBox.scrollHeight;
+          });
+
+          connection.onreconnected(async () => {
+            try { await connection.invoke("JoinConversation", convId); joined = true; } catch {}
+          });
+
+          async function start() {
+            try {
+              await connection.start();
+              await connection.invoke("JoinConversation", convId); // JOIN trước khi cho gửi
+              joined = true;
+              sendBtn.disabled = false;
+            } catch (e) {
+              console.error("Connect failed:", e);
+              setTimeout(start, 1500);
+            }
+          }
+
+          async function send() {
+            const text = (input.value || "").trim();
+            if (!text) return;
+            if (!joined || connection.state !== signalR.HubConnectionState.Connected) return;
+            try {
+              await connection.invoke("SendMessage", convId, text);
+              input.value = "";
+            } catch (err) { console.error("SendMessage failed:", err); }
+          }
+
+          sendBtn.addEventListener('click', (e) => { e.preventDefault(); send(); });
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); send(); }
+            else if (joined) { connection.invoke("Typing", convId).catch(()=>{}); }
+          });
+
+          start();
+        });
+    </script>
+}
+

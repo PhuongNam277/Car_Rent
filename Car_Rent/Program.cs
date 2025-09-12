@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Car_Rent.Interfaces;
 using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.AspNetCore.Authentication;
+using Car_Rent.Services;
+using Car_Rent.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CarRentalDbContext>(
@@ -70,18 +72,24 @@ builder.Services.AddScoped<IUserService, UserService>();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Dk SignalR
+builder.Services.AddSignalR();
+
 // Đăng ký dịch vụ IEmailSender
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddTransient<EmailService>();
 
+// Dang ky dich vu ChatService
+builder.Services.AddScoped<IChatService, ChatService>();
+
 var app = builder.Build();
 
 // Thực hiện migration tự động khi ứng dụng khởi động
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<CarRentalDbContext>(); // Đổi thành CarRentalDbContext
-    dbContext.Database.Migrate();
-}
+//using (var scope = app.Services.CreateScope())
+//{
+//    var dbContext = scope.ServiceProvider.GetRequiredService<CarRentalDbContext>(); // Đổi thành CarRentalDbContext
+//    dbContext.Database.Migrate();
+//}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -101,6 +109,9 @@ app.UseRouting();
 app.UseAuthentication(); // Thêm dòng này để sử dụng Authentication
 
 app.UseAuthorization();
+
+// Map Hub
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.MapControllerRoute(
     name: "default",

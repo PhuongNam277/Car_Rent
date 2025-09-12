@@ -39,7 +39,11 @@ public partial class CarRentalDbContext : DbContext
 
     public virtual DbSet<Role> Roles { get; set; } = null!;
 
-    public virtual DbSet<Location> Locations { get; set; } // NEW
+    public virtual DbSet<Location> Locations { get; set; }
+
+    public virtual DbSet<Conversation> Conversations { get; set; }
+
+    public virtual DbSet<ChatMessage> ChatMessages { get; set; }
 
 
 
@@ -276,6 +280,45 @@ public partial class CarRentalDbContext : DbContext
             entity.Property(e => e.City).HasMaxLength(100);
             entity.Property(e => e.TimeZone).HasMaxLength(50);
         });
+
+        modelBuilder.Entity<Conversation>(entity =>
+        {
+            entity.HasKey(e => e.ConversationId);
+            entity.Property(e => e.Status).HasMaxLength(20).HasDefaultValue("Open");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime2");
+            entity.Property(e => e.LastMessageAt).HasColumnType("datetime2");
+
+            entity.HasOne(e => e.Customer)
+                .WithMany()
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Conversations_Customer");
+
+            entity.HasOne(e => e.Staff)
+                .WithMany()
+                .HasForeignKey(e => e.StaffId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Conversations_Staff");
+        });
+
+        modelBuilder.Entity<ChatMessage>(entity =>
+        {
+            entity.HasKey(e => e.ChatMessageId);
+            entity.Property(e => e.Content).HasMaxLength(4000);
+            entity.Property(e => e.SentAt).HasColumnType("datetime2");
+
+            entity.HasOne(e => e.Conversation)
+                .WithMany(c => c.Messages)
+                .HasForeignKey(e => e.ConversationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Sender)
+                .WithMany()
+                .HasForeignKey(e => e.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+
 
         OnModelCreatingPartial(modelBuilder);
     }
