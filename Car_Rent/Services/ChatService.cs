@@ -24,7 +24,7 @@ namespace Car_Rent.Services
             conv = new Conversation
             {
                 CustomerId = customerId,
-                StaffId = staffId,
+                StaffId = null,
                 Status = "Open",
                 CreatedAt = DateTime.UtcNow,
                 LastMessageAt = DateTime.UtcNow
@@ -33,6 +33,27 @@ namespace Car_Rent.Services
             _context.Conversations.Add(conv);
             await _context.SaveChangesAsync();
             return conv;
+        }
+
+        public async Task<bool> TryAssignStaffAsync(int conversationId, int staffId)
+        {
+            // Cap nhat co dieuf kien de chong tranh chap 2 staff cung luc
+            var rows = await _context.Database.ExecuteSqlRawAsync(
+                "UPDATE dbo.Conversations SET StaffId = {0} WHERE ConversationId = {1} AND StaffId IS NULL",
+                 staffId, conversationId);
+
+            return rows == 1;
+                
+        }
+
+        public Task<List<Conversation>> GetOpenQueueAsync()
+        {
+            return _context.Conversations
+                .Include(c => c.Customer)
+                .Where(c => c.Status == "Open" && c.StaffId == null)
+                .OrderByDescending(c => c.CreatedAt)
+                .Take(100)
+                .ToListAsync();
         }
 
         public Task<Conversation?> GetConversationAsync(int conversationId)
@@ -89,6 +110,16 @@ namespace Car_Rent.Services
                 .FirstOrDefaultAsync();
 
             return staffId; // co the null
+        }
+
+        public Task<List<Conversation>> GetAssignedOpenAsync(int staffId)
+        {
+            return _context.Conversations
+                .Include(c => c.Customer)
+                .Where(c => c.Status == "Open" && c.StaffId == staffId)
+                .OrderByDescending(c => c.LastMessageAt)
+                .Take(100)
+                .ToListAsync();
         }
     }
 }

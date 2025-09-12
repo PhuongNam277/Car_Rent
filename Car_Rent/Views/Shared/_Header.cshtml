@@ -3,6 +3,51 @@
     var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
 
 }
+@if (User.IsInRole("Staff"))
+{
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const badge = document.getElementById('supportBadge');
+          const queueIds = new Set();
+
+          function updateBadge(){ if (badge) badge.textContent = String(queueIds.size); }
+
+          function toast(msg) {
+            const t = document.createElement('div');
+            t.className = 'position-fixed end-0 top-0 m-3 p-3 bg-dark text-white rounded-3 shadow';
+            t.style.zIndex = 1080;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(()=> t.remove(), 3500);
+          }
+
+          const conn = new signalR.HubConnectionBuilder()
+            .withUrl('/hubs/chat')
+            .withAutomaticReconnect()
+            .build();
+
+          // Seed hàng đợi và các phòng đã gán cho tôi
+          conn.on('SeedQueue', items => { items?.forEach(i => queueIds.add(i.conversationId)); updateBadge(); });
+          conn.on('SeedAssigned', items => {
+              // Không cộng vào queueIds (đây là các phòng đã gán), chỉ hiển thị thông tin nếu muốn
+              if (items && items.length) toast(`Có ${items.length} cuộc chat đang mở đã gán cho bạn.`);
+          });
+
+          // Khách mới → tăng badge + toast
+          conn.on('NewConversation', i => { queueIds.add(i.conversationId); updateBadge(); toast('Khách mới yêu cầu hỗ trợ'); });
+
+          // Có staff khác nhận → giảm badge
+          conn.on('ConversationAssigned', e => { queueIds.delete(e.conversationId); updateBadge(); });
+
+          // Khách quay lại phòng đã gán cho tôi
+          conn.on('CustomerBack', e => { toast('Khách vừa quay lại phòng chat của bạn'); });
+
+          conn.start().catch(console.error);
+        });
+    </script>
+}
+
 
 <div class="container-fluid nav-bar sticky-top px-0 px-lg-4 py-2 py-lg-0">
     <div class="container">
@@ -23,6 +68,13 @@
                     <a asp-controller="About" asp-action="Index" class="nav-item nav-link @(ViewData["ActivePage"]?.ToString() == "About" ? "active" : "")">About</a>
                     <a asp-controller="Service" asp-action="Index" class="nav-item nav-link @(ViewData["ActivePage"]?.ToString() == "Service" ? "active" : "")">Service</a>
                     <a asp-controller="Blog" asp-action="Index" class="nav-item nav-link @(ViewData["ActivePage"]?.ToString() == "Blog" ? "active" : "")">Blog</a>
+                    @if (User.IsInRole("Staff"))
+                    {
+                        <a asp-controller="Chat" asp-action="Inbox" class="nav-item nav-link @(ViewData["ActivePage"]?.ToString() == "Chat Inbox" ? "active" : "")">
+                            Chat Inbox
+                            <span id="supportBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+                        </a>
+                    }
 
 
                     <div class="nav-item dropdown">

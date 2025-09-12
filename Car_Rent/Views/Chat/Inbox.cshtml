@@ -1,0 +1,105 @@
+﻿@model List<Car_Rent.Models.Conversation>
+@{
+    ViewData["Title"] = "Hàng đợi chat";
+    Layout = "~/Views/Shared/MainLayout.cshtml";
+}
+<div class="container py-4">
+    <h3 class="mb-3">Hỗ trợ</h3>
+
+    <h5 class="mt-3">Hàng đợi (chưa gán)</h5>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle" id="queueTbl">
+            <thead><tr><th>ID</th><th>Khách</th><th>Bắt đầu</th><th></th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <h5 class="mt-4">Khách của tôi (đang mở)</h5>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle" id="assignedTbl">
+            <thead><tr><th>ID</th><th>Khách</th><th>Cập nhật</th><th></th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const qBody = document.querySelector("#queueTbl tbody");
+          const aBody = document.querySelector("#assignedTbl tbody");
+          const conn = new signalR.HubConnectionBuilder().withUrl("/hubs/chat").withAutomaticReconnect().build();
+
+          function addQueueRow(item) {
+            if (document.getElementById("q-" + item.conversationId)) return;
+            const tr = document.createElement("tr");
+            tr.id = "q-" + item.conversationId;
+            tr.innerHTML = `
+              <td>${item.conversationId}</td>
+              <td>${item.customerName ?? ('User#' + item.customerId)}</td>
+              <td>${new Date(item.createdAt).toLocaleString()}</td>
+              <td><button class="btn btn-primary btn-sm accept-btn" data-id="${item.conversationId}">Nhận</button></td>`;
+            qBody.prepend(tr);
+          }
+
+          function removeQueueRow(conversationId) {
+            const row = document.getElementById("q-" + conversationId);
+            if (row) row.remove();
+          }
+
+          function addAssignedRow(item) {
+            if (document.getElementById("a-" + item.conversationId)) return;
+            const tr = document.createElement("tr");
+            tr.id = "a-" + item.conversationId;
+            tr.innerHTML = `
+              <td>${item.conversationId}</td>
+              <td>${item.customerName ?? ('User#' + item.customerId)}</td>
+              <td>${new Date(item.lastMessageAt || item.at || Date.now()).toLocaleString()}</td>
+              <td><a class="btn btn-success btn-sm" href="/Chat/Room?id=${item.conversationId}">Vào phòng</a></td>`;
+            aBody.prepend(tr);
+          }
+
+          function highlightAssigned(conversationId) {
+            const row = document.getElementById("a-" + conversationId);
+            if (!row) return;
+            row.classList.add('table-warning');
+            setTimeout(()=> row.classList.remove('table-warning'), 1500);
+          }
+
+          // Realtime
+          conn.on("SeedQueue", items => (items||[]).forEach(addQueueRow));
+          conn.on("SeedAssigned", items => (items||[]).forEach(addAssignedRow));
+
+          conn.on("NewConversation", addQueueRow);
+
+          conn.on("ConversationAssigned", e => {
+            removeQueueRow(e.conversationId);
+            // Nếu chính tôi nhận, thêm vào bảng assigned (server OpenConversation cũng sẽ chuyển trang khi Caller là tôi)
+            // Ở Inbox của người khác: chỉ remove; ở Inbox của người nhận: ta có thể fetch 1 bản ghi để add hàng
+            // Đơn giản: làm nhẹ — khi vào Room sẽ thấy ngay.
+          });
+
+          conn.on("CustomerBack", item => {
+            // Bổ sung/hiển thị ở bảng 'Khách của tôi'
+            addAssignedRow(item);
+            highlightAssigned(item.conversationId);
+          });
+
+          conn.start().then(()=> conn.invoke("JoinStaffLobby")).catch(console.error);
+
+          // Click Nhận
+          document.addEventListener("click", async (ev) => {
+            const btn = ev.target.closest(".accept-btn");
+            if (!btn) return;
+            const id = parseInt(btn.dataset.id);
+            try {
+              const ok = await conn.invoke("AcceptConversation", id);
+              if (!ok) alert("Cuộc chat đã có người nhận.");
+              // Caller (tôi) sẽ nhận 'OpenConversation' và tự chuyển sang Room
+            } catch (e) { console.error(e); }
+          });
+        });
+    </script>
+}
+

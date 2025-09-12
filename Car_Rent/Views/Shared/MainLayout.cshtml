@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -31,6 +32,108 @@
     <link href="~/Main/css/style.css" rel="stylesheet">
 </head>
 @RenderSection("Scripts", required: false)
+
+@if (User.IsInRole("Staff"))
+{
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        (function() {
+          const myId = parseInt('@User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)');
+          const badge = document.getElementById('supportBadge'); // <span> ở navbar, nếu có
+          const queueIds = new Set();     // các conv chưa gán (NewConversation)
+          const myActiveIds = new Set();  // các conv đã gán CHO TÔI có hành động (CustomerBack hoặc SeedAssigned)
+
+          function totalCount(){ return queueIds.size + myActiveIds.size; }
+          function updateBadge(){
+            if (!badge) return;
+            const n = totalCount();
+            badge.textContent = String(n);
+            badge.hidden = (n === 0);
+          }
+          function toast(msg){
+            const t = document.createElement('div');
+            t.className = 'position-fixed end-0 top-0 m-3 p-3 bg-dark text-white rounded-3 shadow';
+            t.style.zIndex = 1080; t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(()=>t.remove(), 3000);
+          }
+
+          const conn = new signalR.HubConnectionBuilder()
+            .withUrl('/hubs/chat')
+            .withAutomaticReconnect()
+            .build();
+
+          async function joinLobbyAndSync() {
+            try {
+              await conn.invoke('JoinStaffLobby');  // chủ động join lobby
+              await syncCounts();                   // đồng bộ phòng hờ
+            } catch {}
+          }
+
+          // ====== Realtime handlers ======
+          // 1) Khách mới -> vào hàng đợi chưa gán
+          conn.on('NewConversation', i => {
+            queueIds.add(i.conversationId);
+            updateBadge();
+            toast('Khách mới yêu cầu hỗ trợ');
+          });
+
+          // 2) Có người nhận -> nếu trước đó đang nằm trong hàng đợi, bỏ ra
+          conn.on('ConversationAssigned', e => {
+            queueIds.delete(e.conversationId);
+            // Nếu chính tôi nhận, add vào myActive (tuỳ anh có muốn cộng badge khi mình đã nhận hay không)
+            if (e.staffId && parseInt(e.staffId) === myId) {
+              myActiveIds.add(e.conversationId);
+            }
+            updateBadge();
+          });
+
+          // 3) Khách quay lại phòng đã gán cho TÔI -> cộng vào myActive
+          conn.on('CustomerBack', e => {
+            myActiveIds.add(e.conversationId);
+            updateBadge();
+            toast('Khách vừa quay lại phòng chat của bạn');
+          });
+
+          // 4) (tuỳ chọn) Khi cuộc chat bị đóng -> loại khỏi tất cả danh sách
+          conn.on('ConversationClosed', e => {
+            queueIds.delete(e.conversationId);
+            myActiveIds.delete(e.conversationId);
+            updateBadge();
+          });
+
+          // 5) Seed khi vừa kết nối (nếu anh đã gửi SeedAssigned/SeedQueue ở server)
+          conn.on('SeedQueue', items => {
+            (items || []).forEach(i => queueIds.add(i.conversationId));
+            updateBadge();
+          });
+          conn.on('SeedAssigned', items => {
+            // Chỉ count những cuộc đang open đã gán cho tôi
+            (items || []).forEach(i => myActiveIds.add(i.conversationId));
+            updateBadge();
+          });
+
+          conn.onreconnected(joinLobbyAndSync);
+          conn.start().then(joinLobbyAndSync).catch(console.error);
+
+          // ====== Đồng bộ phòng hờ: nếu client vừa vào mà trượt mất event ======
+          async function syncCounts(){
+            try {
+              const r = await fetch('/Chat/Counts'); // endpoint bên dưới
+              const data = await r.json();
+              // reset và sync
+              queueIds.clear(); myActiveIds.clear();
+              (data.queueIds || []).forEach(id => queueIds.add(id));
+              (data.assignedIds || []).forEach(id => myActiveIds.add(id));
+              updateBadge();
+            } catch {}
+          }
+          setInterval(syncCounts, 10000);
+        })();
+    </script>
+}
+
+
 <body>
 
     <!-- Spinner Start -->
