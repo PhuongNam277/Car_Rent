@@ -5,6 +5,10 @@
     var convId = (int)ViewBag.ConversationId;
     var me = (int)ViewBag.CurrentUserId;
 }
+@{
+    long lastId = (Model != null && Model.Count > 0) ? Model.Max(m => (long)m.ChatMessageId) : 0;
+}
+
 
 <div class="container py-4">
     <h3 class="mb-3">Hỗ trợ trực tuyến</h3>
@@ -36,25 +40,85 @@
         document.addEventListener("DOMContentLoaded", () => {
           const convId = @ViewBag.ConversationId;
           const me = @ViewBag.CurrentUserId;
+          let lastMessageId = @lastId;        // ⬅ id tin nhắn cuối cùng đã render
+          window.activeConvId = convId;       // để layout biết đang xem phòng này
           const chatBox = document.getElementById('chatBox');
           const input   = document.getElementById('messageInput');
           const sendBtn = document.getElementById('sendBtn');
+            function scrollToBottom(smooth = false) {
+            if (!chatBox) return;
+            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+            }
+
+            // Cuộn sau khi DOM render xong (2 nhịp để chắc layout đã đo xong chiều cao)
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', () => {
+                requestAnimationFrame(() => requestAnimationFrame(() => scrollToBottom(false)));
+              });
+            } else {
+              requestAnimationFrame(() => requestAnimationFrame(() => scrollToBottom(false)));
+            }
+
+        // Phòng trường hợp font/ảnh tải chậm làm thay đổi chiều cao, quan sát 1s rồi ngắt
+        try {
+          const ro = new ResizeObserver(() => scrollToBottom(false));
+          ro.observe(chatBox);
+          setTimeout(() => ro.disconnect(), 1000);
+        } catch {}
+
 
           const connection = new signalR.HubConnectionBuilder()
             .withUrl("/hubs/chat")
             .withAutomaticReconnect()
             .build();
 
+
+                  // ====== ĐÁNH DẤU ĐÃ ĐỌC (core) ======
+            async function markRead() {
+              try {
+                await connection.invoke("MarkRead", convId, lastMessageId);
+                // Báo cho layout/Inbox xoá chấm đỏ ngay
+                window.dispatchEvent(new CustomEvent('chatMarkedRead', { detail: { convId } }));
+              } catch (e) { console.warn("MarkRead failed", e); }
+            }
+
+                  // Start & Join → markRead ngay
+            async function start() {
+              try {
+                await connection.start();
+                await connection.invoke("JoinConversation", convId);
+                // đợi 1 nhịp cho chắc DOM đã render đủ, rồi mark read & cuộn đáy
+                requestAnimationFrame(async () => {
+                  scrollToBottom(false);
+                  await markRead();
+                });
+              } catch (err) {
+                console.error(err);
+                setTimeout(start, 1200);
+              }
+            }
+
           let joined = false;
           sendBtn.disabled = true;
 
           connection.on("ReceiveMessage", (m) => {
+            if (m.conversationId !== convId) return;
             const wrap = document.createElement('div');
             wrap.className = 'd-flex mb-2 ' + (m.senderId === me ? 'justify-content-end' : 'justify-content-start');
 
             const bubble = document.createElement('div');
             bubble.className = 'px-3 py-2 rounded-3 ' + (m.senderId === me ? 'bg-primary text-white' : 'bg-light');
             bubble.style.maxWidth = '70%';
+
+                // Cập nhật lastMessageId
+            if (typeof m.messageId === 'number') {
+              lastMessageId = Math.max(lastMessageId, m.messageId);
+            }
+
+                // Nếu tin do KHÁCH gửi (senderId != me) và mình đang ở phòng → đánh dấu đọc luôn
+            if (m.senderId !== me) {
+              markRead();
+            }
 
             const body = document.createElement('div');
             body.className = 'small';
@@ -67,43 +131,82 @@
 
             bubble.appendChild(body); bubble.appendChild(time);
             wrap.appendChild(bubble); chatBox.appendChild(wrap);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            scrollToBottom(true);
           });
 
           connection.onreconnected(async () => {
-            try { await connection.invoke("JoinConversation", convId); joined = true; } catch {}
+            try { await connection.invoke("JoinConversation", convId); joined = true;
+            } catch {}
           });
 
-          async function start() {
-            try {
-              await connection.start();
-              await connection.invoke("JoinConversation", convId); // JOIN trước khi cho gửi
-              joined = true;
-              sendBtn.disabled = false;
-            } catch (e) {
-              console.error("Connect failed:", e);
-              setTimeout(start, 1500);
+                // Khi anh GỬI tin (nút gửi/Enter)
+            async function send() {
+              const text = (input.value || "").trim();
+              if (!text || connection.state !== signalR.HubConnectionState.Connected) return;
+              try {
+                await connection.invoke("SendMessage", convId, text);
+                input.value = "";
+                // Ngay sau khi gửi, gọi markRead để xoá bất kỳ Unread còn sót
+                // (khi server broadcast lại tin của chính mình, ReceiveMessage sẽ cập nhật lastMessageId)
+                await markRead();
+              } catch(e){ console.error(e); }
             }
-          }
-
-          async function send() {
-            const text = (input.value || "").trim();
-            if (!text) return;
-            if (!joined || connection.state !== signalR.HubConnectionState.Connected) return;
-            try {
-              await connection.invoke("SendMessage", convId, text);
-              input.value = "";
-            } catch (err) { console.error("SendMessage failed:", err); }
-          }
 
           sendBtn.addEventListener('click', (e) => { e.preventDefault(); send(); });
           input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') { e.preventDefault(); send(); }
             else if (joined) { connection.invoke("Typing", convId).catch(()=>{}); }
           });
+                // Khi tab trở lại visible → markRead lại (phòng khi bỏ lỡ sự kiện)
+            document.addEventListener('visibilitychange', () => {
+              if (!document.hidden) markRead();
+            });
 
-          start();
+            // Khi rời trang
+            window.addEventListener('beforeunload', () => { window.activeConvId = null; });
+
+            start();
+
+            // Cuộn đáy ngay khi vào (nếu cần)
+            requestAnimationFrame(() => requestAnimationFrame(() => scrollToBottom(false)));
+            });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const convId = @ViewBag.ConversationId;
+          window.activeConvId = convId;  // để layout biết đang ở phòng này
+
+          let lastMessageId = @Model.Any() ? @Model.Max(m => m.ChatMessageId) : 0;
+
+          async function markRead() {
+            try {
+              await connection.invoke("MarkRead", convId, lastMessageId);
+              // Thông báo cho layout xóa badge của conv này
+              window.dispatchEvent(new CustomEvent('chatMarkedRead', { detail: { convId: convId }}));
+            } catch {}
+          }
+
+          // Sau khi start + join, mark read 1 phát
+          connection.start().then(async () => {
+            await connection.invoke("JoinConversation", convId);
+            await markRead();
+                    // Sau markRead, yêu cầu layout sync lại từ server
+            window.dispatchEvent(new CustomEvent('chatRequestCountsSync'));
+          });
+
+          // Khi nhận tin mới
+          connection.on("ReceiveMessage", (m) => {
+            if (m.conversationId === convId) {
+              lastMessageId = Math.max(lastMessageId, m.messageId);
+              // Nếu tin do khách gửi → đang mở phòng => đánh dấu đọc luôn
+              if (m.senderId !== @ViewBag.CurrentUserId) markRead();
+            }
+          });
+
+          // Khi rời trang
+          window.addEventListener('beforeunload', () => { window.activeConvId = null; });
         });
     </script>
+
 }
 

@@ -77,6 +77,29 @@ namespace Car_Rent.Hubs
                 content = msg.Content,
                 sentAt = msg.SentAt
             });
+
+            // neu nguoi gui la khach va conv da gan staff -> notify staff "New Message"
+            var conv = await _chat.GetConversationAsync(conversationId);
+            if (conv?.StaffId != null && conv.CustomerId == userId)
+            {
+                await Clients.User(conv.StaffId.Value.ToString())
+                    .SendAsync("NewMessage", new
+                    {
+                        conversationId,
+                        messageId = msg.ChatMessageId,
+                        preview = msg.Content.Length > 60 ? msg.Content.Substring(0, 60) + "..." : msg.Content,
+                        at = msg.SentAt
+                    });
+            }
+        }
+
+        // Staff hoac Customer hoi khi mo/doc phong
+        public async Task MarkRead(int conversationId, long lastMessageId)
+        {
+            var userId = GetUserId();
+            if (!await _chat.IsParticipantAsync(conversationId, userId)) return;
+
+            await _chat.MarkReadAsync(conversationId, userId, lastMessageId);
         }
 
         // Typing indicator (don gian)

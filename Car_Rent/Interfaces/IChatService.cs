@@ -13,6 +13,9 @@ namespace Car_Rent.Interfaces
         Task<bool> TryAssignStaffAsync(int conversationId, int staffId);
         Task<List<Conversation>> GetOpenQueueAsync();
         Task<List<Conversation>> GetAssignedOpenAsync(int staffId);
+        Task MarkReadAsync(int conversationId, int userId, long lastMessageId);
+        Task<Dictionary<int, int>> GetUnreadCountsForStaffAsync(int staffId);
+        Task<long> GetLastMessageIdAsync(int conversationId);
 
     }
 }

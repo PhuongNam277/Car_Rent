@@ -76,8 +76,10 @@ namespace Car_Rent.Controllers
         [Authorize(AuthenticationSchemes = "MyCookieAuth", Roles = "Staff")]
         public async Task<IActionResult> Inbox()
         {
-            var item = await _chat.GetOpenQueueAsync();
-            return View(item);
+            var me = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            ViewBag.Assigned = await _chat.GetAssignedOpenAsync(me); // da gan cho staff nay
+            ViewBag.Queue = await _chat.GetOpenQueueAsync();
+            return View();
         }
 
         [HttpPost]
@@ -94,11 +96,13 @@ namespace Car_Rent.Controllers
         {
             var me = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var queue = await _chat.GetOpenQueueAsync(); // Open + StaffId == null
-            var mine = await _chat.GetAssignedOpenAsync(me); // Open + StaffId == me
+            //var mine = await _chat.GetAssignedOpenAsync(me); // Open + StaffId == me
+            var unread = await _chat.GetUnreadCountsForStaffAsync(me); // ConvId -> Count
             return Json(new
             {
                 queueIds = queue.Select(c => c.ConversationId).ToArray(),
-                assignedIds = mine.Select(c => c.ConversationId).ToArray()
+                //assignedIds = mine.Select(c => c.ConversationId).ToArray()
+                unread = unread // Dict
             });
         }
     }
