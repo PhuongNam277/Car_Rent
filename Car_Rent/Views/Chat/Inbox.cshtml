@@ -100,7 +100,7 @@
                 });
             }
 
-            // 1) Áp dụng snapshot ngay khi vào trang (đảm bảo reset trước)
+            // Áp dụng snapshot ngay khi vào trang (đảm bảo reset trước)
             (function applySnapshotNow(){
                 let snap = null;
                 try { snap = JSON.parse(localStorage.getItem('cr_unread_v1') || '{}'); } catch {}
@@ -110,7 +110,7 @@
                 }
             })();
 
-            // 2) Cập nhật khi layout publish snapshot mới (đảm bảo reset trước)
+            // Cập nhật khi layout publish snapshot mới (đảm bảo reset trước)
             window.addEventListener('chatSnapshot', (ev) => {
                 const snap = ev.detail || {};
                 resetAllUnread();
@@ -119,14 +119,14 @@
                 }
             });
 
-            // 3) 👉 IMPROVED: khi Room báo đã đọc — sử dụng markAsRead
+            // Khi room báo đã đọc, sử dụng markAsRead
             window.addEventListener('chatMarkedRead', (ev) => {
                 const convId = Number(ev.detail?.convId);
                 console.log('chatMarkedRead event received:', convId);
                 if (convId) markAsRead(convId);
             });
 
-            // 4) 👉 NEW: Xử lý khi click vào button "Vào phòng"
+            // Xử lý event staff click vào phòng, event quan trọng để set đã đọc
             document.addEventListener('click', (e) => {
                 // Kiểm tra nếu click vào link "Vào phòng"
                 if (e.target.matches('a[href*="/Chat/Room"]') ||
@@ -146,7 +146,7 @@
                 }
             });
 
-            // 5) 👉 NEW: Xử lý khi focus trở lại trang (phòng trường hợp mở tab mới)
+            // NEW: Xử lý khi focus trở lại trang (phòng trường hợp mở tab mới)
             window.addEventListener('focus', () => {
                 // Kiểm tra nếu có conversation ID trong URL hiện tại
                 const urlParams = new URLSearchParams(window.location.search);
@@ -156,7 +156,7 @@
                 }
             });
 
-            // (giữ nguyên phần SignalR nếu anh đang dùng để seed/nhận bump)
+            // (giữ nguyên phần SignalR nếu đang dùng để seed/nhận bump)
             // ví dụ: khi có bump riêng cho 1 conv
             window.addEventListener('chatUnreadBump', (ev) => {
                 const { convId, count } = ev.detail || {};
@@ -169,7 +169,7 @@
                 }
             });
 
-            // 6) 👉 DEBUG: Log để kiểm tra events
+            // DEBUG: Log để kiểm tra events
             console.log('Unread message handler initialized');
         });
     </script>

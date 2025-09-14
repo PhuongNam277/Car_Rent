@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Car_Rent.Models;
 
 public partial class Car
 {
+    [Key]
     public int CarId { get; set; }
 
     public string CarName { get; set; } = null!;
