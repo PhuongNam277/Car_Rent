@@ -213,6 +213,8 @@
             // cho các trang (Inbox, v.v.) bắt được
             window.dispatchEvent(new CustomEvent('chatSnapshot', { detail: snap }));
           }
+
+          // Function khôi phục trạng thái từ storage
           function hydrateFromStorage(){
             const snap = getSnapshot();
             if (Array.isArray(snap.queueIds)) snap.queueIds.forEach(id => queueIds.add(id));
@@ -275,7 +277,4 @@
         })();
     </script>
 }
-
-
-
 </html>

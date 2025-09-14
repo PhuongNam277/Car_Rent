@@ -107,7 +107,7 @@
                                                         <option value="">Select a Station</option>
                                                         @foreach (var loc in (IEnumerable<Car_Rent.Models.Location>)ViewBag.Locations)
                                                         {
-                                                            <option value="@loc.LocationId">@loc.Name</option>
+                                                            <option value="@loc.LocationId">@loc.Name - @loc.Address</option>
                                                         }
                                                     </select>
                                                 </div>
@@ -124,7 +124,7 @@
                                                         <option value="">Select a Station</option>
                                                         @foreach (var loc in (IEnumerable<Car_Rent.Models.Location>)ViewBag.Locations)
                                                         {
-                                                            <option value="@loc.LocationId">@loc.Name</option>
+                                                            <option value="@loc.LocationId">@loc.Name - @loc.Address</option>
                                                         }
                                                     </select>
                                                 </div>

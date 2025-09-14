@@ -110,6 +110,9 @@ app.UseAuthentication(); // Thêm dòng này để sử dụng Authentication
 
 app.UseAuthorization();
 
+// Cau hinh map controller
+app.MapControllers();
+
 // Map Hub
 app.MapHub<ChatHub>("/hubs/chat");
 

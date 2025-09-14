@@ -46,8 +46,8 @@
           const input   = document.getElementById('messageInput');
           const sendBtn = document.getElementById('sendBtn');
             function scrollToBottom(smooth = false) {
-            if (!chatBox) return;
-            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+                if (!chatBox) return;
+                chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
             }
 
             // Cuộn sau khi DOM render xong (2 nhịp để chắc layout đã đo xong chiều cao)
@@ -171,42 +171,5 @@
             requestAnimationFrame(() => requestAnimationFrame(() => scrollToBottom(false)));
             });
     </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-          const convId = @ViewBag.ConversationId;
-          window.activeConvId = convId;  // để layout biết đang ở phòng này
-
-          let lastMessageId = @Model.Any() ? @Model.Max(m => m.ChatMessageId) : 0;
-
-          async function markRead() {
-            try {
-              await connection.invoke("MarkRead", convId, lastMessageId);
-              // Thông báo cho layout xóa badge của conv này
-              window.dispatchEvent(new CustomEvent('chatMarkedRead', { detail: { convId: convId }}));
-            } catch {}
-          }
-
-          // Sau khi start + join, mark read 1 phát
-          connection.start().then(async () => {
-            await connection.invoke("JoinConversation", convId);
-            await markRead();
-                    // Sau markRead, yêu cầu layout sync lại từ server
-            window.dispatchEvent(new CustomEvent('chatRequestCountsSync'));
-          });
-
-          // Khi nhận tin mới
-          connection.on("ReceiveMessage", (m) => {
-            if (m.conversationId === convId) {
-              lastMessageId = Math.max(lastMessageId, m.messageId);
-              // Nếu tin do khách gửi → đang mở phòng => đánh dấu đọc luôn
-              if (m.senderId !== @ViewBag.CurrentUserId) markRead();
-            }
-          });
-
-          // Khi rời trang
-          window.addEventListener('beforeunload', () => { window.activeConvId = null; });
-        });
-    </script>
-
 }
 
