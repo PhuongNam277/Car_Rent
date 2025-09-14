@@ -177,4 +177,105 @@
     <script src="~/Main/js/main.js"></script>
 </body>
 
+@if (User.IsInRole("Staff"))
+{
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        (function(){
+          const LS_KEY = 'cr_unread_v1';
+          const myId = parseInt('@User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)');
+          const badge = document.getElementById('supportBadge');
+
+          const queueIds = new Set();     // conv chưa gán (hàng đợi)
+          const unreadMap = new Map();    // convId -> số chưa đọc (đã gán cho TÔI)
+
+          function totalCount(){
+            let unreadTotal = 0; unreadMap.forEach(v => unreadTotal += v);
+            return queueIds.size + unreadTotal;
+          }
+          function updateBadge(){
+            if (!badge) return;
+            const n = totalCount();
+            badge.textContent = String(n);
+            badge.hidden = (n === 0);
+          }
+
+          function getSnapshot(){
+            try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
+          }
+          function publishSnapshot(){
+            const snap = {
+              queueIds: [...queueIds],
+              unread: Object.fromEntries(unreadMap),
+              ts: Date.now()
+            };
+            localStorage.setItem(LS_KEY, JSON.stringify(snap));
+            // cho các trang (Inbox, v.v.) bắt được
+            window.dispatchEvent(new CustomEvent('chatSnapshot', { detail: snap }));
+          }
+          function hydrateFromStorage(){
+            const snap = getSnapshot();
+            if (Array.isArray(snap.queueIds)) snap.queueIds.forEach(id => queueIds.add(id));
+            if (snap.unread) {
+              Object.entries(snap.unread).forEach(([k,v]) => unreadMap.set(parseInt(k), v));
+            }
+            updateBadge();
+          }
+
+          // 1) Hydrate ngay khi vừa load trang (trước khi nối SignalR)
+          hydrateFromStorage();
+
+          // 2) Kết nối SignalR
+          const conn = new signalR.HubConnectionBuilder().withUrl('/hubs/chat').withAutomaticReconnect().build();
+
+          // Sự kiện realtime
+          conn.on('NewConversation', i => { queueIds.add(i.conversationId); updateBadge(); publishSnapshot(); });
+          conn.on('ConversationAssigned', e => { queueIds.delete(e.conversationId); updateBadge(); publishSnapshot(); });
+          conn.on('NewMessage', e => {
+            // nếu đang mở đúng phòng thì Room sẽ MarkRead, không cộng ở layout
+            if (window.activeConvId && window.activeConvId === e.conversationId) return;
+            const cur = unreadMap.get(e.conversationId) || 0;
+            unreadMap.set(e.conversationId, cur + 1);
+            updateBadge(); publishSnapshot();
+          });
+          conn.on('ConversationClosed', e => {
+            queueIds.delete(e.conversationId);
+            unreadMap.delete(e.conversationId);
+            updateBadge(); publishSnapshot();
+          });
+
+          // Đồng bộ từ server (Counts) -> luôn publish sau khi set
+          async function syncCounts(){
+            try {
+              const r = await fetch('/Chat/Counts');     // trả {queueIds:[], unread:{convId:count}}
+              const data = await r.json();
+              queueIds.clear(); (data.queueIds || []).forEach(id => queueIds.add(id));
+              unreadMap.clear();
+              if (data.unread) Object.entries(data.unread).forEach(([k,v]) => unreadMap.set(parseInt(k), v));
+              updateBadge(); publishSnapshot();
+            } catch {}
+          }
+
+          conn.start().then(async () => {
+            try { await conn.invoke('JoinStaffLobby'); } catch {}
+            await syncCounts();                           // sync lần đầu
+          }).catch(console.error);
+
+          // dự phòng nếu rớt mạng / đổi tab
+          setInterval(syncCounts, 10000);
+
+          // Khi phòng chat thông báo đã đọc
+          window.addEventListener('chatMarkedRead', (ev) => {
+            const { convId } = ev.detail || {};
+            if (typeof convId === 'number') {
+              unreadMap.delete(convId);
+              updateBadge(); publishSnapshot();
+            }
+          });
+        })();
+    </script>
+}
+
+
+
 </html>

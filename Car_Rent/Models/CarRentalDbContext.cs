@@ -45,6 +45,7 @@ public partial class CarRentalDbContext : DbContext
 
     public virtual DbSet<ChatMessage> ChatMessages { get; set; }
 
+    public DbSet<ConversationReadState> ConversationReadStates { get; set; }
 
 
 
@@ -317,6 +318,8 @@ public partial class CarRentalDbContext : DbContext
                 .HasForeignKey(e => e.SenderId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<ConversationReadState>().HasKey(x => new { x.ConversationId, x.UserId });
 
 
 
