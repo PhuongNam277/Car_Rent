@@ -1,15 +1,16 @@
 ﻿
 @model IEnumerable<Car_Rent.Models.Reservation>
 @{
-     ViewData["Title"] = "Reservation List"; 
-     Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
-	var total = (int)(ViewBag.TotalItems ?? 0);
-	var page = (int)(ViewBag.Page ?? 1);
-	var pageSize = (int)(ViewBag.PageSize ?? 10);
-	string status = ViewBag.Status as string ?? "All";
-	var totalPages = (int)Math.Ceiling((double)total / pageSize);
-	string? sortBy = ViewBag.SortBy;
- } 
+    ViewData["Title"] = "Reservation List"; 
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+    var total = (int)(ViewBag.TotalItems ?? 0);
+    var page = (int)(ViewBag.Page ?? 1);
+    var pageSize = (int)(ViewBag.PageSize ?? 10);
+    string status = ViewBag.Status as string ?? "All";
+    var totalPages = (int)Math.Ceiling((double)total / pageSize);
+    string? sortBy = ViewBag.SortBy;
+    var currentSearch = ViewData["CurrentSearch"] as string;
+} 
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Reservations</h2>
@@ -93,30 +94,30 @@
 
             <!-- First -->
             <li class="page-item @(page == 1 ? "disabled" : "")">
-                <a class="page-link" href="@Url.Action("Index", new { page = 1, pageSize, sortBy })">« First</a>
+                <a class="page-link" href="@Url.Action("Index", new { page = 1, pageSize, sortBy, search = currentSearch })">« First</a>
             </li>
 
             <!-- Prev -->
             <li class="page-item @(page == 1 ? "disabled" : "")">
-                <a class="page-link" href="@Url.Action("Index", new { page = page - 1, pageSize, sortBy })">‹ Prev</a>
+                <a class="page-link" href="@Url.Action("Index", new { page = page - 1, pageSize, sortBy, search = currentSearch })">‹ Prev</a>
             </li>
 
             <!-- Page numbers -->
             @for (int i = 1; i <= totalPages; i++)
             {
                 <li class="page-item @(i == page ? "active" : "")">
-                    <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize, sortBy })">@i</a>
+                    <a class="page-link" href="@Url.Action("Index", new { page = i, pageSize, sortBy, search = currentSearch })">@i</a>
                 </li>
             }
 
             <!-- Next -->
             <li class="page-item @(page == totalPages ? "disabled" : "")">
-                <a class="page-link" href="@Url.Action("Index", new { page = page + 1, pageSize, sortBy })">Next ›</a>
+                <a class="page-link" href="@Url.Action("Index", new { page = page + 1, pageSize, sortBy, search = currentSearch })">Next ›</a>
             </li>
 
             <!-- Last -->
             <li class="page-item @(page == totalPages ? "disabled" : "")">
-                <a class="page-link" href="@Url.Action("Index", new { page = totalPages, pageSize, sortBy })">Last »</a>
+                <a class="page-link" href="@Url.Action("Index", new { page = totalPages, pageSize, sortBy, search = currentSearch })">Last »</a>
             </li>
         </ul>
     </nav>

@@ -29,6 +29,9 @@ namespace Car_Rent.Controllers
             //var carRentalDbContext = _context.Reservations.Include(r => r.Car).Include(r => r.User);
             //return View(await carRentalDbContext.ToListAsync());
 
+            // Ghi nhớ tham số tìm kiếm hiện tại
+            ViewData["CurrentSearch"] = search;
+
             var query = _context.Reservations
                 .Include(r => r.Car)
                 .Include(r => r.User)
@@ -143,7 +146,7 @@ namespace Car_Rent.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ReservationId,UserId,CarId,ReservationDate,StartDate,EndDate,TotalPrice, Status")] Reservation reservation)
+        public async Task<IActionResult> Edit(int id, [Bind("ReservationId,UserId,CarId,ReservationDate,StartDate,EndDate,TotalPrice,FromCity, ToCity, Status, PickupLocationId, DropoffLocationId")] Reservation reservation)
         {
             if (id != reservation.ReservationId)
             {
@@ -168,6 +171,7 @@ namespace Car_Rent.Controllers
                         if(payment != null)
                         {
                             payment.Status = "Paid";
+                            payment.PaymentDate = DateTime.Now;
                         }
 
                         // Update the car's status to "Available"

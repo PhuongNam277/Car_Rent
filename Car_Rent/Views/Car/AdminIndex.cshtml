@@ -7,6 +7,7 @@
     var page = (int)(ViewBag.Page ?? 1);
     var pageSize = (int)(ViewBag.PageSize ?? 10);
     var totalPages = (int)Math.Ceiling((double)total / pageSize);
+    var currentSearch = ViewData["CurrentSearch"] as string;
     string? sortBy = ViewBag.SortBy;
 }
 
@@ -95,30 +96,30 @@
 
             <!-- First -->
             <li class="page-item @(page == 1 ? "disabled" : "")">
-                <a class="page-link" href="@Url.Action("AdminIndex", new { page = 1, pageSize, sortBy })">« First</a>
+                <a class="page-link" href="@Url.Action("AdminIndex", new { page = 1, pageSize, sortBy, search = currentSearch })">« First</a>
             </li>
 
             <!-- Prev -->
             <li class="page-item @(page == 1 ? "disabled" : "")">
-                <a class="page-link" href="@Url.Action("AdminIndex", new { page = page - 1, pageSize, sortBy })">‹ Prev</a>
+                <a class="page-link" href="@Url.Action("AdminIndex", new { page = page - 1, pageSize, sortBy, search = currentSearch })">‹ Prev</a>
             </li>
 
             <!-- Page numbers -->
             @for (int i = 1; i <= totalPages; i++)
             {
                 <li class="page-item @(i == page ? "active" : "")">
-                    <a class="page-link" href="@Url.Action("AdminIndex", new { page = i, pageSize, sortBy })">@i</a>
+                    <a class="page-link" href="@Url.Action("AdminIndex", new { page = i, pageSize, sortBy, search = currentSearch })">@i</a>
                 </li>
             }
 
             <!-- Next -->
             <li class="page-item @(page == totalPages ? "disabled" : "")">
-                <a class="page-link" href="@Url.Action("AdminIndex", new { page = page + 1, pageSize, sortBy })">Next ›</a>
+                <a class="page-link" href="@Url.Action("AdminIndex", new { page = page + 1, pageSize, sortBy, search = currentSearch })">Next ›</a>
             </li>
 
             <!-- Last -->
             <li class="page-item @(page == totalPages ? "disabled" : "")">
-                <a class="page-link" href="@Url.Action("AdminIndex", new { page = totalPages, pageSize, sortBy })">Last »</a>
+                <a class="page-link" href="@Url.Action("AdminIndex", new { page = totalPages, pageSize, sortBy, search = currentSearch })">Last »</a>
             </li>
         </ul>
     </nav>

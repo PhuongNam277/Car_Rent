@@ -48,8 +48,8 @@ builder.Services.AddAuthentication("MyCookieAuth")
     })
     .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
     {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+        options.ClientId = builder.Configuration["GoogleKeys:ClientId"]!;
+        options.ClientSecret = builder.Configuration["GoogleKeys:ClientSecret"]!;
         options.CallbackPath = "/signin-google";
         options.SaveTokens = true;
         options.Scope.Add("email");
@@ -72,6 +72,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", policy =>
         policy.RequireClaim("Role", "Admin"));
 });
+
+builder.Services.AddScoped<ISalesService, SalesService>();
+
 
 builder.Services.AddAuthorization();
 
@@ -97,6 +100,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
 
 // Đăng ký dịch vụ IEmailSender
+
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddTransient<EmailService>();
 

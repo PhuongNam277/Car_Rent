@@ -11,6 +11,7 @@
 
 <div class="grid grid-cols-12 gap-x-6">
     <div class="col-span-12 xl:col-span-4 md:col-span-6">
+        @* Daily *@
         <div class="card">
             <div class="card-header !pb-0 !border-b-0">
                 <h5>Daily Sales</h5>
@@ -18,19 +19,21 @@
             <div class="card-body">
                 <div class="flex items-center justify-between gap-3 flex-wrap">
                     <h3 class="font-light flex items-center mb-0">
-                        <i class="feather icon-arrow-up text-success-500 text-[30px] mr-1.5"></i>
-                        $ 249.95
+                        <i id="daily-arrow" class="feather text-[30px] mr-1.5"></i>
+                        <span id="daily-amount">$ 0.00</span>
                     </h3>
-                    <p class="mb-0">67%</p>
+                    <p id="daily-change" class="mb-0">0%</p>
                 </div>
                 <div class="w-full bg-theme-bodybg rounded-lg h-1.5 mt-6 dark:bg-themedark-bodybg">
-                    <div class="bg-theme-bg-1 h-full rounded-lg shadow-[0_10px_20px_0_rgba(0,0,0,0.3)]" role="progressbar"
-                         style="width: 75%"></div>
+                    <div id="daily-bar" class="bg-theme-bg-1 h-full rounded-lg shadow-[0_10px_20px_0_rgba(0,0,0,0.3)]" role="progressbar"
+                         style="width: 0%"></div>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-span-12 xl:col-span-4 md:col-span-6">
+        @* Monthly *@
         <div class="card">
             <div class="card-header !pb-0 !border-b-0">
                 <h5>Monthly Sales</h5>
@@ -38,19 +41,21 @@
             <div class="card-body">
                 <div class="flex items-center justify-between gap-3 flex-wrap">
                     <h3 class="font-light flex items-center mb-0">
-                        <i class="feather icon-arrow-down text-danger-500 text-[30px] mr-1.5"></i>
-                        $ 2.942.32
+                        <i id="monthly-arrow" class="feather text-[30px] mr-1.5"></i>
+                        <span id="monthly-amount">$ 0.00</span>
                     </h3>
-                    <p class="mb-0">36%</p>
+                    <p id="monthly-change" class="mb-0">0%</p>
                 </div>
                 <div class="w-full bg-theme-bodybg rounded-lg h-1.5 mt-6 dark:bg-themedark-bodybg">
-                    <div class="bg-theme-bg-2 h-full rounded-lg shadow-[0_10px_20px_0_rgba(0,0,0,0.3)]" role="progressbar"
-                         style="width: 35%"></div>
+                    <div id="monthly-bar" class="bg-theme-bg-2 h-full rounded-lg shadow-[0_10px_20px_0_rgba(0,0,0,0.3)]" role="progressbar"
+                         style="width: 0%"></div>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-span-12 xl:col-span-4">
+        @* Yearly *@
         <div class="card">
             <div class="card-header !pb-0 !border-b-0">
                 <h5>Yearly Sales</h5>
@@ -58,14 +63,14 @@
             <div class="card-body">
                 <div class="flex items-center justify-between gap-3 flex-wrap">
                     <h3 class="font-light flex items-center mb-0">
-                        <i class="feather icon-arrow-up text-success-500 text-[30px] mr-1.5"></i>
-                        $8.638.32
+                        <i id="yearly-arrow" class="feather text-[30px] mr-1.5"></i>
+                        <span id="yearly-amount">$ 0.00</span>
                     </h3>
-                    <p class="mb-0">80%</p>
+                    <p id="yearly-change" class="mb-0">0%</p>
                 </div>
                 <div class="w-full bg-theme-bodybg rounded-lg h-1.5 mt-6 dark:bg-themedark-bodybg">
-                    <div class="bg-theme-bg-1 h-full rounded-lg shadow-[0_10px_20px_0_rgba(0,0,0,0.3)]" role="progressbar"
-                         style="width: 80%"></div>
+                    <div id="yearly-bar" class="bg-theme-bg-1 h-full rounded-lg shadow-[0_10px_20px_0_rgba(0,0,0,0.3)]" role="progressbar"
+                         style="width: 0%"></div>
                 </div>
             </div>
         </div>
@@ -359,4 +364,120 @@
     </div>
 </div>
 <!-- [ Main Content ] end -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // ====== Helpers chung ======
+      const $ = (s) => document.querySelector(s);
+
+      // Ép số an toàn: null/NaN -> 0
+      const num = (v) => {
+        const n = typeof v === 'string' ? Number(v.replace(/[, ]/g,'')) : Number(v);
+        return Number.isFinite(n) ? n : 0;
+      };
+
+      // Tính % thay đổi nếu server không trả sẵn
+      function computeChangePct(current, previous){
+        const cur = num(current), prev = num(previous);
+        if (prev <= 0) return cur > 0 ? 100 : 0;
+        return Math.round(((cur - prev) / prev) * 10000) / 100; // làm tròn 2 số
+      }
+
+      // Format tiền (mặc định USD, anh đổi tuỳ ý)
+      function formatMoneyUSD(v){
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num(v));
+      }
+
+      // Đổi icon/màu mũi tên theo % thay đổi
+      function toggleArrow(el, pct){
+        if(!el) return;
+        const up = num(pct) >= 0;
+        el.classList.remove('text-success-500','text-danger-500','icon-arrow-up','icon-arrow-down');
+        el.classList.add(up ? 'text-success-500' : 'text-danger-500');
+        el.classList.add(up ? 'icon-arrow-up' : 'icon-arrow-down');
+      }
+
+      // Bind dữ liệu cho từng card
+      function bindCard(prefix, stat, barThemeClass){
+        const amountEl = $(`#${prefix}-amount`);
+        const changeEl = $(`#${prefix}-change`);
+        const barEl    = $(`#${prefix}-bar`);
+        const arrowEl  = $(`#${prefix}-arrow`);
+
+        if(!stat){
+          console.warn(`[${prefix}] stat is missing`);
+          return;
+        }
+
+        // Đảm bảo có current/previous/changePct
+        const current  = num(stat.current);
+        const previous = num(stat.previous);
+        const changePct = (stat.changePct !== undefined && stat.changePct !== null)
+            ? num(stat.changePct)
+            : computeChangePct(current, previous);
+
+        if(amountEl) amountEl.textContent = formatMoneyUSD(current);
+        if(changeEl) changeEl.textContent = `${changePct}%`;
+
+        if(barEl){
+          // chiều rộng theo |%|, tối đa 100
+          barEl.style.width = Math.min(Math.abs(changePct), 100) + '%';
+          if(barThemeClass){
+            barEl.classList.remove('bg-theme-bg-1','bg-theme-bg-2');
+            barEl.classList.add(barThemeClass);
+          }
+        }
+        toggleArrow(arrowEl, changePct);
+
+        // Debug log
+        console.table([{prefix, current, previous, changePct}]);
+      }
+
+      // Chuẩn hoá payload từ API (hỗ trợ PascalCase/camelCase)
+      function normalizeStat(s){
+        if(!s) return { current:0, previous:0, changePct:0 };
+        // Cho phép cả Current/Previous/ChangePct hoặc current/previous/changePct
+        const current   = s.current   ?? s.Current   ?? 0;
+        const previous  = s.previous  ?? s.Previous  ?? 0;
+        const changePct = s.changePct ?? s.ChangePct; // có thể undefined -> sẽ tự tính
+        return { current: num(current), previous: num(previous), changePct };
+      }
+
+      function normalizePayload(data){
+        // Cho phép cả Daily/Monthly/Yearly hoặc daily/monthly/yearly
+        const d = data?.daily   ?? data?.Daily;
+        const m = data?.monthly ?? data?.Monthly;
+        const y = data?.yearly  ?? data?.Yearly;
+        return {
+          daily:   normalizeStat(d),
+          monthly: normalizeStat(m),
+          yearly:  normalizeStat(y),
+        };
+      }
+
+      async function loadSales(){
+        try{
+          const res = await fetch('/api/dashboard/sales', { cache: 'no-store' });
+          if(!res.ok) throw new Error(`HTTP ${res.status}`);
+          const raw = await res.json();
+
+          // In toàn bộ raw để anh kiểm tra key
+          console.log('RAW /api/dashboard/sales:', raw);
+
+          const data = normalizePayload(raw);
+          console.log('NORMALIZED:', data);
+
+          // Bind từng card (đúng ID anh đang dùng)
+          bindCard('daily',   data.daily,   'bg-theme-bg-1');
+          bindCard('monthly', data.monthly, 'bg-theme-bg-2');
+          bindCard('yearly',  data.yearly,  'bg-theme-bg-1');
+        }catch(err){
+          console.error('Load sales failed:', err);
+        }
+      }
+
+      loadSales();
+    });
+</script>
+
 
