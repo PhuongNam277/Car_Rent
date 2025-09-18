@@ -38,6 +38,9 @@ namespace Car_Rent.Controllers
         // GET: Car
         public async Task<IActionResult> AdminIndex(string? search, string? sortBy = "NameAsc", int page = 1, int pageSize = 10)
         {
+            // Ghi nhớ tham số tìm kiếm hiện tại
+            ViewData["CurrentSearch"] = search;
+
             var query = _context.Cars
                 .Include(c => c.Category)
                 .AsQueryable();

@@ -27,6 +27,9 @@ namespace Car_Rent.Controllers
         public async Task<IActionResult> Index(string search, string? sortBy = "PaymentDateDesc", int page = 1, int pageSize = 10)
         {
 
+            // Ghi nhớ tham số tìm kiếm hiện tại
+            ViewData["CurrentSearch"] = search;
+
             var query = _context.Payments
                 .Include(p => p.Reservation)
                 .ThenInclude(r => r.PickupLocation)
