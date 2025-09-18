@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Car_Rent.Security;
 using Car_Rent.ViewModels.Auth;
 using static System.Net.WebRequestMethods;
+using Microsoft.AspNetCore.Authentication.Google;
 
 namespace Car_Rent.Controllers
 {
@@ -38,6 +39,123 @@ namespace Car_Rent.Controllers
         public IActionResult Index()
         {
             return View();
+        }
+
+        // Nút login with gg sẽ gọi vào đây
+        [HttpGet]
+        public IActionResult Google(string? returnUrl = "/")
+        {
+            // để chống open-redirect, chỉ chấp nhận local url
+            if(string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
+            {
+                returnUrl = "/";
+            }
+
+            var props = new AuthenticationProperties
+            {
+                RedirectUri = Url.Action(nameof(GoogleCallback), "Login", new { returnUrl })
+            };
+
+            return Challenge(props, GoogleDefaults.AuthenticationScheme);
+        }
+
+        // Gg trả về đây (redirectUri ở trên)
+        [HttpGet]
+        public async Task<IActionResult> GoogleCallback(string? returnUrl = "/")
+        {
+            if (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
+            {
+                returnUrl = "/";
+            }
+
+            // Lấy kết quả xác thực từ Google
+            var result = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+            if (!result.Succeeded || result.Principal == null)
+            {
+                return RedirectToAction(nameof(Index)); // về trang login nếu fail
+            }
+
+            var email = result.Principal.FindFirstValue(ClaimTypes.Email)
+                ?? result.Principal.FindFirst("email")?.Value;
+
+            var fullName = result.Principal.FindFirstValue(ClaimTypes.Name)
+                ?? result.Principal.FindFirst("name")?.Value;
+
+            var avatar = result.Principal.FindFirst("urn:google:picture")?.Value;
+
+            if(string.IsNullOrWhiteSpace(email))
+            {
+                // không lấy được email thì hủy
+                TempData["Error"] = "Google does not provide email. Please try another account.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Tìm hoặc tạo user local
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (user == null)
+            {
+                // Lấy role 'User' làm mặc định
+                int? userRoleId = await _context.Roles
+                    .Where(r => r.RoleName == "User")
+                    .Select(r => (int?)r.RoleId)
+                    .FirstOrDefaultAsync();
+
+                user = new User
+                {
+                    Username = GenerateUniqueUsernameFromEmail(email),
+                    Email = email,
+                    FullName = fullName ?? email,
+                    RoleId = userRoleId,
+                    PasswordHash = "GOOGLE_OAUTH", // đánh dấu external; không dùng để login thường
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                // Nếu có cột AvatarUrl thì lưu
+                try
+                {
+                    var avatarProp = typeof(User).GetProperty("AvatarUrl");
+                    if (avatarProp != null && !string.IsNullOrWhiteSpace(avatar))
+                    {
+                        avatarProp.SetValue(user, avatar);
+                    }
+                }
+                catch { }
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+
+            if (user.IsBlocked)
+            {
+                TempData["Error"] = "Your account has been blocked.";
+            }
+
+            // Lấy RoleName để đưa vào claim "Role" (phục vụ AdminOnly)
+            string roleName = await _context.Roles
+                .Where(r => r.RoleId == user.RoleId)
+                .Select(r => r.RoleName)
+                .FirstOrDefaultAsync() ?? "User";
+
+            var claims = new List<Claim>
+            {
+                new Claim("UserId", user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.FullName ?? user.Username),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("Role", roleName)
+            };
+
+            if (!string.IsNullOrEmpty(avatar)) claims.Add(new Claim("AvatarUrl", avatar));
+
+            var identity = new ClaimsIdentity(claims, "MyCookieAuth");
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync("MyCookieAuth", principal, new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2)
+            });
+
+            return LocalRedirect(returnUrl);
         }
 
         [HttpPost]
@@ -366,6 +484,18 @@ namespace Car_Rent.Controllers
             HttpContext.Session.Remove(K_Attempts);
             HttpContext.Session.Remove(K_Verified);
             HttpContext.Session.Remove(K_Used);
+        }
+
+        private string GenerateUniqueUsernameFromEmail(string email)
+        {
+            var baseName = email.Split('@')[0];
+            var candidate = baseName;
+            int i = 1;
+            while(_context.Users.Any(u => u.Username == candidate))
+            {
+                candidate = $"{baseName}{i++}";
+            }
+            return candidate;
         }
     }
 }

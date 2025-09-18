@@ -284,7 +284,7 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(function () {
+        $(function () {
       const $form = $('#reserveForm');
       const $pickup = $form.find('#pickupLocationSelect');
       const $category = $form.find('#categorySelect');
@@ -295,20 +295,27 @@
       const $endTime   = $form.find('select[name="EndTime"]');
       const $bookBtn   = $form.find('button[type="submit"]');
 
-      // Ghi nhớ XE mà anh đã chọn lần gần nhất (dù danh sách có reload)
+      // Ghi nhớ xe mà đã chọn lần gần nhất (dù danh sách có reload)
       let lastChosenCarId = $car.val() || null;
 
       function hhmm(v){ return (v && v.length===5) ? v : "12:00"; }
       function debounce(fn, wait){ let t; return function(){ clearTimeout(t); t=setTimeout(()=>fn.apply(this,arguments),wait); }; }
       function setLoading(on){
-        if(on){ $car.prop('disabled', true).html('<option selected>Loading...</option>'); $bookBtn.prop('disabled', true); }
-        else  { $car.prop('disabled', false); $bookBtn.prop('disabled', false); }
+        if(on){
+          $car.prop('disabled', true).html('<option selected>Loading...</option>');
+          $bookBtn.prop('disabled', true);
+          // Xóa thông báo cũ khi đang load
+          $form.find('#carLostMsg, #noCarAvailableMsg').remove();
+        }
+        else  {
+          $car.prop('disabled', false);
+          $bookBtn.prop('disabled', false);
+        }
       }
 
-      // Khi anh CHỌN lại xe → xoá cảnh báo ngay
       $car.on('change', function(){
         lastChosenCarId = $(this).val() || null;
-        $form.find('#carLostMsg').remove();
+        $form.find('#carLostMsg, #noCarAvailableMsg').remove();
       });
 
       function reloadCars(){
@@ -320,7 +327,7 @@
         const endTimeVal   = hhmm($endTime.val());
         if(!pickupLocationId || !startDateVal || !endDateVal) return;
 
-        const hadSelection = !!lastChosenCarId;        // trước đó có chọn xe không?
+        const hadSelection = !!lastChosenCarId;
         setLoading(true);
 
         $.get('/Bookcar/AvailableCars', {
@@ -329,7 +336,35 @@
         })
         .done(function(data){
           let foundOld = false;
+
+          // Xóa các thông báo cũ
+          $form.find('#carLostMsg, #noCarAvailableMsg').remove();
+
           $car.empty().append('<option value="">Select Your Car</option>');
+
+          // XỬ LÝ KHI KHÔNG CÓ XE TRỐNG
+          if(!data || data.length === 0){
+            // Thêm option thông báo không có xe
+            $car.append('<option value="" disabled style="color: #dc3545; font-style: italic;">Không có xe phù hợp</option>');
+
+            // Hiển thị thông báo chi tiết
+            const stationName = $pickup.find('option:selected').text() || 'station này';
+            const noCarMsg = `
+              <div id="noCarAvailableMsg" class="alert alert-warning mt-2 mb-0" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Xe tạm thời không có tại ${stationName}</strong><br>
+                <small>Vui lòng chọn station khác hoặc thử lại sau. Bạn cũng có thể thay đổi thời gian hoặc loại xe.</small>
+              </div>
+            `;
+            $car.after(noCarMsg);
+
+            // Disable nút book
+            $bookBtn.prop('disabled', true);
+            lastChosenCarId = null;
+            return;
+          }
+
+          // CÓ XE - Xử lý bình thường
           data.forEach(function(item){
             if(lastChosenCarId && String(item.carId) === String(lastChosenCarId)) foundOld = true;
             $car.append($('<option/>', { value: item.carId, text: item.carName }));
@@ -338,19 +373,43 @@
           // Nếu xe cũ còn → tự chọn lại & xoá cảnh báo
           if(foundOld){
             $car.val(lastChosenCarId);
-            $form.find('#carLostMsg').remove();
           } else {
             // Nếu TRƯỚC ĐÓ CÓ lựa chọn, nhưng giờ không còn trong list → cảnh báo
-            $form.find('#carLostMsg').remove();
-            if(hadSelection){
-              // $car.after('<small id="carLostMsg" class="text-warning ms-2">Xe anh vừa chọn không còn phù hợp với lựa chọn hiện tại.</small>');
-            }
-            // Không ép cảnh báo nếu chưa từng chọn xe
-            lastChosenCarId = null; // reset, đợi anh chọn lại
+            // if(hadSelection){
+            //   const carLostMsg = `
+            //     <small id="carLostMsg" class="text-warning ms-2">
+            //       <i class="fas fa-info-circle me-1"></i>
+            //       Xe bạn vừa chọn không còn phù hợp với lựa chọn hiện tại.
+            //     </small>
+            //   `;
+            //   $car.after(carLostMsg);
+            // }
+            lastChosenCarId = null;
           }
+
+          // Enable nút book khi có xe
+          $bookBtn.prop('disabled', false);
         })
-        .fail(function(){ alert('Cannot load available cars.'); })
-        .always(function(){ setLoading(false); });
+        .fail(function(xhr, status, error){
+          console.error('Load cars failed:', error);
+
+          // Xử lý lỗi API
+          $form.find('#carLostMsg, #noCarAvailableMsg').remove();
+          $car.empty().append('<option value="" disabled style="color: #dc3545;">Lỗi tải dữ liệu</option>');
+
+          const errorMsg = `
+            <div id="noCarAvailableMsg" class="alert alert-danger mt-2 mb-0" role="alert">
+              <i class="fas fa-exclamation-circle me-2"></i>
+              <strong>Không thể tải danh sách xe</strong><br>
+              <small>Vui lòng kiểm tra kết nối internet và thử lại.</small>
+            </div>
+          `;
+          $car.after(errorMsg);
+          $bookBtn.prop('disabled', true);
+        })
+        .always(function(){
+          setLoading(false);
+        });
       }
 
       const reloadCarsDebounced = debounce(reloadCars, 300);
@@ -370,7 +429,7 @@
 
 
 
-<script>
+@* <script>
     $(document).ready(function () {
         $("#categorySelect").change(function () {
             var categoryId = $(this).val(); // Lay category id da chon
@@ -399,4 +458,4 @@
         })
         
     } )
-</script>
+</script> *@
