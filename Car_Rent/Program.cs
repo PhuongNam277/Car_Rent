@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.AspNetCore.Authentication;
 using Car_Rent.Services;
 using Car_Rent.Hubs;
+using Microsoft.AspNetCore.Authentication.Google;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<CarRentalDbContext>(
@@ -14,7 +16,7 @@ builder.Services.AddDbContext<CarRentalDbContext>(
 
 // Đăng ký dịch vụ Authentication
 builder.Services.AddAuthentication("MyCookieAuth")
-    .AddCookie("MyCookieAuth", options => 
+    .AddCookie("MyCookieAuth", options =>
     {
         options.Cookie.Name = "UserLoginCookie"; // Tên cookie
         options.LoginPath = "/Login/Index"; // Đường dẫn đến trang đăng nhập
@@ -43,6 +45,25 @@ builder.Services.AddAuthentication("MyCookieAuth")
             }
         };
 
+    })
+    .AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+        options.CallbackPath = "/signin-google";
+        options.SaveTokens = true;
+        options.Scope.Add("email");
+        options.Scope.Add("profile");
+
+        // Map Json về claim chuẩn .NET để lấy Name/Email nhanh gọn trong callback
+        options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "sub");
+        options.ClaimActions.MapJsonKey(ClaimTypes.Name, "name");
+        options.ClaimActions.MapJsonKey(ClaimTypes.Email, "email");
+        options.ClaimActions.MapCustomJson("urn:google:picture", json =>
+        {
+            try { return json.GetProperty("picture").GetString(); }
+            catch { return null; }
+        });
     });
 
 // (tuỳ chọn) Policy chỉ cho Admin thao tác
