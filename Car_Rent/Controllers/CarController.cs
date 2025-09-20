@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Car_Rent.Models;
+using Car_Rent.ViewModels.Car;
 
 namespace Car_Rent.Controllers
 {
@@ -18,21 +19,145 @@ namespace Car_Rent.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        [HttpGet]
+        public async Task<IActionResult> Index([FromQuery] CarFilterVM filters)
         {
 
             ViewData["ActivePage"] = "Pages";
 
-            var carEntities = await _context.Cars
-                .Include(c => c.Category) // Include the Category navigation property
-                .ToListAsync();
+            var q = _context.Cars.AsNoTracking()
+                .Include(c => c.Category)
+                .Where(c => c.Status == null || c.Status == "Available" || c.Status == "Rented");
 
-            var carViewModels = new CarViewModel
+            // Filters
+            if (filters.CategoryId.HasValue)
+                q = q.Where(c => c.CategoryId == filters.CategoryId.Value);
+
+            if (filters.PriceMin.HasValue)
+                q = q.Where(c => c.RentalPricePerDay >= filters.PriceMin.Value);
+
+            if (filters.PriceMax.HasValue)
+                q = q.Where(c => c.RentalPricePerDay <= filters.PriceMax.Value);
+
+            if (filters.Seats.HasValue)
+                q = q.Where(c => c.SeatNumber == filters.Seats.Value);
+
+            if (!string.IsNullOrWhiteSpace(filters.Transmission))
+                q = q.Where(c => c.TransmissionType == filters.Transmission);
+
+            if(!string.IsNullOrWhiteSpace(filters.Energy))
+                q = q.Where(c => c.EnergyType == filters.Energy);
+
+            // Sort
+            q = filters.SortBy switch
             {
-                Cars = carEntities
+                "PriceDesc" => q.OrderByDescending(c => c.RentalPricePerDay),
+                "NameAsc" => q.OrderBy(c => c.CarName),
+                "NameDesc" => q.OrderByDescending(c => c.CarName),
+                "Newest" => q.OrderBy(c => c.SellDate).ThenByDescending(c => c.CarId),
+                _        => q.OrderBy(c => c.RentalPricePerDay)
             };
 
-            return View(carViewModels);
+            // Count before paging
+            var total = await q.CountAsync();
+
+            // Paging
+            var skip = (Math.Max(1, filters.Page) - 1) * Math.Max(1, filters.PageSize);
+            var items = await q
+                .Skip(skip)
+                .Take(filters.PageSize)
+                .Select(c => new CarListItemVM
+                {
+                    CarId = c.CarId,
+                    CarName = c.CarName,
+                    Brand = c.Brand,
+                    ImageUrl = c.ImageUrl,
+                    RentalPricePerDay = c.RentalPricePerDay,
+                    SeatNumber = c.SeatNumber,
+                    EnergyType = c.EnergyType,
+                    EngineType = c.EngineType,
+                    TransmissionType = c.TransmissionType,
+                    Status = c.Status ?? "Available",
+                    CategoryId = c.CategoryId,
+                    CategoryName = c.Category != null ? c.Category.CategoryName : ""
+                })
+                .ToListAsync();
+
+            var cats = await _context.Categories.AsNoTracking()
+                .Select(cat => new
+                {
+                    cat.CategoryId, cat.CategoryName,
+                    Count = _context.Cars.Count(c => c.CategoryId == cat.CategoryId)
+                })
+                .ToListAsync();
+
+            var vm = new CarIndexVM
+            {
+                Filters = filters,
+                Cars = items,
+                TotalItems = total,
+                Categories = cats.Select(x => (x.CategoryId, x.CategoryName, x.Count)).ToList()
+            };
+
+            return View(vm);
+        }
+
+        // Quick view (partial)
+        [HttpGet]
+        public async Task<IActionResult> DetailsPartial(int id)
+        {
+            var car = await _context.Cars.AsNoTracking()
+                .Include(c => c.Category)
+                .Include(c => c.BaseLocation)
+                .FirstOrDefaultAsync(c => c.CarId == id);
+
+            if (car == null) { return NotFound(); }
+
+            var vm = new CarListItemVM
+            {
+                CarId = car.CarId,
+                CarName = car.CarName,
+                Brand = car.Brand,
+                ImageUrl = car.ImageUrl,
+                RentalPricePerDay = car.RentalPricePerDay,
+                SeatNumber = car.SeatNumber,
+                EnergyType = car.EnergyType,
+                EngineType = car.EngineType,
+                TransmissionType = car.TransmissionType,
+                Status = car.Status ?? "Available",
+                CategoryId = car.CategoryId,
+                CategoryName = car.Category?.CategoryName ?? ""
+            };
+
+            return PartialView("_CarQuickView", vm);
+        }
+
+        // Compare (partial) - nhận tối đa 3 id
+        [HttpGet]
+        public async Task<IActionResult> ComparePartial([FromQuery] int[] ids)
+        {
+            ids = ids?.Distinct().Take(3).ToArray() ?? Array.Empty<int>();
+            var cars = await _context.Cars.AsNoTracking()
+                .Include(c => c.Category)
+                .Where(c => ids.Contains(c.CarId))
+                .Select(c => new CarListItemVM
+                {
+                    CarId = c.CarId,
+                    CarName = c.CarName,
+                    Brand = c.Brand,
+                    ImageUrl = c.ImageUrl,
+                    RentalPricePerDay = c.RentalPricePerDay,
+                    SeatNumber = c.SeatNumber,
+                    EnergyType = c.EnergyType,
+                    EngineType = c.EngineType,
+                    TransmissionType = c.TransmissionType,
+                    Status = c.Status ?? "Available",
+                    CategoryId = c.CategoryId,
+                    CategoryName = c.Category != null ? c.Category.CategoryName : ""
+                })
+                .ToListAsync();
+
+            return PartialView("_CarCompare", cars);
         }
 
         // GET: Car

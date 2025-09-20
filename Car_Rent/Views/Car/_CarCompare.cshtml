@@ -1,0 +1,58 @@
+﻿@using Car_Rent.ViewModels.Car
+@model List<CarListItemVM>
+<div class="p-3">
+	<h5 class="mb-3">Compare Cars</h5>
+	<div class="table-responsive">
+		<table class="table align-middle">
+			<thead>
+				<tr>
+					<th>Spec</th>
+					@foreach (var c in Model)
+					{
+						<th>@c.CarName<br /><small class="text-muted">@c.Brand</small></th>
+					}
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<th>Category</th>@foreach (var c in Model){
+					<td>@c.CategoryName</td>
+										}
+				</tr>
+				<tr>
+					<th>Price/day</th>@foreach (var c in Model){
+					<td>$@c.RentalPricePerDay</td>
+										}
+				</tr>
+				<tr>
+					<th>Seats</th>@foreach (var c in Model){
+					<td>@(c.SeatNumber?.ToString() ?? "-")</td>
+										}
+				</tr>
+				<tr>
+					<th>Transmission</th>@foreach (var c in Model){
+					<td>@(c.TransmissionType ?? "-")</td>
+										}
+				</tr>
+				<tr>
+					<th>Energy</th>@foreach (var c in Model){
+					<td>@(c.EnergyType ?? "-")</td>
+										}
+				</tr>
+				<tr>
+					<th>Engine</th>@foreach (var c in Model){
+					<td>@(c.EngineType ?? "-")</td>
+										}
+				</tr>
+				<tr>
+					<th>Status</th>@foreach (var c in Model){
+					<td>@c.Status</td>
+										}
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="text-end">
+		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+	</div>
+</div>

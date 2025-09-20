@@ -1,0 +1,48 @@
+﻿@model Car_Rent.ViewModels.Car.CarIndexVM
+<div class="row g-4">
+	@foreach (var car in Model.Cars)
+	{
+		<div class="col-12 col-md-6 col-xl-4">
+			<div class="card h-100">
+				<img src="@car.ImageUrl" class="card-img-top" alt="@car.CarName" />
+				<div class="card-body d-flex flex-column">
+					<h5 class="card-title mb-1">@car.CarName</h5>
+					<div class="text-muted small mb-2">@car.Brand • @car.CategoryName</div>
+					<div class="d-flex flex-wrap gap-2 mb-3">
+						@if (car.SeatNumber.HasValue)
+						{
+							<span class="badge bg-light text-dark">@car.SeatNumber chỗ</span>
+						}
+						@if (!string.IsNullOrEmpty(car.TransmissionType))
+						{
+							<span class="badge bg-light text-dark">@car.TransmissionType</span>
+						}
+						@if (!string.IsNullOrEmpty(car.EnergyType))
+						{
+							<span class="badge bg-light text-dark">@car.EnergyType</span>
+						}
+					</div>
+					<div class="mt-auto d-flex justify-content-between align-items-center">
+						<div class="h5 mb-0 text-primary">$@car.RentalPricePerDay<span class="fs-6 text-muted">/day</span></div>
+						<div class="d-flex align-items-center gap-2">
+							<button type="button" class="btn btn-outline-primary btn-sm" data-quickview="@car.CarId">Quick View</button>
+							<input class="form-check-input" type="checkbox" data-compare="@car.CarId" title="Add to compare" />
+							@if (car.Status == "Available")
+							{
+								<a class="btn btn-primary btn-sm"
+								   asp-controller="Bookcar" asp-action="Index"
+								   asp-route-carId="@car.CarId" asp-route-categoryId="@car.CategoryId">
+									Book
+								</a>
+							}
+							else
+							{
+								<span class="badge bg-secondary">Rented</span>
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+</div>
