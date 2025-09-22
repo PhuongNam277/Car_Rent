@@ -16,7 +16,6 @@
 
     <!-- Icon Font Stylesheet -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
 
@@ -31,117 +30,14 @@
     <!-- Template Stylesheet -->
     <link href="~/Main/css/style.css" rel="stylesheet">
 </head>
-@RenderSection("Scripts", required: false)
-
-@if (User.IsInRole("Staff"))
-{
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-    <script>
-        (function() {
-          const myId = parseInt('@User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)');
-          const badge = document.getElementById('supportBadge'); // <span> ở navbar, nếu có
-          const queueIds = new Set();     // các conv chưa gán (NewConversation)
-          const myActiveIds = new Set();  // các conv đã gán CHO TÔI có hành động (CustomerBack hoặc SeedAssigned)
-
-          function totalCount(){ return queueIds.size + myActiveIds.size; }
-          function updateBadge(){
-            if (!badge) return;
-            const n = totalCount();
-            badge.textContent = String(n);
-            badge.hidden = (n === 0);
-          }
-          function toast(msg){
-            const t = document.createElement('div');
-            t.className = 'position-fixed end-0 top-0 m-3 p-3 bg-dark text-white rounded-3 shadow';
-            t.style.zIndex = 1080; t.textContent = msg;
-            document.body.appendChild(t);
-            setTimeout(()=>t.remove(), 3000);
-          }
-
-          const conn = new signalR.HubConnectionBuilder()
-            .withUrl('/hubs/chat')
-            .withAutomaticReconnect()
-            .build();
-
-          async function joinLobbyAndSync() {
-            try {
-              await conn.invoke('JoinStaffLobby');  // chủ động join lobby
-              await syncCounts();                   // đồng bộ phòng hờ
-            } catch {}
-          }
-
-          // ====== Realtime handlers ======
-          // 1) Khách mới -> vào hàng đợi chưa gán
-          conn.on('NewConversation', i => {
-            queueIds.add(i.conversationId);
-            updateBadge();
-            toast('Khách mới yêu cầu hỗ trợ');
-          });
-
-          // 2) Có người nhận -> nếu trước đó đang nằm trong hàng đợi, bỏ ra
-          conn.on('ConversationAssigned', e => {
-            queueIds.delete(e.conversationId);
-            // Nếu chính tôi nhận, add vào myActive (tuỳ anh có muốn cộng badge khi mình đã nhận hay không)
-            if (e.staffId && parseInt(e.staffId) === myId) {
-              myActiveIds.add(e.conversationId);
-            }
-            updateBadge();
-          });
-
-          // 3) Khách quay lại phòng đã gán cho TÔI -> cộng vào myActive
-          conn.on('CustomerBack', e => {
-            myActiveIds.add(e.conversationId);
-            updateBadge();
-            toast('Khách vừa quay lại phòng chat của bạn');
-          });
-
-          // 4) (tuỳ chọn) Khi cuộc chat bị đóng -> loại khỏi tất cả danh sách
-          conn.on('ConversationClosed', e => {
-            queueIds.delete(e.conversationId);
-            myActiveIds.delete(e.conversationId);
-            updateBadge();
-          });
-
-          // 5) Seed khi vừa kết nối (nếu anh đã gửi SeedAssigned/SeedQueue ở server)
-          conn.on('SeedQueue', items => {
-            (items || []).forEach(i => queueIds.add(i.conversationId));
-            updateBadge();
-          });
-          conn.on('SeedAssigned', items => {
-            // Chỉ count những cuộc đang open đã gán cho tôi
-            (items || []).forEach(i => myActiveIds.add(i.conversationId));
-            updateBadge();
-          });
-
-          conn.onreconnected(joinLobbyAndSync);
-          conn.start().then(joinLobbyAndSync).catch(console.error);
-
-          // ====== Đồng bộ phòng hờ: nếu client vừa vào mà trượt mất event ======
-          async function syncCounts(){
-            try {
-              const r = await fetch('/Chat/Counts'); // endpoint bên dưới
-              const data = await r.json();
-              // reset và sync
-              queueIds.clear(); myActiveIds.clear();
-              (data.queueIds || []).forEach(id => queueIds.add(id));
-              (data.assignedIds || []).forEach(id => myActiveIds.add(id));
-              updateBadge();
-            } catch {}
-          }
-          setInterval(syncCounts, 10000);
-        })();
-    </script>
-}
-
-
 <body>
 
     <!-- Spinner Start -->
-    <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+    @* <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center" style="display: flex;">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
         </div>
-    </div>
+    </div> *@
     <!-- Spinner End -->
     <!-- Topbar Start -->
     @await Html.PartialAsync("_Topbar")
@@ -175,106 +71,192 @@
 
     <!-- Template Javascript -->
     <script src="~/Main/js/main.js"></script>
-</body>
+    @RenderSection("Scripts", required: false)
+    @if (User.IsInRole("Staff"))
+    {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+        <script>
+            (function(){
+              // ====== Config & DOM refs ======
+              const LS_KEY = 'cr_unread_v1';
+              const myId = parseInt('@User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)');
+              const badge = document.getElementById('supportBadge');   // <span id="supportBadge">…</span> ở navbar (nếu có)
 
-@if (User.IsInRole("Staff"))
-{
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+              // ====== Toast helper (gộp từ block 1) ======
+              function toast(msg){
+                const t = document.createElement('div');
+                t.className = 'position-fixed end-0 top-0 m-3 p-3 bg-dark text-white rounded-3 shadow';
+                t.style.zIndex = 1080;
+                t.textContent = msg;
+                document.body.appendChild(t);
+                setTimeout(()=>t.remove(), 3000);
+              }
+
+              // ====== State (gộp 2 block) ======
+              const queueIds   = new Set(); // các conv chưa gán (hàng đợi)
+              const unreadMap  = new Map(); // convId -> số tin chưa đọc (đã gán cho TÔI)
+              const myActiveIds = new Set(); // các conv đã gán CHO TÔI có hoạt động (CustomerBack/Assigned)
+
+              function totalCount(){
+                let unreadTotal = 0; unreadMap.forEach(v => unreadTotal += v);
+                return queueIds.size + unreadTotal + myActiveIds.size; // cộng cả 3 loại để “đầy đủ nhất”
+              }
+              function updateBadge(){
+                if (!badge) return;
+                const n = totalCount();
+                badge.textContent = String(n);
+                badge.hidden = (n === 0);
+              }
+
+              // ====== Snapshot (để đồng bộ giữa các trang/tab) ======
+              function getSnapshot(){
+                try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
+              }
+              function publishSnapshot(){
+                const snap = {
+                  queueIds: [...queueIds],
+                  unread: Object.fromEntries(unreadMap),
+                  myActiveIds: [...myActiveIds],
+                  ts: Date.now()
+                };
+                localStorage.setItem(LS_KEY, JSON.stringify(snap));
+                window.dispatchEvent(new CustomEvent('chatSnapshot', { detail: snap }));
+              }
+              function hydrateFromStorage(){
+                const snap = getSnapshot();
+                if (Array.isArray(snap.queueIds)) snap.queueIds.forEach(id => queueIds.add(id));
+                if (snap.unread) Object.entries(snap.unread).forEach(([k,v]) => unreadMap.set(parseInt(k), v));
+                if (Array.isArray(snap.myActiveIds)) snap.myActiveIds.forEach(id => myActiveIds.add(id));
+                updateBadge();
+              }
+
+              // Hydrate sớm
+              hydrateFromStorage();
+
+              // ====== SignalR connection ======
+              const conn = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/chat')
+                .withAutomaticReconnect()
+                .build();
+
+              async function joinLobbyAndSync(){
+                try { await conn.invoke('JoinStaffLobby'); } catch {}
+                await syncCounts();
+              }
+              conn.onreconnected(joinLobbyAndSync);
+
+              // ====== Handlers (gộp + mở rộng) ======
+              // Hàng đợi khách mới
+              conn.on('NewConversation', i => {
+                queueIds.add(i.conversationId);
+                updateBadge(); publishSnapshot();
+                toast('Khách mới yêu cầu hỗ trợ');
+              });
+
+              // Có người nhận cuộc chat
+              conn.on('ConversationAssigned', e => {
+                queueIds.delete(e.conversationId);
+                // Nếu chính TÔI nhận → thêm vào myActiveIds (để tăng hiển thị badge “đang có hoạt động”)
+                if (e.staffId && parseInt(e.staffId) === myId) {
+                  myActiveIds.add(e.conversationId);
+                }
+                updateBadge(); publishSnapshot();
+              });
+
+              // Khách quay lại phòng đã gán cho TÔI
+              conn.on('CustomerBack', e => {
+                myActiveIds.add(e.conversationId);
+                updateBadge(); publishSnapshot();
+                toast('Khách vừa quay lại phòng chat của bạn');
+              });
+
+              // Chat đóng
+              conn.on('ConversationClosed', e => {
+                queueIds.delete(e.conversationId);
+                unreadMap.delete(e.conversationId);
+                myActiveIds.delete(e.conversationId);
+                updateBadge(); publishSnapshot();
+              });
+
+              // Seed (khi vừa kết nối)
+              conn.on('SeedQueue', items => {
+                (items || []).forEach(i => queueIds.add(i.conversationId));
+                updateBadge(); publishSnapshot();
+              });
+              conn.on('SeedAssigned', items => {
+                // các conv đang open & đã gán cho tôi
+                (items || []).forEach(i => myActiveIds.add(i.conversationId));
+                updateBadge(); publishSnapshot();
+              });
+
+              // Tin nhắn mới
+              conn.on('NewMessage', e => {
+                // Nếu đang mở đúng phòng, phía room sẽ MarkRead → không cộng vào unread
+                if (window.activeConvId && window.activeConvId === e.conversationId) return;
+                const cur = unreadMap.get(e.conversationId) || 0;
+                unreadMap.set(e.conversationId, cur + 1);
+                updateBadge(); publishSnapshot();
+              });
+
+              // ====== Đồng bộ định kỳ từ server (gộp từ block 2) ======
+              async function syncCounts(){
+                try {
+                  // Khuyến nghị server trả JSON: { queueIds:[int], unread:{convId:count}, assignedIds:[int] }
+                  const r = await fetch('/Chat/Counts', { cache: 'no-store' });
+                  if (!r.ok) return;
+                  const data = await r.json();
+
+                  queueIds.clear();
+                  (data.queueIds || []).forEach(id => queueIds.add(id));
+
+                  unreadMap.clear();
+                  if (data.unread) Object.entries(data.unread).forEach(([k,v]) => unreadMap.set(parseInt(k), v));
+
+                  myActiveIds.clear();
+                  (data.assignedIds || []).forEach(id => myActiveIds.add(id));
+
+                  updateBadge(); publishSnapshot();
+                } catch {}
+              }
+
+              // Bắt sự kiện “đã đọc” từ phòng chat cụ thể (do client room phát ra)
+              window.addEventListener('chatMarkedRead', (ev) => {
+                const { convId } = ev.detail || {};
+                if (typeof convId === 'number') {
+                  unreadMap.delete(convId);
+                  myActiveIds.delete(convId); // khi đã đọc/ngó, có thể coi như đã “xử lý”
+                  updateBadge(); publishSnapshot();
+                }
+              });
+
+              // Khởi động
+              conn.start().then(joinLobbyAndSync).catch(console.error);
+
+              // Dự phòng rớt mạng/đổi tab
+              setInterval(syncCounts, 10000);
+            })();
+        </script>
+    }
     <script>
-        (function(){
-          const LS_KEY = 'cr_unread_v1';
-          const myId = parseInt('@User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)');
-          const badge = document.getElementById('supportBadge');
-
-          const queueIds = new Set();     // conv chưa gán (hàng đợi)
-          const unreadMap = new Map();    // convId -> số chưa đọc (đã gán cho TÔI)
-
-          function totalCount(){
-            let unreadTotal = 0; unreadMap.forEach(v => unreadTotal += v);
-            return queueIds.size + unreadTotal;
-          }
-          function updateBadge(){
-            if (!badge) return;
-            const n = totalCount();
-            badge.textContent = String(n);
-            badge.hidden = (n === 0);
-          }
-
-          function getSnapshot(){
-            try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
-          }
-          function publishSnapshot(){
-            const snap = {
-              queueIds: [...queueIds],
-              unread: Object.fromEntries(unreadMap),
-              ts: Date.now()
-            };
-            localStorage.setItem(LS_KEY, JSON.stringify(snap));
-            // cho các trang (Inbox, v.v.) bắt được
-            window.dispatchEvent(new CustomEvent('chatSnapshot', { detail: snap }));
-          }
-
-          // Function khôi phục trạng thái từ storage
-          function hydrateFromStorage(){
-            const snap = getSnapshot();
-            if (Array.isArray(snap.queueIds)) snap.queueIds.forEach(id => queueIds.add(id));
-            if (snap.unread) {
-              Object.entries(snap.unread).forEach(([k,v]) => unreadMap.set(parseInt(k), v));
+        // Hide spinner immediately when DOM is ready
+        (function() {
+            function forceHideSpinner() {
+                var spinner = document.getElementById('spinner');
+                if (spinner) {
+                    spinner.style.display = 'none';
+                    spinner.classList.remove('show');
+                }
             }
-            updateBadge();
-          }
 
-          // 1) Hydrate ngay khi vừa load trang (trước khi nối SignalR)
-          hydrateFromStorage();
-
-          // 2) Kết nối SignalR
-          const conn = new signalR.HubConnectionBuilder().withUrl('/hubs/chat').withAutomaticReconnect().build();
-
-          // Sự kiện realtime
-          conn.on('NewConversation', i => { queueIds.add(i.conversationId); updateBadge(); publishSnapshot(); });
-          conn.on('ConversationAssigned', e => { queueIds.delete(e.conversationId); updateBadge(); publishSnapshot(); });
-          conn.on('NewMessage', e => {
-            // nếu đang mở đúng phòng thì Room sẽ MarkRead, không cộng ở layout
-            if (window.activeConvId && window.activeConvId === e.conversationId) return;
-            const cur = unreadMap.get(e.conversationId) || 0;
-            unreadMap.set(e.conversationId, cur + 1);
-            updateBadge(); publishSnapshot();
-          });
-          conn.on('ConversationClosed', e => {
-            queueIds.delete(e.conversationId);
-            unreadMap.delete(e.conversationId);
-            updateBadge(); publishSnapshot();
-          });
-
-          // Đồng bộ từ server (Counts) -> luôn publish sau khi set
-          async function syncCounts(){
-            try {
-              const r = await fetch('/Chat/Counts');     // trả {queueIds:[], unread:{convId:count}}
-              const data = await r.json();
-              queueIds.clear(); (data.queueIds || []).forEach(id => queueIds.add(id));
-              unreadMap.clear();
-              if (data.unread) Object.entries(data.unread).forEach(([k,v]) => unreadMap.set(parseInt(k), v));
-              updateBadge(); publishSnapshot();
-            } catch {}
-          }
-
-          conn.start().then(async () => {
-            try { await conn.invoke('JoinStaffLobby'); } catch {}
-            await syncCounts();                           // sync lần đầu
-          }).catch(console.error);
-
-          // dự phòng nếu rớt mạng / đổi tab
-          setInterval(syncCounts, 10000);
-
-          // Khi phòng chat thông báo đã đọc
-          window.addEventListener('chatMarkedRead', (ev) => {
-            const { convId } = ev.detail || {};
-            if (typeof convId === 'number') {
-              unreadMap.delete(convId);
-              updateBadge(); publishSnapshot();
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', forceHideSpinner);
+            } else {
+                forceHideSpinner();
             }
-          });
+
+            // Backup timer
+            setTimeout(forceHideSpinner, 1000);
         })();
     </script>
-}
+</body>
 </html>

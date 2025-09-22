@@ -1,165 +1,208 @@
-﻿﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model Car_Rent.ViewModels.Car.CarIndexVM
 @{
+	ViewData["Title"] = "Cars";
+	Layout = "~/Views/Shared/MainLayout.cshtml";
+	// Layout = null;
 }
 
-@{
-    ViewData["Title"] = "Cars";
-    Layout = "~/Views/Shared/MainLayout.cshtml";
-}
-
-@model Car_Rent.Models.CarViewModel
-
-<!-- Header Start -->
+<!-- Header -->
 <div class="container-fluid bg-breadcrumb">
-    <div class="container text-center py-5" style="max-width: 900px;">
-        <h4 class="text-white display-4 mb-4 wow fadeInDown" data-wow-delay="0.1s">Our Cars</h4>
-        <ol class="breadcrumb d-flex justify-content-center mb-0 wow fadeInDown" data-wow-delay="0.3s">
-            <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-            <li class="breadcrumb-item"><a href="#">Pages</a></li>
-            <li class="breadcrumb-item active text-primary">Categories</li>
-        </ol>
-    </div>
+	<div class="container text-center py-5" style="max-width:900px;">
+		<h4 class="text-white display-4 mb-4">Our Cars</h4>
+		<ol class="breadcrumb d-flex justify-content-center mb-0">
+			<li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+			<li class="breadcrumb-item active text-primary">Cars</li>
+		</ol>
+	</div>
 </div>
-<!-- Header End -->
-<!-- Car categories Start -->
-<div class="container-fluid categories py-5">
-    <div class="container py-5">
-        <div class="text-center mx-auto pb-5 wow fadeInUp" data-wow-delay="0.1s" style="max-width: 800px;">
-            <h1 class="display-5 text-capitalize mb-3">Vehicle <span class="text-primary">Categories</span></h1>
-            <p class="mb-0">
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut amet nemo expedita asperiores commodi accusantium at cum harum, excepturi, quia tempora cupiditate! Adipisci facilis modi quisquam quia distinctio,
-            </p>
-        </div>
-        <div class="categories-carousel owl-carousel wow fadeInUp" data-wow-delay="0.1s">
-            @foreach (var car in Model.Cars)
-            {
 
-                <div class="categories-item p-4">
-                    <div class="categories-item-inner">
-                        <div class="categories-img rounded-top">
-                            <img src="@car.ImageUrl" class="img-fluid w-100 rounded-top" alt="">
-                        </div>
-                        <div class="categories-content rounded-bottom p-4">
-                            <h4>@car.CarName</h4>
-                            <div class="categories-review mb-4">
-                                <div class="me-3">4.5 Review</div>
-                                <div class="d-flex justify-content-center text-secondary">
-                                    @*                            @for (int i = 1; i <= 5; i++) *@
-                                    @* { *@
-                                    @* 	if (i <= car.Rating) *@
-                                    @* 	{ *@
-                                    @* 		<i class="fas fa-star"></i> *@
-                                    @* 	} *@
-                                    @* 	else *@
-                                    @* 	{ *@
-                                    @* 		<i class="fas fa-star text-body"></i> *@
-                                    @* 	} *@
-                                    @* } *@
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star text-body"></i>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <h4 class="bg-white text-primary rounded-pill py-2 px-4 mb-0">$@car.RentalPricePerDay/Day</h4>
-                            </div>
-                            <div class="row gy-2 gx-0 text-center mb-4">
-                                <div class="col-4 border-end border-white">
-                                    <i class="fa fa-users text-dark"></i> <span class="text-body ms-1">@car.SeatNumber Seat</span>
-                                </div>
-                                <div class="col-4 border-end border-white">
-                                    <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">@car.EngineType</span>
-                                </div>
-                                <div class="col-4">
-                                    <i class="fa fa-gas-pump text-dark"></i> <span class="text-body ms-1">@car.EnergyType</span>
-                                </div>
-                                <div class="col-4 border-end border-white">
-                                    <i class="fa fa-car text-dark"></i> <span class="text-body ms-1">@car.SellDate</span>
-                                </div>
-                                <div class="col-4 border-end border-white">
-                                    <i class="fa fa-cogs text-dark"></i> <span class="text-body ms-1">AUTO</span>
-                                </div>
-                                <div class="col-4">
-                                    <i class="fa fa-road text-dark"></i> <span class="text-body ms-1">@car.DistanceTraveled km</span>
-                                </div>
-                            </div>
-                            @if (car.Status == "Available")
-                            {
-                                <a asp-controller="Bookcar" asp-action="Index"
-                                asp-route-carId="@car.CarId"
-                                asp-route-categoryId="@car.CategoryId"
-                                class="btn btn-primary rounded-pill d-flex justify-content-center py-3">
-                                    Book Now
-                                </a>
-                            }
-                            else
-                            {
-                                <span class="btn btn-dark rounded-pill d-flex justify-content-center py-3 disabled" style="pointer-events: none;">
-                                    Rented
-                                </span>
-                            }
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
+<div class="container py-5">
+
+	<!-- Tabs by Category -->
+	<ul class="nav nav-pills justify-content-center mb-4" id="catTabs">
+		<li class="nav-item">
+			<a class="nav-link @(Model.Filters.CategoryId == null ? "active" : "")"
+			   href="@Url.Action("Index", new { categoryId = (int?)null, sortBy = Model.Filters.SortBy, page = 1 })">
+				All
+			</a>
+		</li>
+		@foreach (var (id, name, count) in Model.Categories)
+		{
+			var active = Model.Filters.CategoryId == id ? "active" : "";
+			<li class="nav-item">
+				<a class="nav-link @active"
+				   href="@Url.Action("Index", new { categoryId = id, sortBy = Model.Filters.SortBy, page = 1 })">
+					@name (@count)
+				</a>
+			</li>
+		}
+	</ul>
+
+	<!-- Filter + Sort -->
+	<form method="get" class="row g-3 align-items-end mb-4">
+		<input type="hidden" name="categoryId" value="@Model.Filters.CategoryId" />
+		<div class="col-6 col-md-2">
+			<label class="form-label">Price Min</label>
+			<input class="form-control" type="number" step="1" name="priceMin" value="@(Model.Filters.PriceMin?.ToString() ?? "")" />
+		</div>
+		<div class="col-6 col-md-2">
+			<label class="form-label">Price Max</label>
+			<input class="form-control" type="number" step="1" name="priceMax" value="@(Model.Filters.PriceMax?.ToString() ?? "")" />
+		</div>
+		<div class="col-6 col-md-2">
+			<label class="form-label">Seats</label>
+			<select class="form-select" name="seats">
+				<option value="">Any</option>
+				@foreach (var s in new[] { 4, 5, 7, 9 })
+				{
+					<option value="@s" selected="@(Model.Filters.Seats == s)">
+						@s
+					</option>
+
+				}
+			</select>
+		</div>
+		<div class="col-6 col-md-2">
+			<label class="form-label">Transmission</label>
+			<select class="form-select" name="transmission">
+				<option value="">Any</option>
+				@foreach (var t in new[] { "Automatic", "Manual" })
+				{
+					<option value="@t" selected="@(Model.Filters.Transmission == t)">@t</option>
+				}
+			</select>
+		</div>
+		<div class="col-6 col-md-2">
+			<label class="form-label">Energy</label>
+			<select class="form-select" name="energy">
+				<option value="">Any</option>
+				@foreach (var e in new[] { "Gasoline", "Diesel", "Hybrid", "Electric" })
+				{
+					<option value="@e" selected="@(Model.Filters.Energy == e)">@e</option>
+				}
+			</select>
+		</div>
+		<div class="col-6 col-md-2">
+			<label class="form-label">Sort</label>
+			<select class="form-select" name="sortBy">
+				@foreach (var kv in new Dictionary<string, string>
+				{
+					["PriceAsc"] = "Price ↑",
+					["PriceDesc"] = "Price ↓",
+					["NameAsc"] = "Name A-Z",
+					["NameDesc"] = "Name Z-A",
+					["Newest"] = "Newest"
+				})
+				{
+					<option value="@kv.Key" selected="@(Model.Filters.SortBy == kv.Key)">@kv.Value</option>
+				}
+			</select>
+		</div>
+		<div class="col-12 col-md-2">
+			<button class="btn btn-primary w-100">Apply</button>
+		</div>
+	</form>
+
+	<!-- Grid -->
+	<div id="carsGrid">
+		@await Html.PartialAsync("_CarGrid", Model)
+	</div>
+
+	<!-- Pagination -->
+	@if (Model.TotalPages > 1)
+	{
+		<nav aria-label="pagination">
+			<ul class="pagination justify-content-center">
+				@for (int p = 1; p <= Model.TotalPages; p++)
+				{
+					var active = p == Model.Page ? "active" : "";
+					var route = Model.Filters.ToRouteValues();
+					route["page"] = p.ToString();
+					route["pageSize"] = Model.PageSize.ToString();
+					<li class="page-item @active">
+						<a class="page-link" href="@Url.Action("Index", route)">@p</a>
+					</li>
+				}
+			</ul>
+		</nav>
+	}
+
 </div>
-<!-- Car categories End -->
-<!-- Car Steps Start -->
-<div class="container-fluid steps py-5">
-    <div class="container py-5">
-        <div class="text-center mx-auto pb-5 wow fadeInUp" data-wow-delay="0.1s" style="max-width: 800px;">
-            <h1 class="display-5 text-capitalize text-white mb-3">Cental<span class="text-primary"> Process</span></h1>
-            <p class="mb-0 text-white">
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut amet nemo expedita asperiores commodi accusantium at cum harum, excepturi, quia tempora cupiditate! Adipisci facilis modi quisquam quia distinctio,
-            </p>
-        </div>
-        <div class="row g-4">
-            <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.1s">
-                <div class="steps-item p-4 mb-4">
-                    <h4>Come In Contact</h4>
-                    <p class="mb-0">Lorem ipsum dolor sit amet consectetur adipisicing elit. Ad, dolorem!</p>
-                    <div class="setps-number">01.</div>
-                </div>
-            </div>
-            <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.3s">
-                <div class="steps-item p-4 mb-4">
-                    <h4>Choose A Car</h4>
-                    <p class="mb-0">Lorem ipsum dolor sit amet consectetur adipisicing elit. Ad, dolorem!</p>
-                    <div class="setps-number">02.</div>
-                </div>
-            </div>
-            <div class="col-lg-4 wow fadeInUp" data-wow-delay="0.5s">
-                <div class="steps-item p-4 mb-4">
-                    <h4>Enjoy Driving</h4>
-                    <p class="mb-0">Lorem ipsum dolor sit amet consectetur adipisicing elit. Ad, dolorem!</p>
-                    <div class="setps-number">03.</div>
-                </div>
-            </div>
-        </div>
-    </div>
+
+<!-- Quick View Modal -->
+<div class="modal fade" id="quickViewModal" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-body p-0" id="quickViewBody">
+				<!-- partial content inject here -->
+			</div>
+		</div>
+	</div>
 </div>
-<!-- Car Steps End -->
-<!-- Banner Start -->
-<div class="container-fluid banner py-5 wow zoomInDown" data-wow-delay="0.1s">
-    <div class="container py-5">
-        <div class="banner-item rounded">
-            <img src="~/Main/img/banner-1.jpg" class="img-fluid rounded w-100" alt="">
-            <div class="banner-content">
-                <h2 class="text-primary">Rent Your Car</h2>
-                <h1 class="text-white">Interested in Renting?</h1>
-                <p class="text-white">Don't hesitate and send us a message.</p>
-                <div class="banner-btn">
-                    <a href="#" class="btn btn-secondary rounded-pill py-3 px-4 px-md-5 me-2">WhatchApp</a>
-                    <a asp-controller="Contact" asp-action="Index" class="btn btn-primary rounded-pill py-3 px-4 px-md-5 ms-2">Contact Us</a>
-                </div>
-            </div>
-        </div>
-    </div>
+
+<!-- Compare Bar -->
+<div id="compareBar" class="position-fixed bottom-0 start-0 end-0 bg-dark text-white p-3 d-none" style="z-index:1050;">
+	<div class="container d-flex align-items-center justify-content-between">
+		<div>
+			<strong>Compare:</strong> <span id="compareCount">0</span>/3 selected
+		</div>
+		<div>
+			<button id="btnCompare" class="btn btn-primary me-2" disabled>Compare</button>
+			<button id="btnClearCompare" class="btn btn-outline-light">Clear</button>
+		</div>
+	</div>
 </div>
-<!-- Banner End -->
+
+@section Scripts {
+	<script>
+		document.addEventListener("DOMContentLoaded", () => {
+			// Quick View
+			document.addEventListener('click', async (e) => {
+			  const btn = e.target.closest('[data-quickview]');
+			  if (!btn) return;
+			  const id = btn.getAttribute('data-quickview');
+			  const res = await fetch(`@Url.Action("DetailsPartial")?id=${id}`);
+			  const html = await res.text();
+			  document.getElementById('quickViewBody').innerHTML = html;
+			  const modal = new bootstrap.Modal(document.getElementById('quickViewModal'));
+			  modal.show();
+			});
+
+			// Compare logic (max 3)
+			const compareSet = new Set();
+			function syncCompareBar(){
+			  const bar = document.getElementById('compareBar');
+			  const count = document.getElementById('compareCount');
+			  const btn = document.getElementById('btnCompare');
+			  count.textContent = compareSet.size;
+			  if (compareSet.size > 0) bar.classList.remove('d-none'); else bar.classList.add('d-none');
+			  btn.disabled = compareSet.size < 2;
+			}
+			document.addEventListener('change', (e) => {
+			  const cb = e.target.closest('[data-compare]');
+			  if(!cb) return;
+			  const id = cb.getAttribute('data-compare');
+			  if (cb.checked) {
+				if (compareSet.size >= 3) { cb.checked = false; return; }
+				compareSet.add(id);
+			  } else {
+				compareSet.delete(id);
+			  }
+			  syncCompareBar();
+			});
+			document.getElementById('btnClearCompare').addEventListener('click', ()=>{
+			  document.querySelectorAll('[data-compare]').forEach(x=>x.checked=false);
+			  compareSet.clear(); syncCompareBar();
+			});
+			document.getElementById('btnCompare').addEventListener('click', async ()=>{
+			  if (compareSet.size < 2) return;
+			  const ids = Array.from(compareSet).join('&ids=');
+			  const res = await fetch(`@Url.Action("ComparePartial")?ids=${ids}`);
+			  const html = await res.text();
+			  document.getElementById('quickViewBody').innerHTML = html;
+			  const modal = new bootstrap.Modal(document.getElementById('quickViewModal'));
+			  modal.show();
+			});
+		});
+	</script>
+}
