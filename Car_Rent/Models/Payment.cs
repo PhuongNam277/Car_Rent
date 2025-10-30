@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Car_Rent.Models;
 
@@ -17,8 +18,11 @@ public partial class Payment
     public string? PaymentMethod { get; set; }
 
     [Required]
-    [RegularExpression("Unpaid|Paid", ErrorMessage = "Status is invalid")]
+    [RegularExpression("Pending|Unpaid|Paid", ErrorMessage = "Status is invalid")]
     public string Status { get; set; } = "Pending";
 
+    public int TenantId { get; set; }
+    [ForeignKey(nameof(TenantId))]
+    public Tenant? Tenant { get; set; }
     public virtual Reservation? Reservation { get; set; } = null!;
 }

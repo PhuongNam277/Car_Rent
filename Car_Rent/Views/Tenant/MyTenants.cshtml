@@ -1,0 +1,92 @@
+﻿@model IEnumerable<Car_Rent.ViewModels.Tenant.TenantItem>
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Danh sách tổ chức của tôi";
+    Layout = "~/Views/Shared/MainLayout.cshtml";
+    var currentTid = User.FindFirst("tenant_id")?.Value;
+    string returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="container py-5">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="mb-0">Tổ chức (Tenant) của tôi</h2>
+        <div class="d-flex gap-2">
+            <a asp-controller="Tenant" asp-action="Select" asp-route-returnUrl="@returnUrl" class="btn btn-outline-primary">
+                Chọn / đổi tenant…
+            </a>
+            <a asp-controller="Tenant" asp-action="Create" asp-route-returnUrl="@returnUrl" class="btn btn-success">
+                + Tạo tổ chức mới
+            </a>
+        </div>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-warning">
+            Anh chưa thuộc tổ chức nào. Bấm <a asp-controller="Tenant" asp-action="Create" asp-route-returnUrl="@returnUrl">tạo tổ chức mới</a> để bắt đầu.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:50px;">#</th>
+                        <th>Tên tổ chức</th>
+                        <th style="width:160px;">Vai trò của tôi</th>
+                        <th style="width:220px;" class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var i = 1;
+                        foreach (var t in Model)
+                        {
+                            var isCurrent = (currentTid != null && currentTid == t.TenantId.ToString());
+                        }
+                    }
+                    @foreach (var t in Model.Select((x, idx) => new { x, idx }))
+                    {
+                        var isCurrent = (currentTid != null && currentTid == t.x.TenantId.ToString());
+                        <tr>
+                            <td>@(t.idx + 1)</td>
+                            <td>
+                                <div class="fw-semibold">@t.x.Name</div>
+                                @if (isCurrent)
+                                {
+                                    <span class="badge bg-primary">Đang dùng</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">@t.x.Role</span>
+                            </td>
+                            <td class="text-end">
+                                @if (!isCurrent)
+                                {
+                                    <form asp-controller="Tenant" asp-action="Switch" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="tenantId" value="@t.x.TenantId" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                            Dùng tenant này
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-secondary" disabled>Đang dùng</button>
+                                }
+
+                                <a asp-controller="Main" asp-action="Index" class="btn btn-sm btn-outline-dark ms-1">
+                                    Vào portal
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+</div>

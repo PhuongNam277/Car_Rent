@@ -12,29 +12,6 @@ namespace Car_Rent.Services
             _context = context;
         }
 
-        public async Task<Conversation> GetOrCreateConversationForCustomerAsync(int customerId)
-        {
-            var conv = await _context.Conversations
-                .Include(c => c.Messages)
-                .FirstOrDefaultAsync(c => c.CustomerId == customerId && c.Status == "Open");
-
-            if (conv != null) return conv;
-
-            var staffId = await PickStaffForCustomerAsync(customerId); // co the null
-            conv = new Conversation
-            {
-                CustomerId = customerId,
-                StaffId = null,
-                Status = "Open",
-                CreatedAt = DateTime.UtcNow,
-                LastMessageAt = DateTime.UtcNow
-            };
-
-            _context.Conversations.Add(conv);
-            await _context.SaveChangesAsync();
-            return conv;
-        }
-
         public async Task<bool> TryAssignStaffAsync(int conversationId, int staffId)
         {
             // Cap nhat co dieuf kien de chong tranh chap 2 staff cung luc
@@ -91,14 +68,21 @@ namespace Car_Rent.Services
             return msg;
         }
 
-        public Task<List<ChatMessage>> GetRecentMessageAsync(int conversationId, int take = 50)
-            => _context.ChatMessages
-            .Include(m => m.Sender)
-            .Where(m => m.ConversationId == conversationId)
-            .OrderByDescending(m => m.ConversationId == conversationId)
-            .Take(take)
-            .OrderBy(m => m.ChatMessageId)
-            .ToListAsync();
+        public async Task<List<ChatMessage>> GetRecentMessageAsync(int conversationId, int take = 50)
+        {
+            var messages = await _context.ChatMessages
+                            .AsNoTracking()
+                            .Where(m => m.ConversationId == conversationId)
+                            .OrderByDescending(m => m.SentAt)
+                            .Take(take)
+                            .ToListAsync();
+
+            messages.Reverse();
+            return messages;
+        }
+            
+
+
 
         public async Task<int?> PickStaffForCustomerAsync(int customerId)
         {
@@ -126,8 +110,8 @@ namespace Car_Rent.Services
         {
             var rs = await _context.Set<ConversationReadState>()
                 .FirstOrDefaultAsync(x => x.ConversationId == conversationId && x.UserId == userId);
-            
-            if (rs ==  null)
+
+            if (rs == null)
             {
                 rs = new ConversationReadState
                 {
@@ -136,15 +120,20 @@ namespace Car_Rent.Services
                     LastReadMessageId = lastMessageId
                 };
 
-                _context.Add(rs);
+                _context.ConversationReadStates.Add(rs);
             }
             else if (lastMessageId > rs.LastReadMessageId)
             {
                 rs.LastReadMessageId = lastMessageId;
-                _context.Update(rs);
+            }
+            else
+            {
+                await _context.SaveChangesAsync();
+                return;
             }
 
-            await _context.SaveChangesAsync();
+            // Cập nhật IsRead trong ChatMessages
+            
         }
 
         public async Task<Dictionary<int, int>> GetUnreadCountsForStaffAsync(int staffId)
@@ -194,6 +183,58 @@ namespace Car_Rent.Services
                 .OrderByDescending(x => x)
                 .FirstOrDefaultAsync();
             return id ?? 0;
+        }
+
+        public async Task<Conversation> GetOrCreateConversationForCustomerAsync(int customerId, int tenantId)
+        {
+            var conversation = await _context.Conversations
+                .FirstOrDefaultAsync(c => c.CustomerId == customerId
+                                        && c.TenantId == tenantId
+                                        && c.Status == "Open"
+                );
+
+            if( conversation == null )
+            {
+                conversation = new Conversation
+                {
+                    CustomerId = customerId,
+                    TenantId = tenantId,
+                    Status = "Open",
+                    CreatedAt = DateTime.UtcNow,
+                    LastMessageAt = DateTime.UtcNow
+                };
+                _context.Conversations.Add( conversation );
+                await _context.SaveChangesAsync();
+            }
+            return conversation;
+        }
+
+        public async Task<List<Conversation>> GetAllConversationsForCustomerAsync(int customerId)
+        {
+            // Lấy danh sách ID các cuộc hội thoại bị user ẩn đi
+            var hiddenConvIds = await _context.UserConversationVisibilities
+                .Where(v => v.UserId == customerId && v.IsHidden)
+                .Select(v => v.ConversationId)
+                .ToListAsync();
+
+            return await _context.Conversations
+                .AsNoTracking()
+                .Where(c => c.CustomerId == customerId && !hiddenConvIds.Contains(c.ConversationId))
+                .Include(c => c.Tenant)
+                .Include(c => c.Staff)
+                .Include(c => c.Messages.OrderByDescending(m => m.SentAt).Take(1))
+                .OrderByDescending(c => c.LastMessageAt)
+                .ToListAsync();
+        }
+
+        public async Task<List<Conversation>> GetOpenQueueForTenantAsync(int tenantId)
+        {
+            return await _context.Conversations
+                .AsNoTracking()
+                .Include(c => c.Tenant)
+                .Where(c => c.Status == "Open" && c.StaffId == null && c.TenantId == tenantId)
+                .OrderBy(c => c.CreatedAt)
+                .ToListAsync();
         }
     }
 }

@@ -47,45 +47,47 @@
     </div>
 </form>
 
-<table class="table table-bordered table-hover table-striped">
-    <thead class="table-white">
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.ReservationDate)</th>
-            <th>@Html.DisplayNameFor(model => model.PickupLocationId)</th>
-            <th>@Html.DisplayNameFor(model => model.DropoffLocationId)</th>
-            <th>@Html.DisplayNameFor(model => model.StartDate)</th>
-            <th>@Html.DisplayNameFor(model => model.EndDate)</th>
-            <th>@Html.DisplayNameFor(model => model.TotalPrice)</th>
-            <th>@Html.DisplayNameFor(model => model.Status)</th>
-            <th>@Html.DisplayNameFor(model => model.Car)</th>
-            <th>@Html.DisplayNameFor(model => model.User)</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
+<div class="table-responsive">
+    <table class="table table-bordered table-hover table-striped">
+        <thead class="table-white">
             <tr>
-                <td>@Html.DisplayFor(m => item.ReservationDate)</td>
-                <td>@Html.DisplayFor(m => item.PickupLocation.Name)</td>
-                <td>@Html.DisplayFor(m => item.DropoffLocation.Name)</td>
-                <td>@Html.DisplayFor(m => item.StartDate)</td>
-                <td>@Html.DisplayFor(m => item.EndDate)</td>
-                <td>@Html.DisplayFor(m => item.TotalPrice)</td>
-                <td>@Html.DisplayFor(m => item.Status)</td>
-                <td>@Html.DisplayFor(m => item.Car.CarName)</td>
-                <td>@Html.DisplayFor(m => item.User.Username)</td>
-                <td>
-                    <div class="btn-group">
-                        <a asp-action="Edit" asp-route-id="@item.ReservationId" class="btn btn-sm btn-primary">Edit</a>
-                        <a asp-action="Details" asp-route-id="@item.ReservationId" class="btn btn-sm btn-info text-white">Details</a>
-                        <a asp-action="Delete" asp-route-id="@item.ReservationId" class="btn btn-sm btn-danger">Delete</a>
-                    </div>
-                </td>
+                <th>@Html.DisplayNameFor(model => model.ReservationDate)</th>
+                <th>@Html.DisplayNameFor(model => model.PickupLocationId)</th>
+                <th>@Html.DisplayNameFor(model => model.DropoffLocationId)</th>
+                <th>@Html.DisplayNameFor(model => model.StartDate)</th>
+                <th>@Html.DisplayNameFor(model => model.EndDate)</th>
+                <th>@Html.DisplayNameFor(model => model.TotalPrice)</th>
+                <th>@Html.DisplayNameFor(model => model.Status)</th>
+                <th>@Html.DisplayNameFor(model => model.Car)</th>
+                <th>@Html.DisplayNameFor(model => model.User)</th>
+                <th>Actions</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@Html.DisplayFor(m => item.ReservationDate)</td>
+                    <td>@Html.DisplayFor(m => item.PickupLocation.Name)</td>
+                    <td>@Html.DisplayFor(m => item.DropoffLocation.Name)</td>
+                    <td>@Html.DisplayFor(m => item.StartDate)</td>
+                    <td>@Html.DisplayFor(m => item.EndDate)</td>
+                    <td>@Html.DisplayFor(m => item.TotalPrice)</td>
+                    <td>@Html.DisplayFor(m => item.Status)</td>
+                    <td>@Html.DisplayFor(m => item.Car.CarName)</td>
+                    <td>@Html.DisplayFor(m => item.User.Username)</td>
+                    <td>
+                        <div class="btn-group">
+                            <a asp-action="Edit" asp-route-id="@item.ReservationId" class="btn btn-sm btn-primary">Edit</a>
+                            <a asp-action="Details" asp-route-id="@item.ReservationId" class="btn btn-sm btn-info text-white">Details</a>
+                            <a asp-action="Delete" asp-route-id="@item.ReservationId" class="btn btn-sm btn-danger">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
 
 @if (totalPages > 1)
 {

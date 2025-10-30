@@ -43,6 +43,12 @@
     </div>
 
     <div class="mb-3">
+        <label asp-for="BaseLocationId" class="form-label"></label>
+        <select asp-for="BaseLocationId" class="form-select" asp-items="ViewBag.BaseLocationId"></select>
+        <span asp-validation-for="BaseLocationId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
         <label class="form-label">Current Image</label><br />
         <img src="@Model.ImageUrl" alt="Current Image" style="max-height: 200px;" />
     </div>
@@ -63,8 +69,8 @@
     <div class="mb-3">
         <label asp-for="Status" class="form-label"></label>
         <select asp-for="Status" class="form-select">
-            <option value="Available" selected="@(Model.Status == "Available")">Available</option>
-            <option value="Rented" selected="@(Model.Status == "Rented")">Rented</option>
+            <option value="Available">Available</option>
+            <option value="Rented">Rented</option>
         </select>
         <span asp-validation-for="Status" class="text-danger"></span>
     </div>

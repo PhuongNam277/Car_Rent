@@ -4,7 +4,7 @@ namespace Car_Rent.Interfaces
 {
     public interface IChatService
     {
-        Task<Conversation> GetOrCreateConversationForCustomerAsync(int customerId);
+        //Task<Conversation> GetOrCreateConversationForCustomerAsync(int customerId);
         Task<Conversation?> GetConversationAsync(int conversationId);
         Task<bool> IsParticipantAsync(int conversationId, int userId);
         Task<ChatMessage> SaveMessageAsync(int conversationId, int senderId, string content);
@@ -16,6 +16,10 @@ namespace Car_Rent.Interfaces
         Task MarkReadAsync(int conversationId, int userId, long lastMessageId);
         Task<Dictionary<int, int>> GetUnreadCountsForStaffAsync(int staffId);
         Task<long> GetLastMessageIdAsync(int conversationId);
+        Task<Conversation> GetOrCreateConversationForCustomerAsync(int customerId, int tenantId);
+        Task<List<Conversation>> GetAllConversationsForCustomerAsync(int customerId);
+        Task<List<Conversation>> GetOpenQueueForTenantAsync(int tenantId);
+        //Task<int> GetTotalUnreadCountForCustomerAsync(int customerId);
 
     }
 }

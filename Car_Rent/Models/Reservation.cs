@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Car_Rent.Models;
 
@@ -38,8 +39,14 @@ public partial class Reservation
     public int? PickupLocationId { get; set; }
     public int? DropoffLocationId { get; set; }
 
+    public int TenantId { get; set; }
+
+    [ForeignKey(nameof(TenantId))]
+    public Tenant? Tenant { get; set; }
+
     public virtual Location? PickupLocation { get; set; } = null!;
     public virtual Location? DropoffLocation { get; set; } = null!;
+
 
 
 }

@@ -1,4 +1,6 @@
-﻿namespace Car_Rent.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Car_Rent.Models
 {
     public partial class Location
     {
@@ -10,6 +12,9 @@
         public decimal? Lng { get; set; }
         public string? TimeZone { get; set; }
         public bool IsActive { get; set; }
+        public int TenantId { get; set; }
+        [ForeignKey(nameof(TenantId))]
+        public Tenant? Tenant { get; set; }
 
         public virtual ICollection<Car> Cars { get; set; } = new List<Car>();
         public virtual ICollection<Reservation> PickupReservations { get; set; } = new List<Reservation>();

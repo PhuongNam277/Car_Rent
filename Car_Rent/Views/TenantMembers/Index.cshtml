@@ -1,0 +1,110 @@
+﻿@model IEnumerable<Car_Rent.Models.TenantMemberships>
+@using System.Security.Claims
+
+@{
+    ViewData["Title"] = "Organization Members"; 
+    Layout = "~/Views/Shared/MainLayout.cshtml";
+    var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                            ?? User.FindFirst("UserId")?.Value;
+    var ownersCount = Model?.Count(m => string.Equals(m.Role, "Owner", StringComparison.OrdinalIgnoreCase)) ?? 0;
+    string returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="container py-5">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="mb-0">Organization Members</h2> 
+        <a asp-action="Add" class="btn btn-success">
+            + Add Member 
+        </a>
+    </div>
+
+    @if (TempData["Success"] is not null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] is not null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            No members yet. Click <a asp-action="Add">Add Member</a> to begin.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:60px;">#</th>
+                        <th>Account</th> 
+                        <th>Full Name</th> 
+                        <th>Email</th>
+                        <th style="width:140px;">Role</th>
+                        <th style="width:200px;" class="text-end">Actions</th> 
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Select((m, idx) => new { m, idx }))
+                    {
+                        var m = item.m;
+                        var isOwner = string.Equals(m.Role, "Owner", StringComparison.OrdinalIgnoreCase);
+                        var isAdmin = string.Equals(m.Role, "Admin", StringComparison.OrdinalIgnoreCase);
+                        var isStaff = string.Equals(m.Role, "Staff", StringComparison.OrdinalIgnoreCase);
+                        var isMe = (currentUserId != null && int.TryParse(currentUserId, out var meId) && meId == m.UserId);
+
+                        // Do not allow removal:
+                        // - yourself (isMe),
+                        // - the last Owner (ownersCount == 1 && isOwner).
+                        var canRemove = !(isMe || (isOwner && ownersCount == 1));
+                        <tr>
+                            <td>@(item.idx + 1)</td>
+                            <td class="fw-semibold">@m.User?.Username</td>
+                            <td>@(m.User?.FullName ?? "-")</td>
+                            <td>@(m.User?.Email ?? "-")</td>
+                            <td>
+                                @if (isOwner)
+                                {
+                                    <span class="badge bg-primary">Owner</span>
+                                }
+                                else if (isAdmin)
+                                {
+                                    <span class="badge bg-dark">Admin</span>
+                                }
+                                else if (isStaff)
+                                {
+                                    <span class="badge bg-secondary">Staff</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark">@m.Role</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @* (Optional) Role change button: you can add this later *@ 
+                                @if (canRemove)
+                                {
+                                    <form asp-action="Remove" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@m.UserId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Remove @m.User?.Username from this tenant?');">
+                                            Remove from Tenant 
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-secondary" disabled>Cannot Remove</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

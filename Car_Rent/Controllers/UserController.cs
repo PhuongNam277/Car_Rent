@@ -11,27 +11,89 @@ using Microsoft.AspNetCore.Identity.Data;
 using Car_Rent.Security;
 using Car_Rent.ViewModels.Profile;
 using Microsoft.AspNetCore.Authorization;
+using Car_Rent.Infrastructure.MultiTenancy;
 
 namespace Car_Rent.Controllers
 {
+    [Authorize(Roles = "Owner, Admin", AuthenticationSchemes = "MyCookieAuth")]
     public class UserController : Controller
     {
         private readonly CarRentalDbContext _context;
+        private readonly ITenantProvider _tenant;
+        private readonly IBranchScopeProvider _branch;
 
-        public UserController(CarRentalDbContext context)
+        public UserController(CarRentalDbContext context, ITenantProvider tenant, IBranchScopeProvider branch)
         {
-            _context = context;
+            _context = context; _tenant = tenant; _branch = branch;
         }
-        
+
+        //Bắt buộc phải Scope theo một chi nhánh
+        private IActionResult? RequireBranchScope(string returnAction)
+        {
+            if (User.IsInRole("Owner") && !_branch.BranchId.HasValue)
+                return RedirectToAction("SelectBranch", "Admin", new { returnUrl = Url.Action(returnAction) });
+            return null;
+        }
+
+        // helper: Owner chưa có branch => trả về view nhắc chọn, không redirect
+        private IActionResult? RequireBranchOrPrompt(string returnAction)
+        {
+            if (User.IsInRole("Owner") && !_branch.BranchId.HasValue)
+            {
+                // Truyền returnUrl để sau khi chọn xong quay lại
+                ViewBag.ReturnUrl = Url.Action(returnAction);
+                return View("BranchRequired"); // ✅ KHÔNG redirect
+            }
+            return null;
+        }
+
+        // Kiểm tra xem user có thuộc target phạm vi hiện tại hay không
+        private Task<bool> IsInScopeAsync(int userId)
+        {
+            if(User.IsInRole("Admin")) return Task.FromResult(true);
+            int tenantId = _tenant.TenantId;
+            int branchId = _branch.BranchId!.Value;
+
+            return (from m in _context.TenantMemberships
+                    join ub in _context.UserBranches
+                    on new { m.UserId, m.TenantId, LocationId = branchId }
+                    equals new { ub.UserId, ub.TenantId, ub.LocationId }
+                    where m.UserId == userId && m.TenantId == tenantId
+                    select m).AnyAsync();
+        }
+
         // GET: User
         public async Task<IActionResult> Index(string search, string? sortBy = "UsernameAsc", int page = 1, int pageSize = 10)
         {
+            //Owner phải có branch scope
+            //var needScope = RequireBranchScope(nameof(Index));
+            //if (needScope != null) return needScope;
+
+            var prompt = RequireBranchOrPrompt(nameof(Index));
+            if (prompt != null) return prompt;
+
             var query = _context.Users.Include(u => u.Role).AsQueryable();
+
+            // nếu là Owner -> giới hạn theo tanent + branch
+            if(User.IsInRole("Owner"))
+            {
+                int tenantId = _tenant.TenantId;
+                int branchId = _branch.BranchId!.Value;
+
+                query =
+                    from u in query
+                    join m in _context.TenantMemberships.AsNoTracking() on u.UserId equals m.UserId
+                    join ub in _context.UserBranches.AsNoTracking()
+                    on new { u.UserId, TenantId = tenantId, LocationId = branchId }
+                    equals new { ub.UserId, ub.TenantId, ub.LocationId }
+                    where m.TenantId == tenantId
+                    select u;
+            }
 
             if (!string.IsNullOrEmpty(search))
             {
                 query = query.Where(u => u.FullName.Contains(search) || u.Username.Contains(search) || u.Email.Contains(search)
-                || u.PhoneNumber.Contains(search));
+                || u.PhoneNumber!.Contains(search));
             }
 
             // Sorting logic
@@ -62,6 +124,9 @@ namespace Car_Rent.Controllers
                 return NotFound();
             }
 
+            // Chặn Owner xem user ngoài phạm vi
+            if (User.IsInRole("Owner") && !await IsInScopeAsync(id.Value)) return Forbid();
+
             var user = await _context.Users
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(m => m.UserId == id);
@@ -76,6 +141,10 @@ namespace Car_Rent.Controllers
         // GET: User/Create
         public IActionResult Create()
         {
+            // Admin không cần branch, Owner cần
+            var prompt = RequireBranchOrPrompt(nameof(Index));
+            if (prompt != null) return prompt;
+
             ViewData["RoleId"] = new SelectList(_context.Roles, "RoleId", "RoleName");
             return View(new User());
         }
@@ -87,11 +156,47 @@ namespace Car_Rent.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("UserId,FullName,Username,PasswordHash,Email,PhoneNumber,RoleId,CreatedDate")] User user)
         {
+            // Owner cần branch scope
+            var needScope = RequireBranchScope(nameof(Index));
+            if (needScope != null) return needScope;
+
             if (ModelState.IsValid)
             {
+                // Giữ nguyên hành vi thêm user
+                if(user.CreatedDate == default) user.CreatedDate = DateTime.UtcNow;
                 _context.Add(user);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+
+                // Nếu là owner -> gán vào tenant + branch hiện tại (Staff theo mặc định)
+                //if(User.IsInRole("Owner"))
+                //{
+                //    int tenantId = _tenant.TenantId;
+                //    int branchId = _branch.BranchId!.Value;
+
+                //    if(!await _context.TenantMemberships.AnyAsync(m => m.TenantId == tenantId && m.UserId == user.UserId))
+                //    {
+                //        _context.TenantMemberships.Add(new TenantMemberships
+                //        {
+                //            TenantId = tenantId,
+                //            UserId = user.UserId,
+                //            Role = "Staff"
+                //        });
+                //    }
+
+                //    if(!await _context.UserBranches.AnyAsync(ub => ub.UserId == user.UserId && ub.TenantId == tenantId && ub.LocationId == branchId))
+                //    {
+                //        _context.UserBranches.Add(new UserBranch
+                //        {
+                //            UserId = user.UserId,
+                //            TenantId = tenantId,
+                //            LocationId = branchId
+                //        });
+                //    }
+
+                //    await _context.SaveChangesAsync();
+                //}
+
+                return RedirectToAction("Index");
             }
             ViewData["RoleId"] = new SelectList(_context.Roles, "RoleId", "RoleName", user.RoleId);
             return View(user);
@@ -104,6 +209,9 @@ namespace Car_Rent.Controllers
             {
                 return NotFound();
             }
+
+            // Chặn ngoài phạm vi khi là Owner
+            if(User.IsInRole("Owner") && !await IsInScopeAsync(id.Value)) return Forbid();
 
             var user = await _context.Users.FindAsync(id);
             if (user == null)
@@ -125,6 +233,9 @@ namespace Car_Rent.Controllers
             {
                 return NotFound();
             }
+
+            // Chặn ngoài phạm vi khi là Owner
+            if (User.IsInRole("Owner") && !await IsInScopeAsync(id)) return Forbid();
 
             if (ModelState.IsValid)
             {
@@ -158,6 +269,8 @@ namespace Car_Rent.Controllers
                 return NotFound();
             }
 
+            if (User.IsInRole("Owner") && !await IsInScopeAsync(id.Value)) return Forbid();
+
             var user = await _context.Users
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(m => m.UserId == id);
@@ -174,6 +287,7 @@ namespace Car_Rent.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            if (User.IsInRole("Owner") && !await IsInScopeAsync(id)) return Forbid();
             var user = await _context.Users.FindAsync(id);
             if (user != null)
             {
@@ -193,6 +307,7 @@ namespace Car_Rent.Controllers
         public async Task<IActionResult> ResetPassword(int? id)
         {
             if (id == null) return NotFound();
+            if (User.IsInRole("Owner") && !await IsInScopeAsync(id.Value)) return Forbid();
 
             var user = await _context.Users.FindAsync(id.Value);
             if (user == null) return NotFound();
@@ -209,6 +324,8 @@ namespace Car_Rent.Controllers
         public async Task<IActionResult> ResetPassword(int id, RequestResetPassword request)
         {
             if (id <= 0 || request == null) return BadRequest("Invalid user ID or request data.");
+
+            if (User.IsInRole("Owner") && !await IsInScopeAsync(id)) return Forbid();
 
             var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound("User not found.");
@@ -239,10 +356,11 @@ namespace Car_Rent.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(AuthenticationSchemes = "MyCookieAuth", Roles = "Admin")]
-
+        [Authorize(AuthenticationSchemes = "MyCookieAuth", Roles = "Admin, Owner")]
         public async Task<IActionResult> Block(int id)
         {
+            if (User.IsInRole("Owner") && !await IsInScopeAsync(id)) return Forbid();
+
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
@@ -272,10 +390,10 @@ namespace Car_Rent.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(AuthenticationSchemes = "MyCookieAuth", Roles = "Admin")]
-
+        [Authorize(AuthenticationSchemes = "MyCookieAuth", Roles = "Admin,Owner")]
         public async Task<IActionResult> Unblock (int id)
         {
+            if (User.IsInRole("Owner") && !await IsInScopeAsync(id)) return Forbid();
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
