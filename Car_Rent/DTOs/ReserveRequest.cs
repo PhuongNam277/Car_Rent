@@ -6,6 +6,7 @@ namespace Car_Rent.DTOs
     {
         public int? CategoryId { get; set; }
         [Required] public int CarId { get; set; }
+        [Required] public int TenantId { get;set; }
 
         [Required] public int PickupLocationId { get; set; }
         [Required] public int DropoffLocationId { get; set; }

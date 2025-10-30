@@ -1,33 +1,46 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Car_Rent.Models;
 using Car_Rent.ViewModels.Car;
+using Car_Rent.Infrastructure.MultiTenancy;
 
 namespace Car_Rent.Controllers
 {
     public class CarController : Controller
     {
         private readonly CarRentalDbContext _context;
+        private readonly ITenantProvider _tenant;
+        private readonly IBranchScopeProvider _branch;
 
-        public CarController(CarRentalDbContext context)
+        public CarController(CarRentalDbContext context, ITenantProvider tenant, IBranchScopeProvider branch)
         {
             _context = context;
+            _tenant = tenant;
+            _branch = branch;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index([FromQuery] CarFilterVM filters)
         {
-
             ViewData["ActivePage"] = "Pages";
+            // Base query (áp dụng tenant & vehicle type)
+            // Nếu chọn tenantId trên marketplace, dùng IgnoreQueryFilters() rồi lọc theo TenantId
+            // nếu không thì để nguyên query (lọc theo tenant hiện hành nhờ GlobalQueryFilters)
 
-            var q = _context.Cars.AsNoTracking()
-                .Include(c => c.Category)
-                .Where(c => c.Status == null || c.Status == "Available" || c.Status == "Rented");
+            IQueryable<Car> qBase = _context.Cars.AsNoTracking().IgnoreQueryFilters().Include(c => c.Category);
+
+            if (filters.TenantId.HasValue)
+            {
+                // Bỏ ép kiểu ở đây
+                qBase = qBase.Where(c => c.TenantId == filters.TenantId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filters.VehicleType))
+                qBase = qBase.Where(c => c.VehicleType == filters.VehicleType);
+
+            // Trạng thái 
+            var q = qBase.Where(c => c.Status == null || c.Status == "Available" || c.Status == "Rented");
 
             // Filters
             if (filters.CategoryId.HasValue)
@@ -79,16 +92,79 @@ namespace Car_Rent.Controllers
                     TransmissionType = c.TransmissionType,
                     Status = c.Status ?? "Available",
                     CategoryId = c.CategoryId,
-                    CategoryName = c.Category != null ? c.Category.CategoryName : ""
+                    CategoryName = c.Category != null ? c.Category.CategoryName : "",
+                    TenantId = c.TenantId
                 })
                 .ToListAsync();
 
-            var cats = await _context.Categories.AsNoTracking()
-                .Select(cat => new
-                {
-                    cat.CategoryId, cat.CategoryName,
-                    Count = _context.Cars.Count(c => c.CategoryId == cat.CategoryId)
-                })
+            // Quan trọng: tabs category theo bối cảnh
+            // Nếu tập danh mục hợp lệ thao VehicleType và override/ẩn theo Tenant nếu có
+            // Nếu có bảng TenantCategories: áp dụng ẩn/đổi tên/sort
+            // Nếu không có: chỉ lọc theo VehicleType & IsActive
+
+            var vt = filters.VehicleType ?? "Car";
+
+            // Đếm số xe theo category trong bối cảnh hiện tại (tenant + vehicleType + filters phụ)
+            var counts = await qBase
+                .GroupBy(c => new {c.CategoryId})
+                .Select(g => new {g.Key.CategoryId, Count = g.Count()})
+                .ToListAsync();
+
+            // Lấy categories theo VehicleType (+ áp override nếu có)
+            List<(int CategoryId, string Name, int Sort)> catList;
+
+            if (_context.Model.FindEntityType(typeof(TenantCategory)) != null && filters.TenantId.HasValue)
+            {
+                var tenantId = filters.TenantId.Value;
+
+                var cats = await (
+                    from c in _context.Categories.AsNoTracking()
+                    join tc in _context.TenantCategories.AsNoTracking().Where(x => x.TenantId == tenantId)
+                        on c.CategoryId equals tc.CategoryId into gj
+                    from tc in gj.DefaultIfEmpty()
+                    where c.IsActive && c.VehicleType == vt && (tc == null || tc.IsHidden == false)
+                    select new
+                    {
+                        c.CategoryId,
+                        Name = (tc != null && tc.DisplayNameOverride != null) ? tc.DisplayNameOverride : c.CategoryName,
+                        Sort = (tc != null && tc.SortOrderOverride != null) ? tc.SortOrderOverride.Value : c.SortOrder
+                    }).ToListAsync();
+
+                catList = cats.Select(x => (x.CategoryId, x.Name, x.Sort)).ToList(); // Có thể lỗi
+            }
+            else
+            {
+                var cats = await _context.Categories.AsNoTracking()
+                    .Where(c => c.IsActive && c.VehicleType == vt)
+                    .Select(c => new { c.CategoryId, Name = c.CategoryName, Sort = c.SortOrder })
+                    .ToListAsync();
+
+                catList = cats.Select(x => (x.CategoryId, x.Name, x.Sort)).ToList();
+            }
+
+            var countDict = counts.ToDictionary(x => x.CategoryId, x => x.Count);
+            var catsVM = catList
+                .Select(x => (x.CategoryId, x.Name, Count: countDict.TryGetValue(x.CategoryId, out var n) ? n : 0, x.Sort))
+                .OrderBy(x => x.Sort).ThenBy(x => x.Name)
+                .ToList();
+
+            // Danh sách các doanh nghiệp
+            var tenantQuery = _context.Cars.IgnoreQueryFilters().AsNoTracking();
+            if(!string.IsNullOrEmpty(filters.VehicleType))
+            {
+                tenantQuery = tenantQuery.Where(c => c.VehicleType == filters.VehicleType);
+
+            }
+
+            var tenants = await tenantQuery
+                .GroupBy(c => c.TenantId)
+                .Select(g => new { TenantId = g.Key, Count = g.Count() })
+                .Join(_context.Tenants.AsNoTracking(),
+                        carGroup => carGroup.TenantId,
+                        tenant => tenant.TenantId,
+                        (carGroup, tenant) => new { tenant.TenantId, tenant.Name, carGroup.Count })
+                .Where(x => x.Count > 0)
+                .OrderBy(x => x.Name)
                 .ToListAsync();
 
             var vm = new CarIndexVM
@@ -96,7 +172,8 @@ namespace Car_Rent.Controllers
                 Filters = filters,
                 Cars = items,
                 TotalItems = total,
-                Categories = cats.Select(x => (x.CategoryId, x.CategoryName, x.Count)).ToList()
+                Categories = catsVM.Select(x => (x.CategoryId, x.Name, x.Count)).ToList(),
+                Tenants = tenants.Select(x => (x.TenantId, x.Name, x.Count)).ToList()
             };
 
             return View(vm);
@@ -163,35 +240,71 @@ namespace Car_Rent.Controllers
         // GET: Car
         public async Task<IActionResult> AdminIndex(string? search, string? sortBy = "NameAsc", int page = 1, int pageSize = 10)
         {
-            // Ghi nhớ tham số tìm kiếm hiện tại
+            // Ghi nhớ tham số tìm kiếm và sắp xếp
             ViewData["CurrentSearch"] = search;
+            ViewBag.SortBy = sortBy;
 
-            var query = _context.Cars
-                .Include(c => c.Category)
-                .AsQueryable();
+            // Clamp cơ bản
+            page = Math.Max(1, page);
+            pageSize = Math.Clamp(pageSize, 5, 100);
 
-            if (!string.IsNullOrEmpty(search))
+            // Khởi tạo base query
+            IQueryable<Car> baseQ;
+
+            if (User.IsInRole("Admin"))
             {
-                query = query.Where(c => c.CarName.Contains(search) || c.Brand.Contains(search) || c.Model.Contains(search) || c.RentalPricePerDay.ToString().Contains(search));
+                // Admin: Thấy tất cả xe, không lọc theo Tenant hay Branch
+                baseQ = _context.Cars
+                    .AsNoTracking()
+                    .Include(c => c.Category);
+            }
+            else
+            {
+
+                // Nếu staff mà chưa có branch_id -> bắt chọn
+                if (_branch.IsBranchScoped && !_branch.BranchId.HasValue)
+                    return RedirectToAction("SelectBranch", "Admin", new { returnUrl = Url.Action("AdminIndex") });
+
+                // Áp dụng lọc Tenant và Branch
+                baseQ = _context.Cars
+                    .AsNoTracking()
+                    .Include(c => c.Category)
+                    .ForTenant(_tenant.TenantId)
+                    .ForBranch(_branch.BranchId, "BaseLocationId");
             }
 
-            // Sorting logic
-            query = sortBy switch
+            // Logic tìm kiếm (Áp dụng cho cả Admin và Non-Admin)
+            if (!string.IsNullOrEmpty(search))
             {
-                "NameDesc" => query.OrderByDescending(c => c.CarName),
-                "RentalPriceAsc" => query.OrderBy(c => c.RentalPricePerDay),
-                "RentalPriceDesc" => query.OrderByDescending(c => c.RentalPricePerDay),
-                _ => query.OrderBy(c => c.CarName)
+                var s = search.Trim();
+                baseQ = baseQ.Where(c => c.CarName.Contains(s)
+                || c.Brand.Contains(s)
+                || c.Model.Contains(s)
+                || c.LicensePlate.Contains(s)
+                || c.RentalPricePerDay.ToString().Contains(s));
+            }
+
+            // Logic Sắp xếp (Áp dụng cho cả Admin và Non-Admin)
+            baseQ = sortBy switch
+            {
+                "NameDesc" => baseQ.OrderByDescending(c => c.CarName),
+                "RentalPriceAsc" => baseQ.OrderBy(c => c.RentalPricePerDay),
+                "RentalPriceDesc" => baseQ.OrderByDescending(c => c.RentalPricePerDay),
+                _ => baseQ.OrderBy(c => c.CarName)
             };
 
-            // Pagination logic
-            var total = await query.CountAsync();
-            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            // Logic Phân trang (Áp dụng cho cả Admin và Non-Admin)
+            var totalItems = await baseQ.CountAsync();
+            var items = await baseQ
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-            ViewBag.SortBy = sortBy;
-            ViewBag.TotalItems = total;
+
+            ViewBag.TotalItems = totalItems;
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
+
             return View(items);
         }
 
@@ -203,7 +316,7 @@ namespace Car_Rent.Controllers
                 return NotFound();
             }
 
-            var car = await _context.Cars
+            var car = await _context.Cars 
                 .Include(c => c.Category)
                 .FirstOrDefaultAsync(m => m.CarId == id);
             if (car == null)
@@ -218,6 +331,13 @@ namespace Car_Rent.Controllers
         public IActionResult Create()
         {
             ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryName");
+
+            var locQ = _context.Locations.AsNoTracking();
+            if(_tenant?.TenantId > 0) locQ = locQ.Where(l => l.TenantId == _tenant.TenantId);
+            if(_branch?.IsBranchScoped == true && _branch.BranchId.HasValue)
+                locQ = locQ.Where(l => l.LocationId == _branch.BranchId.Value);
+
+            ViewData["BaseLocationId"] = new SelectList(locQ.OrderBy(l => l.Name), "LocationId", "Name");
             return View();
         }
 
@@ -228,49 +348,77 @@ namespace Car_Rent.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Car car, IFormFile ImageFile)
         {
-            if (ModelState.IsValid)
+
+            // Validate BaseLocation thuộc về tenant/branch hiện tại
+            var validLocation = await _context.Locations.AsNoTracking()
+                .AnyAsync(l => l.LocationId == car.BaseLocationId
+                            && (_tenant == null || l.TenantId == _tenant.TenantId)
+                            && (_branch == null || !_branch.IsBranchScoped || !_branch.BranchId.HasValue || l.LocationId == _branch.BranchId));
+
+            if (!validLocation)
+                ModelState.AddModelError(nameof(car.BaseLocationId), "Base location is invalid for current tenant/branch.");
+
+            if(!ModelState.IsValid)
             {
-                // Upload ảnh
-                if (ImageFile != null && ImageFile.Length > 0)
+                ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryName", car.CategoryId);
+                var locQ = _context.Locations.AsNoTracking();
+                if (_tenant?.TenantId > 0) locQ = locQ.Where(l => l.TenantId == _tenant.TenantId);
+                if (_branch?.IsBranchScoped == true && _branch.BranchId.HasValue) locQ = locQ.Where(l => l.LocationId == _branch.BranchId.Value);
+                ViewData["BaseLocationId"] = new SelectList(locQ.OrderBy(l => l.Name), "LocationId", "Name", car.BaseLocationId);
+                return View(car);
+            }
+
+            // Gán Tenant/Branch
+            if(_tenant?.TenantId > 0) car.TenantId = _tenant.TenantId;
+            if(_branch?.IsBranchScoped == true && _branch.BranchId.HasValue)
+                car.BaseLocationId = _branch.BranchId.Value;
+
+            // Upload ảnh
+            if (ImageFile != null && ImageFile.Length > 0)
+            {
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageFile.FileName);
+                var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/cars");
+
+                if (!Directory.Exists(uploadPath))
+                    Directory.CreateDirectory(uploadPath);
+
+                var filePath = Path.Combine(uploadPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageFile.FileName);
-                    var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/cars");
-
-                    if (!Directory.Exists(uploadPath))
-                        Directory.CreateDirectory(uploadPath);
-
-                    var filePath = Path.Combine(uploadPath, fileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await ImageFile.CopyToAsync(stream);
-                    }
-
-                    car.ImageUrl = "/images/cars/" + fileName;
+                    await ImageFile.CopyToAsync(stream);
                 }
 
-                _context.Add(car);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(AdminIndex));
+                car.ImageUrl = "/images/cars/" + fileName;
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryId", car.CategoryId);
-            return View(car);
+
+            _context.Add(car);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(AdminIndex));
         }
 
         // GET: Car/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var car = await _context.Cars.FindAsync(id);
-            if (car == null)
-            {
-                return NotFound();
-            }
+
+            if (car == null) return NotFound();
+
             ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryName", car.CategoryId);
+
+            // Lọc location theo tenant/branch hiện tại để không lộ dữ liệu chéo
+            var locQ = _context.Locations.AsNoTracking();
+            if (_tenant?.TenantId > 0) locQ = locQ.Where(l => l.TenantId == _tenant.TenantId);
+            if (_branch?.IsBranchScoped == true && _branch.BranchId.HasValue)
+                locQ = locQ.Where(l => l.LocationId == _branch.BranchId.Value);
+
+            ViewData["BaseLocationId"] = new SelectList(
+                locQ.OrderBy(l => l.Name).ToList(),
+                "LocationId", "Name", car.BaseLocationId
+            );
+
             return View(car);
         }
 
@@ -286,54 +434,72 @@ namespace Car_Rent.Controllers
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            // Lấy bản ghi TRACKET để không overpost nhầm TenantId/ khóa ngoại
+            var existing = await _context.Cars.FirstOrDefaultAsync(c => c.CarId == id);
+            if (existing == null) return NotFound();
+
+            // Validate BaseLocation nằm trong phạm vi được phép
+            var validLocation = await _context.Locations.AsNoTracking() 
+                .AnyAsync(l => l.LocationId == car.BaseLocationId
+                            && (_tenant == null || l.TenantId == _tenant.TenantId)
+                            && (_branch == null || !_branch.IsBranchScoped || !_branch.BranchId.HasValue || l.LocationId == _branch.BranchId));
+            if (!validLocation)
+                ModelState.AddModelError(nameof(car.BaseLocationId), "Base location is invalid for current tenant/branch.");
+
+            if (!ModelState.IsValid)
             {
-                try
-                {
-                    // Lấy bản ghi cũ để giữ nguyên ảnh nếu không upload mới
-                    var existingCar = await _context.Cars.AsNoTracking().FirstOrDefaultAsync(c => c.CarId == id);
+                // Repopulate dropdowns khi ModelState invalid
+                ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryName", car.CategoryId);
 
-                    if (ImageFile != null && ImageFile.Length > 0)
-                    {
-                        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageFile.FileName);
-                        var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/cars");
+                var locQ = _context.Locations.AsNoTracking();        
+                if (_tenant?.TenantId > 0) locQ = locQ.Where(l => l.TenantId == _tenant.TenantId);
+                if (_branch?.IsBranchScoped == true && _branch.BranchId.HasValue)
+                    locQ = locQ.Where(l => l.LocationId == _branch.BranchId.Value);
+                ViewData["BaseLocationId"] = new SelectList(locQ.OrderBy(l => l.Name), "LocationId", "Name", car.BaseLocationId);
 
-                        if (!Directory.Exists(uploadPath))
-                            Directory.CreateDirectory(uploadPath);
-
-                        var filePath = Path.Combine(uploadPath, fileName);
-
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await ImageFile.CopyToAsync(stream);
-                        }
-
-                        car.ImageUrl = "/images/cars/" + fileName;
-                    }
-                    else
-                    {
-                        // Không chọn ảnh mới => giữ nguyên ảnh cũ
-                        car.ImageUrl = existingCar?.ImageUrl;
-                    }
-
-                    _context.Update(car);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CarExists(car.CarId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(AdminIndex));
+                return View(car);
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "CategoryId", "CategoryId", car.CategoryId);
-            return View(car);
+
+            try
+            {
+                // Chỉ gán các field được phép sửa - không đụng tới TenandId/khóa hệ thống
+                existing.CarName = car.CarName;
+                existing.Model = car.Model;
+                existing.CategoryId = car.CategoryId;
+                existing.LicensePlate = car.LicensePlate;
+                existing.RentalPricePerDay = car.RentalPricePerDay;
+                existing.Brand = car.Brand;
+                existing.BaseLocationId = car.BaseLocationId;
+                existing.Status = car.Status;
+                existing.SeatNumber = car.SeatNumber;
+                existing.DistanceTraveled = car.DistanceTraveled;
+                existing.EnergyType = car.EnergyType;
+                existing.EngineType = car.EngineType;
+                existing.SellDate = car.SellDate;
+                existing.TransmissionType = car.TransmissionType;
+                existing.VehicleType = car.VehicleType;
+
+                // Upload ảnh nếu có
+                if (ImageFile is { Length: > 0 })
+                {
+                    var fileName = Guid.NewGuid() + Path.GetExtension(ImageFile.FileName);
+                    var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/cars");
+                    if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+                    var filePath = Path.Combine(uploadPath, fileName);
+                    using var stream = new FileStream(filePath, FileMode.Create);
+                    await ImageFile.CopyToAsync(stream);
+                    existing.ImageUrl = "/images/cars/" + fileName;
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!await _context.Cars.AnyAsync(e => e.CarId == id)) return NotFound();
+                throw;
+            }
+
+            return RedirectToAction(nameof(AdminIndex));
         }
 
         // GET: Car/Delete/5

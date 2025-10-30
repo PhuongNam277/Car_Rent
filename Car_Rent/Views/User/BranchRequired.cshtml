@@ -1,0 +1,11 @@
+﻿
+@{
+    ViewData["Title"] = "Branch Required";
+    var returnUrl = (string)ViewBag.ReturnUrl ?? "/User";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+<div class="alert alert-warning mt-4">
+    <h4 class="alert-heading">Branch required</h4>
+    <p>Please select a branch to continue managing users.</p>
+    <a class="btn btn-primary" href="@Url.Action("SelectBranch", "Admin", new { returnUrl })">Select Branch</a>
+</div>

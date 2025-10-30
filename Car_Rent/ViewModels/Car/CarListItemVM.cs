@@ -13,6 +13,7 @@
         public string? TransmissionType { get; set; }
         public string Status { get; set; } = "Available";
         public int CategoryId { get; set; }
-        public string CategoryName { get; set; }
+        public string? CategoryName { get; set; }
+        public int TenantId { get; set; }
     }
 }

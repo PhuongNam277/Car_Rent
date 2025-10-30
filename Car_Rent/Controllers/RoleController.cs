@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Car_Rent.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Car_Rent.Controllers
 {

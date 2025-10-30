@@ -1,0 +1,30 @@
+﻿@using System.Security.Claims
+@inject Car_Rent.Models.CarRentalDbContext Db
+
+@{
+    var tidClaim = User.FindFirst("tenant_id")?.Value;
+    string? tenantName = null;
+    if (int.TryParse(tidClaim, out var tid))
+    {
+        tenantName = Db.Tenants.Where(t => t.TenantId == tid).Select(t => t.Name).FirstOrDefault();
+    }
+}
+
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        @if (!string.IsNullOrEmpty(tenantName))
+        {
+            <span>Tenant: <strong>@tenantName</strong></span>
+        }
+        else
+        {
+            <span>Chưa chọn tenant</span>
+        }
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" asp-controller="Tenant" asp-action="Select" asp-route-returnUrl="@Context.Request.Path">Chọn / đổi tenant…</a></li>
+        <li><a class="dropdown-item" asp-controller="Tenant" asp-action="MyTenants">Danh sách của tôi</a></li>
+        <li><a class="dropdown-item" asp-controller="Tenant" asp-action="Create" asp-route-returnUrl="@Context.Request.Path">Tạo tổ chức mới</a></li>
+        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Index" asp-route-returnUrl="@Context.Request.Path">Manage My Tenant</a></li>
+    </ul>
+</li>

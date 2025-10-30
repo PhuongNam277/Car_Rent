@@ -1,0 +1,21 @@
+﻿@model IEnumerable<Car_Rent.Controllers.AdminController.BranchVm>
+@{
+    ViewData["Title"] = "Select Branch";
+    Layout = "~/Views/Shared/MainLayout.cshtml";
+}
+<div class="container py-5">
+    <h2>Select Working Branch</h2>
+    <form asp-action="SwitchBranch" method="post">
+        @Html.AntiForgeryToken()
+        <div class="list-group mb-3">
+            @foreach (var b in Model)
+            {
+                <label class="list-group-item">
+                    <input class="form-check-input me-2" type="radio" name="branchId" value="@b.BranchId" />
+                    @b.Name
+                </label>
+            }
+        </div>
+        <button class="btn btn-primary">Use This Branch</button>
+    </form>
+</div>

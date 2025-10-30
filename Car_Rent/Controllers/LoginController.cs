@@ -34,6 +34,8 @@ namespace Car_Rent.Controllers
         private const string K_Verified = "PWRESET_VERIFIED"; // int (0/1)
         private const string K_Used = "PWRESET_USED"; // int (0/1)
 
+        
+
 
         [HttpGet]
         public IActionResult Index()
@@ -136,18 +138,42 @@ namespace Car_Rent.Controllers
                 .Select(r => r.RoleName)
                 .FirstOrDefaultAsync() ?? "User";
 
+            // Lấy tenant của user
+            var tenantIds = await _context.TenantMemberships
+                .Where(tm => tm.UserId == user.UserId)
+                .Select(tm => tm.TenantId)
+                .ToListAsync();
+
             var claims = new List<Claim>
             {
                 new Claim("UserId", user.UserId.ToString()),
                 new Claim(ClaimTypes.Name, user.FullName ?? user.Username),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim("Role", roleName)
+                new Claim(ClaimTypes.Role, roleName.Trim()),
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString())
             };
+
+            // Nếu chỉ 1 tenant -> gắn claim `tenant_id`
+            if (tenantIds.Count == 1)
+            {
+                claims.Add(new Claim("tenant_id", tenantIds[0].ToString()));
+            }
 
             if (!string.IsNullOrEmpty(avatar)) claims.Add(new Claim("AvatarUrl", avatar));
 
             var identity = new ClaimsIdentity(claims, "MyCookieAuth");
             var principal = new ClaimsPrincipal(identity);
+
+            // Nếu nhiều tenant, đăng nhập tạm rồi chuyển sang chọn tenant
+            if (tenantIds.Count > 1)
+            {
+                await HttpContext.SignInAsync("MyCookieAuth", principal, new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTime.UtcNow.AddHours(2)
+                });
+                return RedirectToAction("Select", "Tenant", new { returnUrl });
+            }
 
             await HttpContext.SignInAsync("MyCookieAuth", principal, new AuthenticationProperties
             {
@@ -210,6 +236,12 @@ namespace Car_Rent.Controllers
             // LẤY RoleName và chuẩn hoá
             var roleName = (user.Role?.RoleName ?? "User").Trim(); // ví dụ: "Admin", "User", "SuperAdmin"
 
+            // Lấy tenant của user
+            var tenantIds = await _context.TenantMemberships
+                .Where(tm => tm.UserId == user.UserId)
+                .Select(tm => tm.TenantId)
+                .ToListAsync();
+
             // TẠO CLAIMS ĐẦY ĐỦ (phải có ClaimTypes.Role)
             var claims = new List<Claim>
             {
@@ -220,8 +252,21 @@ namespace Car_Rent.Controllers
                 // có thể thêm Email/FullName nếu cần
             };
 
+            // Nếu user chỉ thuộc một tenant thì gắn luôn claim 'tenant_id'
+            if(tenantIds.Count == 1)
+            {
+                claims.Add(new Claim("tenant_id", tenantIds[0].ToString()));
+            }
+
             var identity = new ClaimsIdentity(claims, "MyCookieAuth");
             var principal = new ClaimsPrincipal(identity);
+
+            // Nếu user thuộc nhiều tenant thì đăng nhập tạm và chuyển sang màn chọn tenant
+            if (tenantIds.Count > 1)
+            {
+                await HttpContext.SignInAsync("MyCookieAuth", principal);
+                return RedirectToAction("Select", "Tenant", new { returnUrl });
+            }
 
             // (tuỳ) remember-me
             //var authProps = new AuthenticationProperties
@@ -258,14 +303,6 @@ namespace Car_Rent.Controllers
         {
             Response.StatusCode = 403;
             return View();
-        }
-
-        [Authorize(AuthenticationSchemes = "MyCookieAuth")] // hoặc Roles="Admin"
-        [HttpGet("/debug/whoami")]
-        public IActionResult WhoAmI()
-        {
-            var lines = User.Claims.Select(c => $"{c.Type} = {c.Value}");
-            return Content(string.Join(Environment.NewLine, lines), "text/plain");
         }
 
         // B1: Nhap email, gui otp

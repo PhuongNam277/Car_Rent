@@ -1,0 +1,22 @@
+﻿@{
+    ViewData["Title"] = "Add a staff to tenant";
+    Layout = "~/Views/Shared/AdminLayout/_AdminLayout.cshtml";
+}
+<div class="container py-5">
+    <h2>Add Staff/Employee</h2>
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <div class="mb-3">
+            <label class="form-label">Username or Email</label>
+            <input name="usernameOrEmail" class="form-control" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Role</label>
+            <select name="role" class="form-select">
+                <option value="Staff">Staff</option>
+                <option value="Owner">Owner</option>
+            </select>
+        </div>
+        <button class="btn btn-primary">Add</button>
+    </form>
+</div>

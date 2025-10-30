@@ -25,27 +25,31 @@ namespace Car_Rent.Hubs
             // Neu la staff : tu join lobby + seed danh sach
             if (Context.User?.IsInRole("Staff") == true)
             {
-                await Groups.AddToGroupAsync(Context.ConnectionId, "staff:lobby");
-
-                var openUnassigned = await _chat.GetOpenQueueAsync();
-                await Clients.Caller.SendAsync("SeedQueue", openUnassigned.Select(c => new
+                var tenantIdClaim = Context.User.FindFirst("tenant_id")?.Value;
+                if (!string.IsNullOrEmpty(tenantIdClaim) && int.TryParse(tenantIdClaim, out var tenantId))
                 {
-                    conversationId = c.ConversationId,
-                    customerId = c.CustomerId,
-                    customerName = c.Customer?.Username,
-                    createdAt = c.CreatedAt
-                }));
+                    await Groups.AddToGroupAsync(Context.ConnectionId, $"staff:tenant:{tenantId}");
 
-                // Seed cac cuon chat Open da gan cho Staff hien tai
-                var staffId = int.Parse(Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var mine = await _chat.GetAssignedOpenAsync(staffId);
-                await Clients.Caller.SendAsync("SeedAssigned", mine.Select(c => new
-                {
-                    conversationId = c.ConversationId,
-                    customerId = c.CustomerId,
-                    customerName = c.Customer?.Username,
-                    lastMessageAt = c.LastMessageAt
-                }));
+                    var openUnassigned = await _chat.GetOpenQueueForTenantAsync(tenantId);
+                    await Clients.Caller.SendAsync("SeedQueue", openUnassigned.Select(c => new
+                    {
+                        conversationId = c.ConversationId,
+                        customerId = c.CustomerId,
+                        customerName = c.Customer?.Username,
+                        createdAt = c.CreatedAt
+                    }));
+
+                    // Seed cac cuon chat Open da gan cho Staff hien tai
+                    var staffId = int.Parse(Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                    var mine = await _chat.GetAssignedOpenAsync(staffId);
+                    await Clients.Caller.SendAsync("SeedAssigned", mine.Select(c => new
+                    {
+                        conversationId = c.ConversationId,
+                        customerId = c.CustomerId,
+                        customerName = c.Customer?.Username,
+                        lastMessageAt = c.LastMessageAt
+                    }));
+                }
             }
         }
 
@@ -80,6 +84,9 @@ namespace Car_Rent.Hubs
 
             // neu nguoi gui la khach va conv da gan staff -> notify staff "New Message"
             var conv = await _chat.GetConversationAsync(conversationId);
+            if (conv == null) return;
+
+            // User gửi -> báo cho staff
             if (conv?.StaffId != null && conv.CustomerId == userId)
             {
                 await Clients.User(conv.StaffId.Value.ToString())
@@ -91,6 +98,20 @@ namespace Car_Rent.Hubs
                         at = msg.SentAt
                     });
             }
+
+            // Staff gửi -> báo cho user, người đang không ở trong phòng chat
+            if (conv?.CustomerId != null && conv.StaffId == userId)
+            {
+                await Clients.User(conv.CustomerId.ToString())
+                    .SendAsync("StaffMessage", new
+                    {
+                        conversationId,
+                        messageId = msg.ChatMessageId,
+                        preview = msg.Content.Length > 60 ? msg.Content.Substring(0, 60) + "..." : msg.Content,
+                        at = msg.SentAt
+                    });
+            }
+
         }
 
         // Staff hoac Customer hoi khi mo/doc phong
@@ -125,10 +146,16 @@ namespace Car_Rent.Hubs
 
             if (ok)
             {
-                // Bao cho tat ca staff trong lobby biet: cuoc chat nay da co nguoi nhan
-                await Clients.Group("staff:lobby").SendAsync("ConversationAssigned", new { conversationId, staffId });
+                // Lấy thông tin cuộc hội thoại để biết TenantId
+                var conv = await _chat.GetConversationAsync(conversationId);
+                if (conv?.TenantId != null)
+                {
+                    // Gửi thông báo đến đúng group của tenant
+                    await Clients.Group($"staff:tenant:{conv.TenantId.Value}")
+                        .SendAsync("ConversationAssigned", new { conversationId, staffId });
+                }
 
-                // Bao rieng cho nguoi vua nhan: mo phong chat
+                // Thông báo riêng cho người nhận vẫn giữ nguyên
                 await Clients.Caller.SendAsync("OpenConversation", new { conversationId });
             }
             return ok;

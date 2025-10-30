@@ -239,12 +239,14 @@ namespace Car_Rent.Controllers
             }
 
             var car = await _context.Cars
+                .IgnoreQueryFilters()
+                .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.CarId == req.CarId);
 
             ViewBag.CarName = car?.CarName ?? $"Car #{req.CarId}"; // Default car name if not found
 
-            var pickup = await _context.Locations.FirstOrDefaultAsync(l => l.LocationId == req.PickupLocationId);
-            var dropoff = await _context.Locations.FirstOrDefaultAsync(l => l.LocationId == req.DropoffLocationId);
+            var pickup = await _context.Locations.IgnoreQueryFilters().AsNoTracking().FirstOrDefaultAsync(l => l.LocationId == req.PickupLocationId);
+            var dropoff = await _context.Locations.IgnoreQueryFilters().AsNoTracking().FirstOrDefaultAsync(l => l.LocationId == req.DropoffLocationId);
 
             ViewBag.PickUpName = pickup?.Name ?? $"Station #{req.PickupLocationId}";
             ViewBag.DropOffName = dropoff?.Name ?? $"Station #{req.DropoffLocationId}";
@@ -291,7 +293,7 @@ namespace Car_Rent.Controllers
                 return RedirectToAction("Index", "Bookcar");
             }
 
-            var car = await _context.Cars.FirstOrDefaultAsync(c => c.CarId == req.CarId);
+            var car = await _context.Cars.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.CarId == req.CarId);
             if (car == null)
             {
                 TempData["FailedMessage"] = "Car not found. Please try again.";
@@ -336,7 +338,8 @@ namespace Car_Rent.Controllers
                     Status = "Pending",
                     TotalPrice = req.TotalPrice,
                     FromCity = "",
-                    ToCity = ""
+                    ToCity = "",
+                    TenantId = car.TenantId
                 };
                 _context.Reservations.Add(reservation);
                 await _context.SaveChangesAsync();
@@ -347,13 +350,14 @@ namespace Car_Rent.Controllers
                     PaymentDate = DateTime.Now,
                     Amount = reservation.TotalPrice,
                     PaymentMethod = "Cash",
-                    Status = "Pending"
+                    Status = "Pending",
+                    TenantId = car.TenantId
                 };
                 _context.Payments.Add(payment);
 
                 // Tuỳ chính sách: có thể KHÔNG đổi trạng thái xe ở đây (dùng calendar từ Reservation)
-                car.Status = "Rented";
-                _context.Cars.Update(car);
+                //car.Status = "Rented";
+                //_context.Cars.Update(car);
 
                 await _context.SaveChangesAsync();
                 await tx.CommitAsync();

@@ -1,461 +1,292 @@
-﻿@model CategoryCarModel
+﻿@model Car_Rent.ViewModels.Car.BookcarViewModel
+@using Car_Rent.ViewModels.Car
+
 
 @{
-    ViewData["Title"] = "Booking A Car";
-    Layout = "~/Views/Shared/MainLayout.cshtml";
+	ViewData["Title"] = "Booking A Car";
+	Layout = "~/Views/Shared/MainLayout.cshtml";
 }
 
 <!-- Carousel Start -->
 <div class="header-carousel">
-    <div id="carouselId" class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
-        <ol class="carousel-indicators">
-            <li data-bs-target="#carouselId" data-bs-slide-to="0" class="active" aria-current="true" aria-label="First slide"></li>
-            <li data-bs-target="#carouselId" data-bs-slide-to="1" aria-label="Second slide"></li>
-        </ol>
-        <div class="carousel-inner" role="listbox">
-            <div class="carousel-item active">
-                <img src="~/Main/img/carousel-2.jpg" class="img-fluid w-100" alt="First slide" />
-                <div class="carousel-caption">
-                    <div class="container py-4">
-                        <div class="row g-5">
-                            <div class="col-lg-6 fadeInLeft animated" data-animation="fadeInLeft" data-delay="1s" style="animation-delay: 1s;">
-                                <div class="bg-secondary rounded p-5">
-                                    <h4 class="text-white mb-4">CONTINUE CAR RESERVATION</h4>
-                                    <form id="reserveForm" asp-action="BookNow" asp-controller="Bookcar" method="post">
-                                        @Html.AntiForgeryToken()
-                                        <div class="row g-3">
+	<div id="carouselId" class="carousel slide" data-bs-ride="carousel" data-bs-interval="false">
+		<ol class="carousel-indicators">
+			<li data-bs-target="#carouselId" data-bs-slide-to="0" class="active" aria-current="true" aria-label="First slide"></li>
+			<li data-bs-target="#carouselId" data-bs-slide-to="1" aria-label="Second slide"></li>
+		</ol>
+		<div class="carousel-inner" role="listbox">
+			<div class="carousel-item active">
+				<img src="~/Main/img/carousel-2.jpg" class="img-fluid w-100" alt="First slide" />
+				<div class="carousel-caption">
+					<div class="container py-4">
+						<div class="row g-5">
+							<div class="col-lg-6 fadeInLeft animated" data-animation="fadeInLeft" data-delay="1s" style="animation-delay: 1s;">
+								<div class="bg-secondary rounded p-5">
+									<h4 class="text-white mb-4">CONTINUE CAR RESERVATION</h4>
+									<form id="reserveForm" asp-action="BookNow" asp-controller="Bookcar" method="post">
+										@Html.AntiForgeryToken()
+										<input type="hidden" id="tenantIdHidden" value="@User.FindFirst("tenant_id")?.Value" />
+										<input type="hidden" name="TenantId" id="tenantId" value="@User.FindFirst("tenant_id")?.Value" />
+										<div class="row g-3">
 
-                                            <!-- 1) PICKUP DATE/TIME -->
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Pick Up</span>
-                                                    </div>
-                                                    <input class="form-control" name="StartDate" type="date">
-                                                    <select class="form-select ms-3" name="StartTime" aria-label="Pick up time">
-                                                        <option>12:00</option>
-                                                        <option>01:00</option>
-                                                        <option>02:00</option>
-                                                        <option>03:00</option>
-                                                        <option>04:00</option>
-                                                        <option>05:00</option>
-                                                        <option>06:00</option>
-                                                        <option>07:00</option>
-                                                        <option>08:00</option>
-                                                        <option>09:00</option>
-                                                        <option>10:00</option>
-                                                        <option>11:00</option>
-                                                        <option>12:00</option>
-                                                        <option>13:00</option>
-                                                        <option>14:00</option>
-                                                        <option>15:00</option>
-                                                        <option>16:00</option>
-                                                        <option>17:00</option>
-                                                        <option>18:00</option>
-                                                        <option>19:00</option>
-                                                        <option>20:00</option>
-                                                        <option>21:00</option>
-                                                        <option>22:00</option>
-                                                        <option>23:00</option>
-                                                    </select>
-                                                </div>
-                                            </div>
+											<!-- 1) PICKUP DATE/TIME -->
+											<div class="col-12">
+												<div class="input-group">
+													<div class="d-flex align-items-center bg-light text-body rounded-start p-2">
+														<span class="fas fa-calendar-alt"></span><span class="ms-1">Pick Up</span>
+													</div>
+													<input class="form-control" name="StartDate" type="date">
+													<select class="form-select ms-3" name="StartTime" aria-label="Pick up time">
+														<option>12:00</option>
+														<option>01:00</option>
+														<option>02:00</option>
+														<option>03:00</option>
+														<option>04:00</option>
+														<option>05:00</option>
+														<option>06:00</option>
+														<option>07:00</option>
+														<option>08:00</option>
+														<option>09:00</option>
+														<option>10:00</option>
+														<option>11:00</option>
+														<option>12:00</option>
+														<option>13:00</option>
+														<option>14:00</option>
+														<option>15:00</option>
+														<option>16:00</option>
+														<option>17:00</option>
+														<option>18:00</option>
+														<option>19:00</option>
+														<option>20:00</option>
+														<option>21:00</option>
+														<option>22:00</option>
+														<option>23:00</option>
+													</select>
+												</div>
+											</div>
 
-                                            <!-- 1) DROPOFF DATE/TIME -->
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Drop off</span>
-                                                    </div>
-                                                    <input class="form-control" name="EndDate" type="date">
-                                                    <select class="form-select ms-3" name="EndTime" aria-label="Drop off time">
-                                                        <option>12:00</option>
-                                                        <option>01:00</option>
-                                                        <option>02:00</option>
-                                                        <option>03:00</option>
-                                                        <option>04:00</option>
-                                                        <option>05:00</option>
-                                                        <option>06:00</option>
-                                                        <option>07:00</option>
-                                                        <option>08:00</option>
-                                                        <option>09:00</option>
-                                                        <option>10:00</option>
-                                                        <option>11:00</option>
-                                                        <option>12:00</option>
-                                                        <option>13:00</option>
-                                                        <option>14:00</option>
-                                                        <option>15:00</option>
-                                                        <option>16:00</option>
-                                                        <option>17:00</option>
-                                                        <option>18:00</option>
-                                                        <option>19:00</option>
-                                                        <option>20:00</option>
-                                                        <option>21:00</option>
-                                                        <option>22:00</option>
-                                                        <option>23:00</option>
-                                                    </select>
-                                                </div>
-                                            </div>
+											<!-- 1) DROPOFF DATE/TIME -->
+											<div class="col-12">
+												<div class="input-group">
+													<div class="d-flex align-items-center bg-light text-body rounded-start p-2">
+														<span class="fas fa-calendar-alt"></span><span class="ms-1">Drop off</span>
+													</div>
+													<input class="form-control" name="EndDate" type="date">
+													<select class="form-select ms-3" name="EndTime" aria-label="Drop off time">
+														<option>12:00</option>
+														<option>01:00</option>
+														<option>02:00</option>
+														<option>03:00</option>
+														<option>04:00</option>
+														<option>05:00</option>
+														<option>06:00</option>
+														<option>07:00</option>
+														<option>08:00</option>
+														<option>09:00</option>
+														<option>10:00</option>
+														<option>11:00</option>
+														<option>12:00</option>
+														<option>13:00</option>
+														<option>14:00</option>
+														<option>15:00</option>
+														<option>16:00</option>
+														<option>17:00</option>
+														<option>18:00</option>
+														<option>19:00</option>
+														<option>20:00</option>
+														<option>21:00</option>
+														<option>22:00</option>
+														<option>23:00</option>
+													</select>
+												</div>
+											</div>
 
-                                            <!-- 2) PICKUP (Station) -->
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-map-marker-alt"></span> <span class="ms-1">Pick Up (Station)</span>
-                                                    </div>
-                                                    <select class="form-select" name="PickupLocationId" id="pickupLocationSelect" required>
-                                                        <option value="">Select a Station</option>
-                                                        @foreach (var loc in (IEnumerable<Car_Rent.Models.Location>)ViewBag.Locations)
-                                                        {
-                                                            <option value="@loc.LocationId">@loc.Name - @loc.Address</option>
-                                                        }
-                                                    </select>
-                                                </div>
-                                            </div>
+											<!-- 2) PICKUP (Station) -->
+											<div class="col-12">
+												<div class="input-group">
+													<div class="d-flex align-items-center bg-light text-body rounded-start p-2">
+														<span class="fas fa-map-marker-alt"></span> <span class="ms-1">Pick Up (Station)</span>
+													</div>
+													<select id="pickupLocationSelect" name="PickupLocationId" class="form-select">
+														@foreach (var l in (IEnumerable<LocationOptionVM>)ViewBag.Locations)
+														{
+															<option value="@l.LocationId" data-tenantid="@l.TenantId">
+																[@l.TenantId] @l.Name
+															</option>
+														}
+													</select>
+												</div>
+											</div>
 
-                                            <!-- 2) DROPOFF (Station) -->
-                                            <div class="col-12">
-                                                <a href="#" class="text-start text-white d-block mb-2">Need a different drop-off location?</a>
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-map-marker-alt"></span><span class="ms-1">Drop off (Station)</span>
-                                                    </div>
-                                                    <select class="form-select" name="DropoffLocationId" id="dropoffLocationSelect" required>
-                                                        <option value="">Select a Station</option>
-                                                        @foreach (var loc in (IEnumerable<Car_Rent.Models.Location>)ViewBag.Locations)
-                                                        {
-                                                            <option value="@loc.LocationId">@loc.Name - @loc.Address</option>
-                                                        }
-                                                    </select>
-                                                </div>
-                                            </div>
+											<!-- 2) DROPOFF (Station) -->
+											<div class="col-12">
+												<a href="#" class="text-start text-white d-block mb-2">Need a different drop-off location?</a>
+												<div class="input-group">
+													<div class="d-flex align-items-center bg-light text-body rounded-start p-2">
+														<span class="fas fa-map-marker-alt"></span><span class="ms-1">Drop off (Station)</span>
+													</div>
+													<select class="form-select" name="DropoffLocationId" id="dropoffLocationSelect" required>
+														@foreach (var l in (IEnumerable<LocationOptionVM>)ViewBag.Locations)
+														{
+															<option value="@l.LocationId" data-tenantid="@l.TenantId">
+																[@l.TenantId] @l.Name
+															</option>
+														}
+													</select>
+												</div>
+											</div>
 
-                                            <!-- 3) CATEGORY -->
-                                            <div class="col-12">
-                                                <select id="categorySelect" name="CategoryId" class="form-select" aria-label="Select car type">
-                                                    <option selected>Select Your Car Type</option>
-                                                    @foreach (var c in Model.Categories)
-                                                    {
-                                                        var isSelected = (ViewBag.SelectedCategoryId != null && c.CategoryId == (int)ViewBag.SelectedCategoryId);
-                                                        var selectedText = isSelected ? "selected" : "";
-                                                        @Html.Raw($"<option value='{c.CategoryId}' {selectedText}>{c.CategoryName}</option>")
-                                                    }
-                                                </select>
-                                            </div>
+											<!-- 3) CATEGORY -->
+											<div class="col-12">
+												<select id="categorySelect" name="CategoryId" class="form-select">
+													<option value="">Select Your Car Type</option>
+													@foreach (var c in Model.Categories)
+													{
+														var sel = (Model.SelectedCategoryId.HasValue && c.CategoryId == Model.SelectedCategoryId.Value) ? "selected" : "";
+														@Html.Raw($"<option value='{c.CategoryId}' {sel}>{c.CategoryName}</option>")
+													}
+												</select>
 
-                                            <!-- 3) CAR -->
-                                            <div class="col-12">
-                                                <select id="carSelect" name="CarId" class="form-select" aria-label="Select car brand">
-                                                    <option selected>Select Your Car Brand</option>
-                                                    @foreach (var car in Model.Cars)
-                                                    {
-                                                        var isSelected = (ViewBag.SelectedCarId != null && car.CarId == (int)ViewBag.SelectedCarId);
-                                                        var selectedText = isSelected ? "selected" : "";
-                                                        @Html.Raw($"<option value='{car.CarId}' {selectedText}>{car.CarName} - {car.LicensePlate}</option>")
-                                                    }
-                                                </select>
-                                            </div>
+											</div>
 
-                                            <!-- SUBMIT -->
-                                            <div class="col-12">
-                                                <button type="submit" class="btn btn-light w-100 py-2">Book Now</button>
-                                            </div>
-                                        </div>
-                                    </form>
+											<!-- 3) CAR -->
+											<div class="col-12">
+												<select id="carSelect" name="CarId" class="form-select">
+													<option value="">Select Your Car</option>
+													@foreach (var car in Model.Cars)
+													{
+														var sel = (Model.SelectedCarId.HasValue && car.CarId == Model.SelectedCarId.Value) ? "selected" : "";
+														@Html.Raw($"<option value='{car.CarId}' {sel}>{car.CarName} - {car.LicensePlate}</option>")
+													}
+												</select>
 
-                                </div>
-                            </div>
-                            <div class="col-lg-6 d-none d-lg-flex fadeInRight animated" data-animation="fadeInRight" data-delay="1s" style="animation-delay: 1s;">
-                                <div class="text-start">
-                                    <h1 class="display-5 text-white">Get 15% off your rental Plan your trip now</h1>
-                                    <p>Treat yourself in USA</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="carousel-item">
-                <img src="~/Main/img/carousel-1.jpg" class="img-fluid w-100" alt="First slide" />
-                <div class="carousel-caption">
-                    <div class="container py-4">
-                        <div class="row g-5">
-                            <div class="col-lg-6 fadeInLeft animated" data-animation="fadeInLeft" data-delay="1s" style="animation-delay: 1s;">
-                                <div class="bg-secondary rounded p-5">
-                                    <h4 class="text-white mb-4">CONTINUE CAR RESERVATION</h4>
-                                    <form>
-                                        <div class="row g-3">
-                                            <div class="col-12">
-                                                <select id="categorySelect" class="form-select" aria-label="Default select example">
-                                                    <option selected>Select Your Car type</option>
-                                                    @foreach (var c in Model.Categories)
-                                                    {
-                                                        <option value="@c.CategoryId">@c.CategoryName</option>
-                                                    }
+											</div>
+
+											<!-- SUBMIT -->
+											<div class="col-12">
+												<button type="submit" class="btn btn-light w-100 py-2">Book Now</button>
+											</div>
+										</div>
+									</form>
+
+								</div>
+							</div>
+							<div class="col-lg-6 d-none d-lg-flex fadeInRight animated" data-animation="fadeInRight" data-delay="1s" style="animation-delay: 1s;">
+								<div class="text-start">
+									<h1 class="display-5 text-white">Get 15% off your rental Plan your trip now</h1>
+									<p>Treat yourself in USA</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="carousel-item">
+				<img src="~/Main/img/carousel-1.jpg" class="img-fluid w-100" alt="First slide" />
+				<div class="carousel-caption">
+					<div class="container py-4">
+						<div class="row g-5">
+							<div class="col-lg-6 fadeInLeft animated" data-animation="fadeInLeft" data-delay="1s" style="animation-delay: 1s;">
+								<div class="bg-secondary rounded p-5">
+									<h4 class="text-white mb-4">CONTINUE CAR RESERVATION</h4>
+									<form>
+										<div class="row g-3">
+											<div class="col-12">
+												<select id="categorySelect" class="form-select" aria-label="Default select example">
+													<option selected>Select Your Car type</option>
+													@foreach (var c in Model.Categories)
+													{
+														<option value="@c.CategoryId">@c.CategoryName</option>
+													}
 
 
-                                                </select>
-                                            </div>
-                                            <div class="col-12">
-                                                <select id="carSelect" class="form-select" aria-label="Default select example">
-                                                    <option selected>Select Your Car Brand</option>
-                                                    @foreach (var car in Model.Cars)
-                                                    {
-                                                        <option value="@car.CarId">@car.CarName</option>
-                                                    }
+												</select>
+											</div>
+											<div class="col-12">
+												<select id="carSelect" class="form-select" aria-label="Default select example">
+													<option selected>Select Your Car Brand</option>
+													@foreach (var car in Model.Cars)
+													{
+														<option value="@car.CarId">@car.CarName</option>
+													}
 
-                                                </select>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-map-marker-alt"></span><span class="ms-1">Pick Up</span>
-                                                    </div>
-                                                    <input class="form-control" type="text" placeholder="Enter a City or Airport" aria-label="Enter a City or Airport">
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <a href="#" class="text-start text-white d-block mb-2">Need a different drop-off location?</a>
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-map-marker-alt"></span><span class="ms-1">Drop off</span>
-                                                    </div>
-                                                    <input class="form-control" type="text" placeholder="Enter a City or Airport" aria-label="Enter a City or Airport">
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Pick Up</span>
-                                                    </div>
-                                                    <input class="form-control" type="date">
-                                                    <select class="form-select ms-3" aria-label="Default select example">
-                                                        <option selected>12:00AM</option>
-                                                        <option value="1">1:00AM</option>
-                                                        <option value="2">2:00AM</option>
-                                                        <option value="3">3:00AM</option>
-                                                        <option value="4">4:00AM</option>
-                                                        <option value="5">5:00AM</option>
-                                                        <option value="6">6:00AM</option>
-                                                        <option value="7">7:00AM</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <div class="input-group">
-                                                    <div class="d-flex align-items-center bg-light text-body rounded-start p-2">
-                                                        <span class="fas fa-calendar-alt"></span><span class="ms-1">Drop off</span>
-                                                    </div>
-                                                    <input class="form-control" type="date">
-                                                    <select class="form-select ms-3" aria-label="Default select example">
-                                                        <option selected>12:00AM</option>
-                                                        <option value="1">1:00AM</option>
-                                                        <option value="2">2:00AM</option>
-                                                        <option value="3">3:00AM</option>
-                                                        <option value="4">4:00AM</option>
-                                                        <option value="5">5:00AM</option>
-                                                        <option value="6">6:00AM</option>
-                                                        <option value="7">7:00AM</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-12">
-                                                <button class="btn btn-light w-100 py-2">Book Now</button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                            <div class="col-lg-6 d-none d-lg-flex fadeInRight animated" data-animation="fadeInRight" data-delay="1s" style="animation-delay: 1s;">
-                                <div class="text-start">
-                                    <h1 class="display-5 text-white">Get 15% off your rental! Choose Your Model </h1>
-                                    <p>Treat yourself in USA</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+												</select>
+											</div>
+											<div class="col-12">
+												<div class="input-group">
+													<div class="d-flex align-items-center bg-light text-body rounded-start p-2">
+														<span class="fas fa-map-marker-alt"></span><span class="ms-1">Pick Up</span>
+													</div>
+													<input class="form-control" type="text" placeholder="Enter a City or Airport" aria-label="Enter a City or Airport">
+												</div>
+											</div>
+											<div class="col-12">
+												<a href="#" class="text-start text-white d-block mb-2">Need a different drop-off location?</a>
+												<div class="input-group">
+													<div class="d-flex align-items-center bg-light text-body rounded-start p-2">
+														<span class="fas fa-map-marker-alt"></span><span class="ms-1">Drop off</span>
+													</div>
+													<input class="form-control" type="text" placeholder="Enter a City or Airport" aria-label="Enter a City or Airport">
+												</div>
+											</div>
+											<div class="col-12">
+												<div class="input-group">
+													<div class="d-flex align-items-center bg-light text-body rounded-start p-2">
+														<span class="fas fa-calendar-alt"></span><span class="ms-1">Pick Up</span>
+													</div>
+													<input class="form-control" type="date">
+													<select class="form-select ms-3" aria-label="Default select example">
+														<option selected>12:00AM</option>
+														<option value="1">1:00AM</option>
+														<option value="2">2:00AM</option>
+														<option value="3">3:00AM</option>
+														<option value="4">4:00AM</option>
+														<option value="5">5:00AM</option>
+														<option value="6">6:00AM</option>
+														<option value="7">7:00AM</option>
+													</select>
+												</div>
+											</div>
+											<div class="col-12">
+												<div class="input-group">
+													<div class="d-flex align-items-center bg-light text-body rounded-start p-2">
+														<span class="fas fa-calendar-alt"></span><span class="ms-1">Drop off</span>
+													</div>
+													<input class="form-control" type="date">
+													<select class="form-select ms-3" aria-label="Default select example">
+														<option selected>12:00AM</option>
+														<option value="1">1:00AM</option>
+														<option value="2">2:00AM</option>
+														<option value="3">3:00AM</option>
+														<option value="4">4:00AM</option>
+														<option value="5">5:00AM</option>
+														<option value="6">6:00AM</option>
+														<option value="7">7:00AM</option>
+													</select>
+												</div>
+											</div>
+											<div class="col-12">
+												<button class="btn btn-light w-100 py-2">Book Now</button>
+											</div>
+										</div>
+									</form>
+								</div>
+							</div>
+							<div class="col-lg-6 d-none d-lg-flex fadeInRight animated" data-animation="fadeInRight" data-delay="1s" style="animation-delay: 1s;">
+								<div class="text-start">
+									<h1 class="display-5 text-white">Get 15% off your rental! Choose Your Model </h1>
+									<p>Treat yourself in USA</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
 <!-- Carousel End -->
 
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-        $(function () {
-      const $form = $('#reserveForm');
-      const $pickup = $form.find('#pickupLocationSelect');
-      const $category = $form.find('#categorySelect');
-      const $car = $form.find('#carSelect');
-      const $startDate = $form.find('input[name="StartDate"]');
-      const $endDate   = $form.find('input[name="EndDate"]');
-      const $startTime = $form.find('select[name="StartTime"]');
-      const $endTime   = $form.find('select[name="EndTime"]');
-      const $bookBtn   = $form.find('button[type="submit"]');
-
-      // Ghi nhớ xe mà đã chọn lần gần nhất (dù danh sách có reload)
-      let lastChosenCarId = $car.val() || null;
-
-      function hhmm(v){ return (v && v.length===5) ? v : "12:00"; }
-      function debounce(fn, wait){ let t; return function(){ clearTimeout(t); t=setTimeout(()=>fn.apply(this,arguments),wait); }; }
-      function setLoading(on){
-        if(on){
-          $car.prop('disabled', true).html('<option selected>Loading...</option>');
-          $bookBtn.prop('disabled', true);
-          // Xóa thông báo cũ khi đang load
-          $form.find('#carLostMsg, #noCarAvailableMsg').remove();
-        }
-        else  {
-          $car.prop('disabled', false);
-          $bookBtn.prop('disabled', false);
-        }
-      }
-
-      $car.on('change', function(){
-        lastChosenCarId = $(this).val() || null;
-        $form.find('#carLostMsg, #noCarAvailableMsg').remove();
-      });
-
-      function reloadCars(){
-        const pickupLocationId = $pickup.val();
-        const categoryId = $category.val();
-        const startDateVal = $startDate.val();
-        const endDateVal   = $endDate.val();
-        const startTimeVal = hhmm($startTime.val());
-        const endTimeVal   = hhmm($endTime.val());
-        if(!pickupLocationId || !startDateVal || !endDateVal) return;
-
-        const hadSelection = !!lastChosenCarId;
-        setLoading(true);
-
-        $.get('/Bookcar/AvailableCars', {
-          pickupLocationId, categoryId, startDate: startDateVal, endDate: endDateVal,
-          startTime: startTimeVal, endTime: endTimeVal
-        })
-        .done(function(data){
-          let foundOld = false;
-
-          // Xóa các thông báo cũ
-          $form.find('#carLostMsg, #noCarAvailableMsg').remove();
-
-          $car.empty().append('<option value="">Select Your Car</option>');
-
-          // XỬ LÝ KHI KHÔNG CÓ XE TRỐNG
-          if(!data || data.length === 0){
-            // Thêm option thông báo không có xe
-            $car.append('<option value="" disabled style="color: #dc3545; font-style: italic;">Không có xe phù hợp</option>');
-
-            // Hiển thị thông báo chi tiết
-            const stationName = $pickup.find('option:selected').text() || 'station này';
-            const noCarMsg = `
-              <div id="noCarAvailableMsg" class="alert alert-warning mt-2 mb-0" role="alert">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>Xe tạm thời không có tại ${stationName}</strong><br>
-                <small>Vui lòng chọn station khác hoặc thử lại sau. Bạn cũng có thể thay đổi thời gian hoặc loại xe.</small>
-              </div>
-            `;
-            $car.after(noCarMsg);
-
-            // Disable nút book
-            $bookBtn.prop('disabled', true);
-            lastChosenCarId = null;
-            return;
-          }
-
-          // CÓ XE - Xử lý bình thường
-          data.forEach(function(item){
-            if(lastChosenCarId && String(item.carId) === String(lastChosenCarId)) foundOld = true;
-            $car.append($('<option/>', { value: item.carId, text: item.carName }));
-          });
-
-          // Nếu xe cũ còn → tự chọn lại & xoá cảnh báo
-          if(foundOld){
-            $car.val(lastChosenCarId);
-          } else {
-            // Nếu TRƯỚC ĐÓ CÓ lựa chọn, nhưng giờ không còn trong list → cảnh báo
-            // if(hadSelection){
-            //   const carLostMsg = `
-            //     <small id="carLostMsg" class="text-warning ms-2">
-            //       <i class="fas fa-info-circle me-1"></i>
-            //       Xe bạn vừa chọn không còn phù hợp với lựa chọn hiện tại.
-            //     </small>
-            //   `;
-            //   $car.after(carLostMsg);
-            // }
-            lastChosenCarId = null;
-          }
-
-          // Enable nút book khi có xe
-          $bookBtn.prop('disabled', false);
-        })
-        .fail(function(xhr, status, error){
-          console.error('Load cars failed:', error);
-
-          // Xử lý lỗi API
-          $form.find('#carLostMsg, #noCarAvailableMsg').remove();
-          $car.empty().append('<option value="" disabled style="color: #dc3545;">Lỗi tải dữ liệu</option>');
-
-          const errorMsg = `
-            <div id="noCarAvailableMsg" class="alert alert-danger mt-2 mb-0" role="alert">
-              <i class="fas fa-exclamation-circle me-2"></i>
-              <strong>Không thể tải danh sách xe</strong><br>
-              <small>Vui lòng kiểm tra kết nối internet và thử lại.</small>
-            </div>
-          `;
-          $car.after(errorMsg);
-          $bookBtn.prop('disabled', true);
-        })
-        .always(function(){
-          setLoading(false);
-        });
-      }
-
-      const reloadCarsDebounced = debounce(reloadCars, 300);
-
-      // Triggers
-      $pickup.on('change', function(){
-        reloadCarsDebounced();
-        $form.find('#dropoffLocationSelect').val($(this).val()); // MVP: đồng bộ drop-off
-      });
-      $category.on('change', reloadCarsDebounced);
-      $startDate.on('change', reloadCarsDebounced);
-      $endDate.on('change', reloadCarsDebounced);
-      $startTime.on('change', reloadCarsDebounced);
-      $endTime.on('change', reloadCarsDebounced);
-    });
-</script>
-
-
-
-@* <script>
-    $(document).ready(function () {
-        $("#categorySelect").change(function () {
-            var categoryId = $(this).val(); // Lay category id da chon
-            $("#carSelect").html('<option selected> Loading... </option>') // Hien thi loading
-
-            if(categoryId) {
-                $.ajax({
-                    url: "/Bookcar/GetCarsByCategory", // Goi controller
-                    type: "GET",
-                    data: {categoryId: categoryId},
-                    success: function (data) {
-                        $("#carSelect").html('<option selected value=""> Select Your Car Brand </option>');
-                        $.each(data, function (index, car) {
-                            $("#carSelect").append('<option value="' + car.carId + '">' + car.carName + '</option>' );
-                        } ) ;
-                    },
-                    error: function () {
-                        alert("Loi khi tai danh sach xe.");
-                    }
-                });
-            }
-            else {
-                $("#carSelect").html('<option selected value="">Select Your Car Brand</option>'); // Reset nếu chưa chọn
-            }
-
-        })
-        
-    } )
-</script> *@
+<script src="~/js/booking.js"></script>

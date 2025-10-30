@@ -24,7 +24,8 @@ namespace Car_Rent.Controllers
 
 
         // GET: Reservation
-        public async Task<IActionResult> Index(string? search, string? status, string? sortBy = "DateDesc", int page = 1, int pageSize = 10)
+        // Admin Index
+        public async Task<IActionResult> Index(string? search, string? status, string? sortBy = "DateDesc", int page = 1, int pageSize = 10) 
         {
             //var carRentalDbContext = _context.Reservations.Include(r => r.Car).Include(r => r.User);
             //return View(await carRentalDbContext.ToListAsync());
@@ -110,6 +111,10 @@ namespace Car_Rent.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Map TenantId theo Car
+                var car = await _context.Cars.FirstOrDefaultAsync(c => c.CarId == reservation.CarId);
+                if(car != null) reservation.TenantId = car.TenantId;
+
                 _context.Add(reservation);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -146,27 +151,41 @@ namespace Car_Rent.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ReservationId,UserId,CarId,ReservationDate,StartDate,EndDate,TotalPrice,FromCity, ToCity, Status, PickupLocationId, DropoffLocationId")] Reservation reservation)
+        public async Task<IActionResult> Edit(int id, [Bind("ReservationId,UserId,CarId,ReservationDate,StartDate,EndDate,TotalPrice,FromCity, ToCity, Status, PickupLocationId, DropoffLocationId")] Reservation input)
         {
-            if (id != reservation.ReservationId)
+            if (id != input.ReservationId)
             {
                 return NotFound();
             }
 
+            // Load Entity gốc để không overwrite TenantId
+            var reservation = await _context.Reservations
+                .FirstOrDefaultAsync(r => r.ReservationId == id);
+            if (reservation == null) return NotFound();
+
             if (ModelState.IsValid)
             {
+                // Không dùng _context.Update(input); -> sẽ làm TenantId = 0
+                reservation.UserId = input.UserId;
+                reservation.CarId = input.CarId;
+                reservation.ReservationDate = input.ReservationDate;
+                reservation.StartDate = input.StartDate;
+                reservation.EndDate = input.EndDate;
+                reservation.TotalPrice = input.TotalPrice;
+                reservation.FromCity = ".";
+                reservation.ToCity = ".";
+                reservation.Status = input.Status;
+                reservation.PickupLocationId = input.PickupLocationId;
+                reservation.DropoffLocationId = input.DropoffLocationId;
+                // Lưu ý không đụng vào reservation.TenantId
+
+                // Cập nhật Payment/Car theo Status - dùng reservation thay vì input
+                var payment = await _context.Payments
+                    .FirstOrDefaultAsync(p => p.ReservationId == reservation.ReservationId);
                 try
                 {
-                    reservation.FromCity = ".";
-                    reservation.ToCity = ".";
-
-                    _context.Update(reservation);
-                    // If Status = "Completed"
                     if(string.Equals(reservation.Status, "Completed", StringComparison.OrdinalIgnoreCase))
                     {
-                        // update payment
-                        var payment = await _context.Payments.
-                            FirstOrDefaultAsync(p => p.ReservationId == reservation.ReservationId);
 
                         if(payment != null)
                         {
@@ -185,11 +204,9 @@ namespace Car_Rent.Controllers
                     }
                     else if (string.Equals(reservation.Status, "Cancelled", StringComparison.OrdinalIgnoreCase))
                     {
-                        // Payment -> Cancelled (hoặc Refunded), Car -> Available ngay
-                        var payment = await _context.Payments.FirstOrDefaultAsync(p => p.ReservationId == reservation.ReservationId);
                         if (payment != null)
                         {
-                            payment.Status = "Cancelled"; // or "Refunded" based on your logic
+                            payment.Status = "Cancelled";
                         }
                         var car = await _context.Cars.FindAsync(reservation.CarId);
                         if (car != null)
@@ -211,6 +228,7 @@ namespace Car_Rent.Controllers
                     }
 
                     await _context.SaveChangesAsync();
+                    return RedirectToAction("Index");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -223,11 +241,12 @@ namespace Car_Rent.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
             }
-            ViewData["CarId"] = new SelectList(_context.Cars, "CarId", "CarName", reservation.CarId);
-            ViewData["UserId"] = new SelectList(_context.Users, "UserId", "Username", reservation.UserId);
-            return View(reservation);
+            ViewData["CarId"] = new SelectList(_context.Cars, "CarId", "CarName", input.CarId);                               
+            ViewData["UserId"] = new SelectList(_context.Users, "UserId", "Username", input.UserId);                          
+            ViewData["PickupLocationId"] = new SelectList(_context.Locations.Where(l => l.IsActive), "LocationId", "Name", input.PickupLocationId);
+            ViewData["DropoffLocationId"] = new SelectList(_context.Locations.Where(l => l.IsActive), "LocationId", "Name", input.DropoffLocationId); 
+            return View(input);
         }
 
         // GET: Reservation/Delete/5

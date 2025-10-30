@@ -9,11 +9,13 @@
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime LastMessageAt { get; set; } = DateTime.UtcNow;
         public DateTime? ClosedAt { get; set; }
+        public int? TenantId { get; set; }
 
 
-        public virtual User Customer { get; set; } = null!;
+        public virtual User? Customer { get; set; } = null!;
         public virtual User? Staff { get; set; }
         public virtual ICollection<ChatMessage> Messages { get; set; } = new List<ChatMessage>();
+        public virtual Tenant? Tenant { get; set; }
 
 
 

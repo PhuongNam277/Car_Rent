@@ -1,4 +1,30 @@
-﻿
+﻿.list-group-item.unread-chat h5,
+.list-group-item.unread-chat p {
+    font-weight: bold; /* In đậm tiêu đề và preview */
+    color: #212529; /* Đảm bảo màu chữ đậm rõ ràng */
+}
+
+.list-group-item .unread-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: red;
+    border-radius: 50%;
+    margin-right: 8px; /* Khoảng cách với tiêu đề */
+    vertical-align: middle; /* Căn giữa với dòng chữ */
+}
+
+/* Ẩn dấu chấm đỏ mặc định */
+.list-group-item .unread-dot {
+    display: none;
+}
+
+/* Hiện dấu chấm đỏ khi có class unread-chat */
+.list-group-item.unread-chat .unread-dot {
+    display: inline-block;
+}
+
+
 /*** Spinner Start ***/
 /*** Spinner ***/
 #spinner {

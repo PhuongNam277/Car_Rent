@@ -1,5 +1,5 @@
 ﻿@{
-    var username = User.Identity.Name;
+    var username = User.Identity!.Name;
     var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
 
 }
@@ -72,14 +72,16 @@
                     {
                         <a asp-controller="Chat" asp-action="Inbox" class="nav-item nav-link @(ViewData["ActivePage"]?.ToString() == "Chat Inbox" ? "active" : "")">
                             Chat Inbox
-                            <span id="supportBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+                            <span id="supportBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger ">0</span>
                         </a>
                     }
-                    else if (User.IsInRole("User") || User.IsInRole("Admin"))
+                    else if (User.Identity.IsAuthenticated)
                     {
-                        <a asp-controller="Chat" asp-action="Start" class="nav-item nav-link @(ViewData["ActivePage"]?.ToString() == "Chat" ? "active" : "")">
+                        <a asp-controller="Chat" asp-action="History" class="nav-item nav-link @(ViewData["ActivePage"]?.ToString() == "Chat" ? "active" : "")">
                             Chat
+                            <span id="userChatBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
                         </a>
+                        
                     }
 
 
@@ -101,27 +103,20 @@
                             <a asp-controller="Login" asp-action="Logout" class="dropdown-item">Log out</a>
                         </div>
                     </div>
-
-                </div>
-                @* <a asp-controller="Login" asp-action="Index" class="btn btn-primary rounded-pill py-2 px-4"> *@
-                @*     @if(!string.IsNullOrEmpty(username)) { *@
-                @*         @($"Hi, {username}") *@
-
-                @*     } *@
-                @*     else { *@
-                @*         <text>Login</text> *@
-                @*     } *@
-                @* </a> *@
+                    @if (User.IsInRole("Owner") || User.IsInRole("Staff"))
+                    {
+                        <partial name="_TenantSwitcher"></partial>
+                    }
 
                 @if (!string.IsNullOrEmpty(username))
                 {
-                    <span class="btn btn-primary rounded-pill py-2 px-4 disabled" style="pointer-events: none;">
-                        @($"Hi, {username}")
-                    </span>
+                        <span class="btn btn-primary rounded-pill py-2 px-4 disabled d-inline-flex align-items-center" style="pointer-events: none;">
+                            @($"Hi, {username}")
+                        </span>
                 }
                 else
                 {
-                    <a asp-controller="Login" asp-action="Index" class="btn btn-primary rounded-pill py-2 px-4">
+                        <a asp-controller="Login" asp-action="Index" class="btn btn-primary rounded-pill py-2 px-4 d-inline-flex align-items-center">
                         Login
                     </a>
                 }
@@ -129,7 +124,7 @@
 
                 @if (username == "Admin")
                 {
-                    <a asp-controller="Admin" asp-action="Index" class="btn btn-primary rounded-pill py-2 px-4" style="margin-left: 12px">
+                    <a asp-controller="Admin" asp-action="Index" class="btn btn-primary rounded-pill py-2 px-4 d-inline-flex align-items-center" style="margin-left: 12px">
                         <text>Manage</text>
                     </a>
                 }

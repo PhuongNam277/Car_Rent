@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Car_Rent.DTOs;
 using Car_Rent.Models;
+using Car_Rent.ViewModels.Car;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,27 +15,83 @@ namespace Car_Rent.Controllers
         public BookcarController(CarRentalDbContext context)
         {
             _context = context;
-        } 
+        }
 
-        public async Task<IActionResult> Index(int? carId, int? categoryId)
+        //public async Task<IActionResult> Index(int? carId, int? categoryId)
+        //{
+        //    var viewModel = new CategoryCarModel
+        //    {
+        //        Categories = _context.Categories.ToList(),
+        //        Cars = categoryId != null
+        //        ? _context.Cars.Where(c => c.CategoryId == categoryId).ToList()
+        //        : _context.Cars.ToList()
+        //    };
+
+        //    ViewBag.SelectedCarId = carId;
+        //    ViewBag.SelectedCategoryId = categoryId;
+
+        //    // New - Load locations for dropdowns
+        //    ViewBag.Locations = await _context.Locations
+        //                                .Where(l => l.IsActive)
+        //                                .OrderBy(l => l.Name)
+        //                                .ToListAsync();
+        //    return View(viewModel);
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> Index(int? categoryId = null, int? carId = null)
         {
-            var viewModel = new CategoryCarModel
+            var categories = await _context.Categories
+                .IgnoreQueryFilters()
+                .Where(c => c.IsActive == true)
+                .OrderBy(c => c.SortOrder)
+                .ToListAsync();
+
+            var carsQuery = _context.Cars
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(c => c.Status == "Available");
+
+            if (categoryId.HasValue)
+                carsQuery = carsQuery.Where(c => c.CategoryId == categoryId.Value);
+
+            var cars = await carsQuery
+                .OrderBy(c => c.CarName)
+                .Take(100)
+                .Select(c => new CarOptionVM
+                {
+                    CarId = c.CarId,
+                    CarName = c.CarName,
+                    LicensePlate = c.LicensePlate
+                })
+                .ToListAsync();
+
+            var locations = await _context.Locations
+                .IgnoreQueryFilters()
+                .Include(l => l.Tenant)
+                .AsNoTracking()
+                .Where(l => l.IsActive == true)
+                .Select(l => new LocationOptionVM
+                {
+                    LocationId = l.LocationId,
+                    Name = l.Name,
+                    TenantId = l.TenantId,
+                    TenantName = l.Tenant!.Name
+                })
+                .OrderBy(x => x.TenantName).ThenBy(x => x.Name)
+                .ToListAsync();
+
+            var model = new BookcarViewModel
             {
-                Categories = _context.Categories.ToList(),
-                Cars = categoryId != null
-            ? _context.Cars.Where(c => c.CategoryId == categoryId).ToList()
-            : _context.Cars.ToList()
+                Categories = categories,
+                Cars = cars,
+                SelectedCategoryId = categoryId,
+                SelectedCarId = carId
             };
 
-            ViewBag.SelectedCarId = carId;
-            ViewBag.SelectedCategoryId = categoryId;
+            ViewBag.Locations = locations;
 
-            // New - Load locations for dropdowns
-            ViewBag.Locations = await _context.Locations
-                                        .Where(l => l.IsActive)
-                                        .OrderBy(l => l.Name)
-                                        .ToListAsync();
-            return View(viewModel);
+            return View(model);
         }
 
         [HttpGet]
@@ -50,31 +107,127 @@ namespace Car_Rent.Controllers
         }
 
         // New: Search - car available in a station + time range
+        //[HttpGet]
+        //public async Task<IActionResult> AvailableCars([FromQuery] SearchAvailabilityRequest req, [FromQuery] int? tenantId)
+        //{
+        //    var start = CombineDateTime(req.StartDate, req.StartTime);
+        //    var end = CombineDateTime(req.EndDate, req.EndTime);
+        //    if(end <= start)
+        //    {
+        //        return BadRequest("End date and time must be after start date and time.");
+        //    }
+
+        //    // Update 25_09_2025
+        //    // Base query theo tenant (marketplace có thể khác tenant hiện hành)
+        //    IQueryable<Car> carsQ = _context.Cars.AsNoTracking();
+
+        //    if (tenantId.HasValue)
+        //        carsQ = carsQ.IgnoreQueryFilters().Where(c => c.TenantId == tenantId.Value);
+
+        //    // lọc theo station pick-up (bắt buộc)
+        //    carsQ = carsQ.Where(c => c.BaseLocationId == req.PickupLocationId);
+
+        //    // lọc theo category nếu có
+        //    if (req.CategoryId.HasValue)
+        //        carsQ = carsQ.Where(c => c.CategoryId == req.CategoryId.Value);
+
+        //    // chặn trùng lịch + buffer 1h
+        //    var buf = TimeSpan.FromHours(1);
+        //    var startWithBuf = start - buf;
+        //    var endWithBuf = end + buf;
+
+        //    var cars = await carsQ
+        //        .Where(c => !_context.Reservations
+        //            .IgnoreQueryFilters()
+        //            .Any(r =>
+        //                r.TenantId == c.TenantId &&
+        //                r.CarId == c.CarId &&
+        //                r.Status != "Cancelled" &&
+        //                r.StartDate < endWithBuf && startWithBuf < r.EndDate
+
+        //            )
+        //        )
+        //        .Select(c => new { c.CarId, c.CarName })
+        //        .ToListAsync();
+
+        //    return Json(cars);
+        //}
+
         [HttpGet]
-        public async Task<IActionResult> AvailableCars([FromQuery] SearchAvailabilityRequest req)
+        public async Task<IActionResult> AvailableCars(
+    int pickupLocationId,
+    DateTime startDate, string startTime,
+    DateTime endDate, string endTime,
+    int? categoryId,
+    int? tenantId
+)
         {
-            var start = CombineDateTime(req.StartDate, req.StartTime);
-            var end = CombineDateTime(req.EndDate, req.EndTime);
-            if(end <= start)
+            static string HHmm(string? v) => !string.IsNullOrWhiteSpace(v) && v!.Length == 5 ? v! : "12:00";
+            if (!TimeSpan.TryParse(HHmm(startTime), out var startTs) ||
+                !TimeSpan.TryParse(HHmm(endTime), out var endTs))
+                return BadRequest(new { message = "Invalid time format. Expect HH:mm." });
+
+            var start = startDate.Date + startTs;
+            var end = endDate.Date + endTs;
+            if (end <= start)
+                return BadRequest(new { message = "End time must be after start time." });
+
+            // Suy ra tenantId nếu chưa có
+            if (tenantId is null)
             {
-                return BadRequest("End date and time must be after start date and time.");
+                tenantId = await _context.Locations
+                    .IgnoreQueryFilters()
+                    .Where(l => l.LocationId == pickupLocationId && l.IsActive == true)
+                    .Select(l => (int?)l.TenantId)
+                    .FirstOrDefaultAsync();
+
+                if (tenantId is null)
+                    return BadRequest(new { message = "Cannot infer tenant from pickup station." });
             }
 
-            var query = _context.Cars
-                .Where(c => c.BaseLocationId == req.PickupLocationId);
+            var pickupOk = await _context.Locations
+                .IgnoreQueryFilters()
+                .AnyAsync(l => l.LocationId == pickupLocationId
+                            && l.TenantId == tenantId.Value
+                            && l.IsActive == true);
+            if (!pickupOk)
+                return BadRequest(new { message = "Invalid pickup station for this tenant." });
 
-            if (req.CategoryId.HasValue) query = query.Where(c => c.CategoryId == req.CategoryId.Value);
+            var busyStatuses = new[] { "Pending", "Confirmed", "Active" };
 
-            var cars = await query
-                .Where(c => !_context.Reservations.Any(r =>
-                    r.CarId == c.CarId &&
-                    r.Status != "Cancelled" &&                  // chỉ loại đơn chưa hủy
-                    r.StartDate < end && start < r.EndDate))    // điều kiện overlap chuẩn
-                .Select(c => new { c.CarId, c.CarName })
+            var carsQuery = _context.Cars
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(c => c.TenantId == tenantId.Value
+                         && c.Status == "Available"
+                         && c.BaseLocationId == pickupLocationId);
+
+            if (categoryId.HasValue)
+                carsQuery = carsQuery.Where(c => c.CategoryId == categoryId.Value);
+
+            var available = await carsQuery
+                .Where(c => !_context.Reservations
+                    .IgnoreQueryFilters()
+                    .Any(r => r.CarId == c.CarId
+                           && r.TenantId == tenantId.Value
+                           && busyStatuses.Contains(r.Status)
+                           && r.StartDate < end
+                           && r.EndDate > start))
+                .OrderBy(c => c.CarName)
+                .Select(c => new
+                {
+                    carId = c.CarId,
+                    carName = c.CarName,
+                    imageUrl = c.ImageUrl,
+                    categoryId = c.CategoryId
+                })
                 .ToListAsync();
 
-            return Json(cars);
+            return Json(available);
         }
+
+
+
 
         // Get UserId from Claims
         private int? GetUserIdFromClaims(ClaimsPrincipal user)
@@ -124,12 +277,25 @@ namespace Car_Rent.Controllers
             if (req.DropoffLocationId == 0) req.DropoffLocationId = req.PickupLocationId;
 
             // check car
-            var car = await _context.Cars.FirstOrDefaultAsync(c => c.CarId == req.CarId);
+            //var car = await _context.Cars.FirstOrDefaultAsync(c => c.CarId == req.CarId);
+            //if (car == null)
+            //{
+            //    ModelState.AddModelError("", "Car not found.");
+            //    return RedirectToAction("Index", new { carId = req.CarId, categoryId = req.CategoryId });
+            //}
+
+            var car = await _context.Cars
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.CarId == req.CarId);
+
             if (car == null)
             {
                 ModelState.AddModelError("", "Car not found.");
-                return RedirectToAction("Index", new { carId = req.CarId, categoryId = req.CategoryId });
+                return RedirectToAction("Index", new {carId = req.CarId, categoryId = req.CategoryId});
             }
+
+            req.TenantId = car.TenantId;
 
             // Bat buoc xe thuoc dung station pick-up
             if (car.BaseLocationId != req.PickupLocationId)

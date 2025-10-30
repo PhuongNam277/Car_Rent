@@ -1,18 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using Car_Rent.Infrastructure.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace Car_Rent.Models;
 
 public partial class CarRentalDbContext : DbContext
 {
+    private readonly ITenantProvider _tenant;
     public CarRentalDbContext()
     {
     }
 
-    public CarRentalDbContext(DbContextOptions<CarRentalDbContext> options)
+    public CarRentalDbContext(DbContextOptions<CarRentalDbContext> options, ITenantProvider tenant)
         : base(options)
     {
+        _tenant = tenant;
     }
 
     public virtual DbSet<Comment> Comments { get; set; }
@@ -34,6 +37,7 @@ public partial class CarRentalDbContext : DbContext
     public virtual DbSet<Reservation> Reservations { get; set; }
 
     public virtual DbSet<Review> Reviews { get; set; }
+    public virtual DbSet<TenantCategory> TenantCategories { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -45,16 +49,42 @@ public partial class CarRentalDbContext : DbContext
 
     public virtual DbSet<ChatMessage> ChatMessages { get; set; }
 
-    public DbSet<ConversationReadState> ConversationReadStates { get; set; }
+    public virtual DbSet<ConversationReadState> ConversationReadStates { get; set; }
 
+    public virtual DbSet<Tenant> Tenants { get; set; }
+    public virtual DbSet<TenantMemberships> TenantMemberships { get; set; }
 
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=ASUS\\SQLEXPRESS;Initial Catalog=CarRentalDB;Integrated Security=True;Trust Server Certificate=True");
+    public virtual DbSet<UserBranch> UserBranches {  get; set; }
+    public virtual DbSet<UserConversationVisibility> UserConversationVisibilities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
+        // Global Query Filters theo TenantId
+        modelBuilder.Entity<Car>().HasQueryFilter(x =>
+            _tenant.IsEndUser || x.TenantId == _tenant.TenantId);
+
+        modelBuilder.Entity<Reservation>().HasQueryFilter(x =>
+            _tenant.IsEndUser || x.TenantId == _tenant.TenantId);
+
+        modelBuilder.Entity<Payment>().HasQueryFilter(x =>
+            _tenant.IsEndUser || x.TenantId == _tenant.TenantId);
+
+        modelBuilder.Entity<Review>().HasQueryFilter(x =>
+            _tenant.IsEndUser || x.TenantId == _tenant.TenantId);
+
+        modelBuilder.Entity<Location>().HasQueryFilter(x =>
+            _tenant.IsEndUser || x.TenantId == _tenant.TenantId);
+
+        // Ràng buộc độ dài/unique (unique (TenantId, LicensePlate) đã tạo ở SQL)
+        modelBuilder.Entity<Car>()
+          .Property(x => x.TransmissionType).HasMaxLength(20);
+
+        modelBuilder.Entity<Car>()
+          .Property(x => x.VehicleType).HasMaxLength(20);
+
+
         modelBuilder.Entity<Blog>(entity =>
         {
             entity.HasKey(e => e.BlogId).HasName("PK__Blog__54379E30930C48EE");
@@ -110,6 +140,15 @@ public partial class CarRentalDbContext : DbContext
 
         modelBuilder.Entity<Category>(entity =>
         {
+            entity.Property(x => x.CategoryName).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.VehicleType).HasMaxLength(20).IsRequired();
+            entity.Property(x => x.Slug).HasMaxLength(120);
+
+            entity.HasOne(x => x.ParentCategory)
+             .WithMany(x => x.SubCategories)
+             .HasForeignKey(x => x.ParentCategoryId)
+             .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasKey(e => e.CategoryId).HasName("PK__Categori__19093A0BDF788EA5");
 
             entity.HasIndex(e => e.CategoryName, "UQ__Categori__8517B2E0F39EC167").IsUnique();
@@ -241,6 +280,16 @@ public partial class CarRentalDbContext : DbContext
                 .HasConstraintName("FK__Reviews__UserId__5812160E");
         });
 
+        modelBuilder.Entity<TenantCategory>(entity =>
+        {
+            entity.HasKey(x => new { x.TenantId, x.CategoryId });
+            entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId)
+              .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.Category).WithMany().HasForeignKey(x => x.CategoryId)
+              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4C90EA71FB");
@@ -300,6 +349,13 @@ public partial class CarRentalDbContext : DbContext
                 .HasForeignKey(e => e.StaffId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("FK_Conversations_Staff");
+
+            entity.HasOne(c => c.Tenant)
+              .WithMany() 
+              .HasForeignKey(c => c.TenantId) 
+              .IsRequired(false) 
+              .OnDelete(DeleteBehavior.SetNull)
+              .HasConstraintName("FK_Conversations_Tenants");
         });
 
         modelBuilder.Entity<ChatMessage>(entity =>
@@ -321,6 +377,75 @@ public partial class CarRentalDbContext : DbContext
 
         modelBuilder.Entity<ConversationReadState>().HasKey(x => new { x.ConversationId, x.UserId });
 
+        modelBuilder.Entity<TenantMemberships>(e =>
+        {
+            e.HasKey(x => new { x.TenantId, x.UserId });
+
+            e.HasOne(x => x.Tenant)
+             .WithMany(t => t.Memberships)             
+             .HasForeignKey(x => x.TenantId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            // FK -> Users (tường minh)
+            e.HasOne(x => x.User)
+             .WithMany(t => t.Memberships)               
+             .HasForeignKey(x => x.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+
+        modelBuilder.Entity<Car>()
+          .HasOne(c => c.Tenant)
+          .WithMany()
+          .HasForeignKey(c => c.TenantId)
+          .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Reservation>()
+         .HasOne(r => r.Tenant)
+         .WithMany()
+         .HasForeignKey(r => r.TenantId)
+         .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Payment>()
+         .HasOne(p => p.Tenant)
+         .WithMany()
+         .HasForeignKey(p => p.TenantId)
+         .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Location>()
+         .HasOne(l => l.Tenant)
+         .WithMany()
+         .HasForeignKey(l => l.TenantId)
+         .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Review>()
+         .HasOne(rv => rv.Tenant)
+         .WithMany()
+         .HasForeignKey(rv => rv.TenantId)
+         .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserBranch>(e =>
+        {
+            e.HasKey(x => new { x.UserId, x.TenantId, x.LocationId });
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Location).WithMany().HasForeignKey(x => x.LocationId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserConversationVisibility>()
+            .HasKey(ucv => new { ucv.UserId, ucv.ConversationId });
+
+        modelBuilder.Entity<UserConversationVisibility>()
+            .HasOne(ucv => ucv.User)
+            .WithMany()
+            .HasForeignKey(ucv => ucv.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserConversationVisibility>()
+            .HasOne(ucv => ucv.Conversation)
+            .WithMany()
+            .HasForeignKey(ucv => ucv.ConversationId)
+            .OnDelete(DeleteBehavior.Cascade);
 
 
         OnModelCreatingPartial(modelBuilder);
